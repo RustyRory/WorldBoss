@@ -1,0 +1,28 @@
+{
+  "players": [
+    {
+      "id": "197004687327625216",
+      "username": "Rusty",
+      "class": "N/A",
+      "power": "N/A",
+      "level": 7,
+      "life": 56,
+      "action": 0,
+      "experience": 84,
+      "golds": 165,
+      "degats": 0
+    },
+    {
+      "id": "988158445255544892",
+      "username": "Rory",
+      "class": "N/A",
+      "power": "N/A",
+      "level": 1,
+      "life": 100,
+      "action": 5,
+      "experience": 0,
+      "golds": 0,
+      "degats": 0
+    }
+  ]
+}
