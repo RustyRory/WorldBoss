@@ -1,6 +1,6 @@
 {
   "nom": "World Boss",
-  "niveau": 10,
-  "pointsDeVie": 5000,
-  "degatsSubits": 5
+  "niveau": 7,
+  "life": 91,
+  "degatsSubits": 36
 }
