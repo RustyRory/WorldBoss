@@ -144,7 +144,17 @@ function modifyPlayerExp(playerId, newExp) {
     return false; // Retourner false si aucun joueur avec cet ID n'a été trouvé
 }
 
-
+// Fonction pour modifier les dégats totaux d'un joueur par son ID
+function modifyPlayerDmg(playerId, newDmg) {
+    const player = findPlayerById(playerId);
+    if (player) {
+        player.degats = newDmg;
+        savePlayersData(); // Sauvegarder les données après modification
+        console.log(`Points d'action de ${player.username} modifiée à ${newDmg}.`);
+        return true;
+    }
+    return false; // Retourner false si aucun joueur avec cet ID n'a été trouvé
+}
 
 // Ajouter 1 pdv à tous les joueurs
 function addLifeToPlayers() {
@@ -253,34 +263,29 @@ client.on('messageReactionAdd', async (reaction, user) => {
         }
 
         if (reaction.emoji.name === '🅰️') {
-            console.log('attaque');
-            
             reaction.message.delete();
-
             let player = findPlayerById(user.id);
             if (!player) {
                 console.log('Pas de joueur avec cet id');
                 return;
             } else {
                 if(player.action>0){
-                    modifyPlayerLife(user.id, player.life-(worldboss.niveau+1)*getRandomMultiplier());
                     modifyPlayerAction(user.id, player.action-1);
+                    modifyPlayerLife(user.id, player.life-worldboss.niveau*getRandomMultiplier());
                     modifyPlayerExp(user.id, player.experience+worldboss.niveau);
                     modifyPlayerGolds(user.id, player.golds+worldboss.niveau);
-                    modifyWBLife(worldboss.degatsSubits+(player.level+1)*getRandomMultiplier());
-                    
+                    const dmg = player.level*getRandomMultiplier();
+                    modifyPlayerDmg(user.id, player.degats+dmg);
+                    modifyWBLife(worldboss.degatsSubits+dmg);
+                    client.users.send(user.id, 'attaque');
                 }else{
                     console.log('Pas assez de points d\'actions');
                 }
                 
             }
-
-            
-            
             worldBossMessageBuilder();
 
         } else if (reaction.emoji.name === '🏹') {
-            console.log('aventure');
             reaction.message.delete();
             let player = findPlayerById(user.id);
             if (!player) {
@@ -291,7 +296,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
                     modifyPlayerAction(user.id, player.action-1);
                     modifyPlayerExp(user.id, player.experience+worldboss.niveau*getRandomMultiplier());
                     modifyPlayerGolds(user.id, player.golds+worldboss.niveau*getRandomMultiplier());
-                    
+                    client.users.send(user.id, 'aventure');
                 }else{
                     console.log('Pas assez de points d\'actions');
                 }
@@ -301,6 +306,21 @@ client.on('messageReactionAdd', async (reaction, user) => {
         } else if (reaction.emoji.name === '💤') {
             console.log('repos');
             reaction.message.delete();
+            let player = findPlayerById(user.id);
+            if (!player) {
+                console.log('Pas de joueur avec cet id');
+                return;
+            } else {
+                if(player.action>0){
+                    modifyPlayerAction(user.id, player.action-1);
+                    modifyPlayerLife(user.id, player.experience+worldboss.niveau*getRandomMultiplier());
+                    modifyPlayerGolds(user.id, player.golds-worldboss.niveau*getRandomMultiplier());
+                    client.users.send(user.id, 'repos');
+                }else{
+                    console.log('Pas assez de points d\'actions');
+                }
+                
+            }
             worldBossMessageBuilder();
         }
 
