@@ -1,16 +1,16 @@
 {
   "players": [
     {
-      "id": "0",
+      "id": "197004687327625216",
       "username": "Rusty",
       "class": "N/A",
       "power": "N/A",
-      "level": 8,
-      "life": 70,
-      "action": 1,
-      "experience": 63,
-      "golds": 165,
-      "degats": 16
+      "level": 10,
+      "life": 321,
+      "action": 5,
+      "experience": 126,
+      "golds": 716,
+      "damages": 1132
     },
     {
       "id": "988158445255544892",
@@ -18,11 +18,11 @@
       "class": "N/A",
       "power": "N/A",
       "level": 1,
-      "life": 100,
+      "life": 261,
       "action": 5,
       "experience": 0,
       "golds": 0,
-      "degats": 0
+      "damages": 0
     }
   ]
 }
