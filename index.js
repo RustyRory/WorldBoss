@@ -1,13 +1,6 @@
-const {
-  Client,
-  Events,
-  GatewayIntentBits,
-  EmbedBuilder,
-} = require("discord.js");
+const { Client, GatewayIntentBits, EmbedBuilder } = require("discord.js");
 
 const { token, channelWB } = require("./config.json");
-
-const fs = require("fs");
 
 const client = new Client({
   intents: [
@@ -18,286 +11,423 @@ const client = new Client({
   ],
 });
 
-let worldboss;
+const fs = require("fs");
 
-let players = [];
+// Lire les données du fichier worldBoss.json
+const rawBossData = fs.readFileSync("worldBoss.json");
+let worldBossData = JSON.parse(rawBossData);
 
-let messageTrackerWB, messageTrackerOther;
+// Lire les données du fichier players.json
+const rawPlayersData = fs.readFileSync("players.json");
+let playersData = JSON.parse(rawPlayersData);
 
-// Lire le fichier  Wordlboss JSON
-function loadWorldbossData() {
-  fs.readFile("worldboss.json", "utf8", (err, data) => {
-    if (err) {
-      console.error("Erreur en lisant le fichier worldboss.json:", err);
+let game;
+
+async function worldBossElapsedTime() {
+  try {
+    const message = await fetchMessageById(channelWB, worldBossData.id);
+    if (message) {
+      const elapsedTime = Date.now() - message.createdTimestamp;
+      const seconds = Math.floor((elapsedTime / 1000) % 60);
+      const minutes = Math.floor((elapsedTime / (1000 * 60)) % 60);
+      const hours = Math.floor((elapsedTime / (1000 * 60 * 60)) % 24);
+      const days = Math.floor(elapsedTime / (1000 * 60 * 60 * 24));
+      return { days, hours, minutes, seconds };
+    } else {
+      console.error("Message introuvable.");
+      return null;
+    }
+  } catch (error) {
+    console.error("Erreur lors de la récupération du temps écoulé :", error);
+  }
+}
+
+function worldBossEmbedBuilder(timeleft) {
+  return new EmbedBuilder()
+    .setTitle("World Boss Stats")
+    .setDescription("Voici les statistiques actuelles du World Boss.")
+    .addFields(
+      {
+        name: "Niveau",
+        value: worldBossData.level.toString(),
+      },
+      {
+        name: "Dégâts",
+        value: worldBossData.damages.toString(),
+        inline: true,
+      },
+      { name: "\u200B", value: "\u200B", inline: true },
+      {
+        name: "Temps restant",
+        value: timeleft.toString(),
+        inline: true,
+      },
+      { name: "\u200B", value: "\u200B" }
+    )
+    .setFooter({
+      text:
+        "Réagissez pour interragir\n" +
+        "\n" +
+        " | 🗡️ | Attaque du Boss \n" +
+        " | 🏹 | Partir en aventure (XP + Golds)\n" +
+        " | 💤 | Se reposer (Gain de vie pour des golds)",
+    });
+}
+
+// Embed
+async function worldBossNewMessage() {
+  // Vérification channel WorldBoss
+  const channel = client.channels.cache.get(channelWB);
+  if (!channel) return console.error("Le canal est introuvable.");
+
+  // Création et envoi Embed
+  const message = await channel.send({
+    embeds: [worldBossEmbedBuilder(worldBossData.timeout)],
+  });
+
+  // Ajouter des réactions à l'embed
+  await message.react("🗡️");
+  await message.react("🏹");
+  await message.react("💤");
+  await message.react("❤️");
+
+  // Enregistrer l'ID du message pour les futures références
+  worldBossData.id = message.id;
+  fs.writeFileSync("worldBoss.json", JSON.stringify(worldBossData, null, 2));
+}
+
+//
+function worldBossReset() {
+  worldBossData.damages = 0;
+  playersData.players.forEach((player) => {
+    if (player.life <= 0) player.life = 100;
+  });
+  fs.writeFileSync("worldBoss.json", JSON.stringify(worldBossData, null, 2));
+  fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+}
+
+// Timeout
+function worldBossTimeout() {
+  game = setTimeout(async () => {
+    if (worldBossData.damages < worldBossData.life) {
+      //Récup le message et le supprime
+      try {
+        const message = await client.channels.cache
+          .get(channelWB)
+          .messages.fetch(worldBossData.id);
+        await message.delete();
+      } catch (err) {
+        console.error("Erreur en récupérant ou en supprimant le message:", err);
+      }
+
+      //Reset WB
+      worldBossReset();
+
+      //Envoi new mess + new timeout
+      worldBossNewMessage();
+      worldBossTimeout();
+    } else {
+      console.error("Error : Boss mort mais timeout tj actif");
+    }
+    console.log("Le timer du WB est écoulé.");
+  }, worldBossData.timeout * 1000); // 60000 millisecondes = 1 minute
+}
+
+async function fetchMessageById(channelId, messageId) {
+  try {
+    const channel = await client.channels.fetch(channelId);
+    if (!channel) {
+      console.error("Le canal est introuvable.");
       return;
     }
-    worldboss = JSON.parse(data);
-    console.log("Données du World Boss chargées:", worldboss);
-  });
-}
 
-// Sauvegarder les modifications dans le fichier Wordlboss JSON
-function saveWorldbossData() {
-  fs.writeFile(
-    "worldBoss.json",
-    JSON.stringify(worldboss, null, 2),
-    "utf8",
-    (err) => {
-      if (err) {
-        console.error(
-          "Erreur en écrivant dans le fichier worldboss.json:",
-          err
-        );
-        return;
-      }
-      console.log("Données du World Boss sauvegardées avec succès.");
-    }
-  );
-}
-
-// Charger les données des joueurs depuis players.json
-function loadPlayersData() {
-  fs.readFile("players.json", "utf8", (err, data) => {
-    if (err) {
-      console.error("Erreur en lisant le fichier players.json:", err);
-      return;
-    }
-    try {
-      const json = JSON.parse(data);
-      players = json.players;
-      console.log("Données des joueurs chargées");
-    } catch (jsonErr) {
-      console.error("Erreur en parsant le fichier players.json:", jsonErr);
-    }
-  });
-}
-
-// Sauvegarder les données des joueurs dans players.json
-function savePlayersData() {
-  fs.writeFile(
-    "players.json",
-    JSON.stringify({ players }, null, 2),
-    "utf8",
-    (err) => {
-      if (err) {
-        console.error("Erreur en écrivant dans le fichier players.json:", err);
-        return;
-      }
-      console.log("Données des joueurs sauvegardées avec succès.");
-    }
-  );
-}
-
-function getRandomMultiplier() {
-  const random = Math.random(); // Génère un nombre aléatoire entre 0 et 1
-  if (random < 1 / 4) {
-    return 0;
-  } else if (random < 2 / 4) {
-    return 1;
-  } else if (random < 3 / 4) {
-    return 2;
-  } else {
-    return 4;
+    const message = await channel.messages.fetch(messageId);
+    return message;
+  } catch (error) {
+    console.error("Erreur lors de la récupération du message :", error);
   }
 }
 
 // Fonction pour trouver un joueur par son ID
 function findPlayerById(playerId) {
-  return players.find((player) => player.id === playerId);
+  return playersData.players.find((player) => player.id === playerId);
 }
 
-// Fonction pour modifier la vie d'un joueur par son ID
-function modifyPlayerLife(playerId, newLife) {
-  const player = findPlayerById(playerId);
-  if (player) {
-    player.life = newLife;
-    savePlayersData(); // Sauvegarder les données après modification
-    client.users.send(playerId, `Votre vie est passée à ${newLife}.`);
-
-    console.log(`Vie de ${player.username} modifiée à ${newLife}.`);
-    return true;
-  }
-  return false; // Retourner false si aucun joueur avec cet ID n'a été trouvé
+function getRandomMultiplier() {
+  const random = Math.random(); // Génère un nombre aléatoire entre 0 et 1
+  if (random < 1 / 10) return 0;
+  else if (random < 6 / 10) return 1;
+  else if (random < 9 / 10) return 2;
+  else return 4;
 }
 
-// Fonction pour modifier les point d'action d'un joueur par son ID
-function modifyPlayerAction(playerId, newAction) {
-  const player = findPlayerById(playerId);
-  if (player) {
-    player.action = newAction;
-    savePlayersData(); // Sauvegarder les données après modification
-    client.users.send(
-      playerId,
-      `Vos points d'action sont passés à ${newAction}.`
+async function worldBossAttack(player, dataDamages, dataLife) {
+  player.action -= 1;
+  player.damages = player.damages + (dataDamages - worldBossData.level + 1);
+  worldBossData.damages =
+    worldBossData.damages + (dataDamages - worldBossData.level + 1);
+  player.life = player.life - (dataLife - player.level);
+  player.experience = player.experience + worldBossData.level;
+  player.golds = player.golds + worldBossData.level;
+
+  let embed = new EmbedBuilder()
+    .setTitle("WorldBoss Attaque")
+    .setDescription("Voici le rapport de combat de votre attaque.")
+    .addFields(
+      {
+        name: "Point de dégats",
+        value:
+          "(" +
+          (dataDamages - worldBossData.level).toString() +
+          ") => " +
+          worldBossData.damages.toString(),
+        inline: true,
+      },
+      {
+        name: "Point de vie",
+        value:
+          "(" +
+          (dataLife - player.level).toString() +
+          ") => " +
+          player.life.toString(),
+        inline: true,
+      },
+      { name: "\u200B", value: "\u200B" },
+      {
+        name: "Point d'expériences",
+        value:
+          "(+" +
+          worldBossData.level.toString() +
+          ") => " +
+          player.experience.toString(),
+        inline: true,
+      },
+      {
+        name: "golds",
+        value:
+          "(+" +
+          worldBossData.level.toString() +
+          ") => " +
+          player.golds.toString(),
+        inline: true,
+      },
+      { name: "\u200B", value: "\u200B" }
     );
-    console.log(
-      `Points d'action de ${player.username} modifiée à ${newAction}.`
-    );
-    return true;
-  }
-  return false; // Retourner false si aucun joueur avec cet ID n'a été trouvé
-}
 
-// Fonction pour modifier les golds d'un joueur par son ID
-function modifyPlayerGolds(playerId, newGolds) {
-  const player = findPlayerById(playerId);
-  if (player) {
-    player.golds = newGolds;
-    savePlayersData(); // Sauvegarder les données après modification
-    client.users.send(playerId, `Vos golds sont passés à ${newGolds}.`);
-    console.log(`Golds de ${player.username} modifiée à ${newGolds}.`);
-    return true;
-  }
-  return false; // Retourner false si aucun joueur avec cet ID n'a été trouvé
-}
-
-// Fonction pour modifier l'xp' d'un joueur par son ID
-function modifyPlayerExp(playerId, newExp) {
-  const player = findPlayerById(playerId);
-  if (player) {
-    player.experience = newExp;
-    client.users.send(
-      playerId,
-      `Vos points d'expérience sont passés à ${newExp}.`
+  if (player.experience >= player.level * 13) {
+    player.experience = 0;
+    player.level += 1;
+    player.life += 50;
+    player.action += 5;
+    embed.addFields(
+      {
+        name: "Gain de Niveau",
+        value: "(+1) => " + player.level.toString(),
+      },
+      {
+        name: "Point de vie",
+        value: "(+50) => " + player.life.toString(),
+        inline: true,
+      },
+      { name: "\u200B", value: "\u200B", inline: true },
+      {
+        name: "Point d'action",
+        value: "(+5) => " + player.action.toString(),
+        inline: true,
+      }
     );
-    console.log(`Expérience de ${player.username} modifiée à ${newExp}.`);
-    if (player.experience >= player.level * 13) {
-      player.experience = 0;
-      player.level++;
-      player.life += 50;
-      player.action = 5;
-      client.users.send(
-        playerId,
-        `Vous gagnez 1 niveau -> LVL ${player.level}.`
-      );
-      console.log(`Niveau de ${player.username} modifiée à ${player.level}.`);
+  } else {
+    embed.addFields({
+      name: "Point d'action",
+      value: "(-1) => " + player.action.toString(),
+    });
+  }
+
+  client.users.send(player.id, { embeds: [embed] });
+
+  //save
+  fs.writeFileSync("worldBoss.json", JSON.stringify(worldBossData, null, 2));
+  fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+
+  try {
+    const message = await fetchMessageById(channelWB, worldBossData.id);
+    if (message) {
+      const elapsedTime = await worldBossElapsedTime();
+      let timeLeft = 0;
+      if (elapsedTime) {
+        timeLeft = worldBossData.timeout - elapsedTime.seconds;
+      }
+      await message.edit({ embeds: [worldBossEmbedBuilder(timeLeft)] });
+      console.log("Message mis à jour avec succès.");
+    } else {
+      console.error("Message introuvable.");
     }
-    savePlayersData(); // Sauvegarder les données après modification
-
-    return true;
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour du message :", error);
   }
-  return false; // Retourner false si aucun joueur avec cet ID n'a été trouvé
-}
 
-// Fonction pour modifier les dégats totaux d'un joueur par son ID
-function modifyPlayerDmg(playerId, newDmg) {
-  const player = findPlayerById(playerId);
-  if (player) {
-    player.degats = newDmg;
-    savePlayersData(); // Sauvegarder les données après modification
-    console.log(`Dégats infligé de ${player.username} modifiée à ${newDmg}.`);
-    return true;
-  }
-  return false; // Retourner false si aucun joueur avec cet ID n'a été trouvé
-}
+  if (worldBossData.damages >= worldBossData.life) {
+    worldBossData.level += 1;
+    worldBossData.life = worldBossData.level * 13;
+    //save
+    worldBossReset();
 
-// Ajouter 1 pdv à tous les joueurs
-function addLifeToPlayers() {
-  players.forEach((player) => {
-    player.life += 1;
-  });
-  savePlayersData();
-  console.log(`Maj PDV`);
-}
-
-// Ajouter 1 action à tous les joueurs
-function addActionToPlayers() {
-  players.forEach((player) => {
-    if (player.action < 5) player.action += 1;
-  });
-  savePlayersData();
-  console.log(`Maj Action`);
-}
-
-// Fonction pour modifier les point d'action d'un joueur par son ID
-function modifyWBLife(playerId, newlife) {
-  client.users.send(
-    playerId,
-    `Vous infligez ${
-      newlife - worldboss.degatsSubits
-    } points de dégats au World Boss`
-  );
-  worldboss.degatsSubits = newlife;
-  console.log(`Points de dégats subit ${worldboss.nom} modifiée à ${newlife}.`);
-  if (worldboss.degatsSubits >= worldboss.life) {
-    worldboss.degatsSubits = 0;
-    worldboss.niveau++;
-    worldboss.life = worldboss.niveau * 13;
-  }
-  saveWorldbossData();
-}
-
-function worldBossMessageBuilder() {
-  // Charger les données du World Boss
-  loadWorldbossData();
-  // Attendre un peu pour s'assurer que les données sont chargées
-  setTimeout(async () => {
-    if (!worldboss) {
-      console.error("Les données du World Boss n'ont pas été chargées.");
-      return;
+    clearTimeout(game);
+    try {
+      const message = await fetchMessageById(channelWB, worldBossData.id);
+      if (message) {
+        await message.delete();
+        console.log("Message supprimé avec succès.");
+      } else {
+        console.error("Message introuvable.");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la supression du message :", error);
     }
-
-    const worldBossStats = new EmbedBuilder()
-      .setColor(0xffffff)
-      .setTitle("Statistiques et interractions du world boss")
-      .setAuthor({ name: worldboss.nom ? worldboss.nom.toString() : "N/A" })
-      .setDescription(
-        "3 interractions possible : \n" +
-          "\n" +
-          " | 🅰️ | Attaque du Boss \n" +
-          " | 🏹 | Partir en aventure (XP + Golds)\n" +
-          " | 💤 | Se reposer (Gain de vie pour des golds)"
-      )
-      .addFields(
-        { name: "\u200B", value: "\u200B" },
-        {
-          name: "Niveau",
-          value: worldboss.niveau ? worldboss.niveau.toString() : "N/A",
-        },
-        {
-          name: "Dégâts Subits",
-          value: worldboss.degatsSubits
-            ? worldboss.degatsSubits.toString()
-            : "N/A",
-          inline: true,
-        }
-      )
-      .setFooter({
-        text: "@RustyRory",
-        iconURL: "https://i.imgur.com/AfFp7pu.png",
-      });
-
-    const channel = client.channels.cache.get(channelWB);
-    await channel.send({ embeds: [worldBossStats] });
-  }, 100);
+    worldBossNewMessage();
+    worldBossTimeout();
+  }
 }
 
-// Quand le bot est prêt
-client.once("ready", () => {
+async function worldBossAdventure(player, dataExperience, dataGolds) {
+  player.action -= 1;
+  player.experience = player.experience + dataExperience;
+  player.golds = player.golds + dataGolds;
+
+  let embed = new EmbedBuilder()
+    .setTitle("WorldBoss Aventure")
+    .setDescription("Voici le rapport de votre aventure.")
+    .addFields(
+      {
+        name: "Point d'expériences",
+        value:
+          "(+" +
+          dataExperience.toString() +
+          ") => " +
+          player.experience.toString(),
+        inline: true,
+      },
+      {
+        name: "golds",
+        value: "(+" + dataGolds.toString() + ") => " + player.golds.toString(),
+        inline: true,
+      },
+      { name: "\u200B", value: "\u200B" }
+    );
+
+  if (player.experience >= player.level * 13) {
+    player.experience = 0;
+    player.level += 1;
+    player.life += 50;
+    player.action += 5;
+    embed.addFields(
+      {
+        name: "Gain de Niveau",
+        value: "(+1) => " + player.level.toString(),
+      },
+      {
+        name: "Point de vie",
+        value: "(+50) => " + player.life.toString(),
+        inline: true,
+      },
+      { name: "\u200B", value: "\u200B", inline: true },
+      {
+        name: "Point d'action",
+        value: "(+5) => " + player.action.toString(),
+        inline: true,
+      }
+    );
+  } else {
+    embed.addFields({
+      name: "Point d'action",
+      value: "(-1) => " + player.action.toString(),
+    });
+  }
+
+  client.users.send(player.id, { embeds: [embed] });
+
+  //save
+  fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+}
+
+async function worldBossRest(player, dataLife, dataGolds) {
+  player.action -= 1;
+  player.life = player.life + dataLife;
+  player.golds = player.golds - (dataGolds * 10 + dataLife);
+
+  let embed = new EmbedBuilder()
+    .setTitle("WorldBoss Repos")
+    .setDescription("Voici la facture de l'auberge.")
+    .addFields(
+      {
+        name: "Point de vie",
+        value: "(+" + dataLife.toString() + ") => " + player.life.toString(),
+        inline: true,
+      },
+      {
+        name: "golds",
+        value:
+          "(-" +
+          (dataGolds + dataLife).toString() +
+          ") => " +
+          player.golds.toString(),
+        inline: true,
+      },
+      { name: "\u200B", value: "\u200B" },
+      {
+        name: "Point d'action",
+        value: "(-1) => " + player.action.toString(),
+      }
+    );
+  client.users.send(player.id, { embeds: [embed] });
+
+  //save
+  fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+}
+
+client.once("ready", async () => {
+  // Vérifications connection / datas
   console.log(`Connecté en tant que ${client.user.tag}`);
+  console.log("Données du World Boss chargées:", worldBossData);
+  console.log("Données des joueurs chargées:", playersData);
 
-  worldBossMessageBuilder();
-  loadPlayersData();
+  // WORLD BOSS
+  worldBossNewMessage();
+  worldBossTimeout();
 
   setInterval(async () => {
-    addLifeToPlayers();
-    addActionToPlayers();
-  }, 3600000); // 3600000 ms = 1 heure
-});
-
-// Écouter l'événement messageCreate
-client.on("messageCreate", async (message) => {
-  // Mise en mémoire des messages du bot
-  if (message.author.bot) {
-    if (message.channel.id === channelWB) {
-      await message.react("🅰️");
-      await message.react("🏹");
-      await message.react("💤");
-      messageTrackerWB = message.id;
-    } else if (message.channel.id === "1257046797277331507") {
-      messageTrackerOther = message.id;
+    // Maj embed
+    try {
+      const message = await fetchMessageById(channelWB, worldBossData.id);
+      if (message) {
+        const elapsedTime = await worldBossElapsedTime();
+        let timeLeft = 0;
+        if (elapsedTime) {
+          timeLeft = worldBossData.timeout - elapsedTime.seconds;
+        }
+        await message.edit({ embeds: [worldBossEmbedBuilder(timeLeft)] });
+        console.log("Message mis à jour avec succès.");
+      } else {
+        console.error("Message introuvable.");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du message :", error);
     }
-  }
+  }, 1000); // 1000 ms = 1 sec
+
+  setInterval(async () => {
+    // Maj pv + action
+    playersData.players.forEach((player) => {
+      if (player.life > 0 && player.life > 100) {
+        player.life += 1;
+      }
+      if (player.action < 5) {
+        player.action += 1;
+      }
+    });
+    fs.writeFileSync("worldBoss.json", JSON.stringify(worldBossData, null, 2));
+    fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+  }, worldBossData.interval * 1000); // 10000 ms = 10 sec
 });
 
 client.on("messageReactionAdd", async (reaction, user) => {
@@ -305,7 +435,7 @@ client.on("messageReactionAdd", async (reaction, user) => {
   if (user.bot) return;
 
   // Vérifie si la réaction est sur le message que nous suivons
-  if (reaction.message.id === messageTrackerWB) {
+  if (reaction.message.id === worldBossData.id) {
     try {
       // Enlève la réaction ajoutée
       await reaction.users.remove(user.id);
@@ -313,76 +443,49 @@ client.on("messageReactionAdd", async (reaction, user) => {
       console.error("Erreur en enlevant la réaction:", error);
     }
 
-    if (reaction.emoji.name === "🅰️") {
-      reaction.message.delete();
-      let player = findPlayerById(user.id);
-      if (!player) {
-        console.log("Pas de joueur avec cet id");
-        return;
-      } else {
+    let player = findPlayerById(user.id);
+    if (!player) {
+      client.users.send(
+        user.id,
+        `Vous n'avez pas de personnage. Entrez !worldboss pour jouer et créer votre personnage.`
+      );
+      return;
+    } else {
+      if (player.life > 0) {
         if (player.action > 0) {
-          modifyPlayerAction(user.id, player.action - 1);
-          modifyPlayerLife(
-            user.id,
-            player.life - worldboss.niveau * getRandomMultiplier()
-          );
-          modifyPlayerExp(user.id, player.experience + worldboss.niveau);
-          modifyPlayerGolds(user.id, player.golds + worldboss.niveau);
-          const dmg = player.level * getRandomMultiplier();
-          modifyPlayerDmg(user.id, player.degats + dmg);
-          modifyWBLife(user.id, worldboss.degatsSubits + dmg);
+          if (reaction.emoji.name === "🗡️") {
+            //
+            const dataDamages = player.level * getRandomMultiplier();
+            const dataLife = worldBossData.level * getRandomMultiplier();
+
+            worldBossAttack(player, dataDamages, dataLife);
+          } else if (reaction.emoji.name === "🏹") {
+            const dataExperince = player.level * getRandomMultiplier();
+            const dataGolds = player.level * getRandomMultiplier();
+            worldBossAdventure(player, dataExperince, dataGolds);
+          } else if (reaction.emoji.name === "💤") {
+            const dataLife = player.level * getRandomMultiplier();
+            const dataGolds = player.level * getRandomMultiplier();
+
+            //player.golds - worldBossData.level * getRandomMultiplier()
+
+            worldBossRest(player, dataLife, dataGolds);
+          }
         } else {
-          console.log("Pas assez de points d'actions");
+          client.users.send(user.id, `Pas assez de points d'actions`);
+          return;
         }
-      }
-      worldBossMessageBuilder();
-    } else if (reaction.emoji.name === "🏹") {
-      reaction.message.delete();
-      let player = findPlayerById(user.id);
-      if (!player) {
-        console.log("Pas de joueur avec cet id");
-        return;
       } else {
-        if (player.action > 0) {
-          modifyPlayerAction(user.id, player.action - 1);
-          modifyPlayerExp(
-            user.id,
-            player.experience + worldboss.niveau * getRandomMultiplier()
-          );
-          modifyPlayerGolds(
-            user.id,
-            player.golds + worldboss.niveau * getRandomMultiplier()
-          );
-        } else {
-          console.log("Pas assez de points d'actions");
-        }
-      }
-      worldBossMessageBuilder();
-    } else if (reaction.emoji.name === "💤") {
-      console.log("repos");
-      reaction.message.delete();
-      let player = findPlayerById(user.id);
-      if (!player) {
-        console.log("Pas de joueur avec cet id");
+        client.users.send(
+          user.id,
+          `Vous êtes mort... Attendez la fin du combat.`
+        );
         return;
-      } else {
-        if (player.action > 0) {
-          modifyPlayerAction(user.id, player.action - 1);
-          modifyPlayerLife(
-            user.id,
-            player.experience + worldboss.niveau * getRandomMultiplier()
-          );
-          modifyPlayerGolds(
-            user.id,
-            player.golds - worldboss.niveau * getRandomMultiplier()
-          );
-        } else {
-          console.log("Pas assez de points d'actions");
-        }
       }
-      worldBossMessageBuilder();
     }
   }
 });
+
+client.on("messageCreate", (message) => {});
 
 client.login(token);

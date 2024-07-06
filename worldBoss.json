@@ -1,6 +1,9 @@
 {
-  "nom": "World Boss",
-  "niveau": 7,
-  "life": 91,
-  "degatsSubits": 52
+  "name": "World Boss",
+  "id": "1259152186789597186",
+  "level": 3,
+  "life": 39,
+  "damages": 0,
+  "timeout": 60,
+  "interval": 45
 }
