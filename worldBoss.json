@@ -1,9 +1,18 @@
 {
   "name": "World Boss",
-  "id": "1259152186789597186",
+  "id": "1259949942856744971",
   "level": 3,
   "life": 39,
   "damages": 0,
   "timeout": 60,
-  "interval": 45
+  "interval": 45,
+  "cityId": "1259949185369768067",
+  "warriorId": "1259949186216890504",
+  "mageId": "1259949187089567776",
+  "rogueId": "1259949188389666816",
+  "adventurerId": "1259949189203361873",
+  "warrior": 0,
+  "mage": 0,
+  "rogue": 0,
+  "adventurer": 0
 }
