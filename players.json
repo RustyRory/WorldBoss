@@ -1,28 +1,40 @@
 {
   "players": [
     {
-      "id": "197004687327625216",
-      "username": "Rusty",
+      "id": "0",
+      "username": "test",
       "class": "N/A",
-      "power": "N/A",
       "level": 10,
-      "life": 321,
+      "life": 383,
       "action": 5,
       "experience": 126,
       "golds": 716,
-      "damages": 1132
+      "damages": 1132,
+      "donation": 0
     },
     {
       "id": "988158445255544892",
       "username": "Rory",
       "class": "N/A",
-      "power": "N/A",
       "level": 1,
-      "life": 261,
+      "life": 323,
       "action": 5,
       "experience": 0,
       "golds": 0,
-      "damages": 0
+      "damages": 0,
+      "donation": 0
+    },
+    {
+      "id": "197004687327625216",
+      "username": "rustyrory",
+      "class": "Aventurier",
+      "level": 4,
+      "life": 277,
+      "action": 3,
+      "experience": 24,
+      "golds": 112,
+      "damages": 52,
+      "donation": 0
     }
   ]
 }

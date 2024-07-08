@@ -1,6 +1,6 @@
 const { Client, GatewayIntentBits, EmbedBuilder } = require("discord.js");
 
-const { token, channelWB } = require("./config.json");
+const { token, channelWB, channelCity } = require("./config.json");
 
 const client = new Client({
   intents: [
@@ -69,7 +69,8 @@ function worldBossEmbedBuilder(timeleft) {
         "Réagissez pour interragir\n" +
         "\n" +
         " | 🗡️ | Attaque du Boss \n" +
-        " | 🏹 | Partir en aventure (XP + Golds)\n" +
+        " | 🏹 | Attaque spéciale (2 points d'action) \n" +
+        " | 🐴 | Partir en aventure (XP + Golds)\n" +
         " | 💤 | Se reposer (Gain de vie pour des golds)",
     });
 }
@@ -88,12 +89,345 @@ async function worldBossNewMessage() {
   // Ajouter des réactions à l'embed
   await message.react("🗡️");
   await message.react("🏹");
+  await message.react("🐴");
   await message.react("💤");
   await message.react("❤️");
 
   // Enregistrer l'ID du message pour les futures références
   worldBossData.id = message.id;
   fs.writeFileSync("worldBoss.json", JSON.stringify(worldBossData, null, 2));
+}
+
+// Embed city
+async function cityNewMessage() {
+  // Vérification channel City
+  const channel = client.channels.cache.get(channelCity);
+  if (!channel) return console.error("Le canal est introuvable.");
+
+  // Création et envoi Embed
+  const message = await channel.send({
+    embeds: [cityEmbedBuilder()],
+  });
+
+  // Ajouter des réactions à l'embed
+  await message.react("🧑‍🚀");
+  await message.react("🧙‍♂️");
+  await message.react("🧝‍♀️");
+  await message.react("🧑‍🎤");
+
+  // Enregistrer l'ID du message pour les futures références
+  worldBossData.cityId = message.id;
+  fs.writeFileSync("worldBoss.json", JSON.stringify(worldBossData, null, 2));
+}
+
+// Embed guerrier
+async function warriorNewMessage() {
+  // Vérification channel City
+  const channel = client.channels.cache.get(channelCity);
+  if (!channel) return console.error("Le canal est introuvable.");
+
+  // Création et envoi Embed
+  const message = await channel.send({
+    embeds: [warriorEmbedBuilder()],
+  });
+
+  // Ajouter des réactions à l'embed
+  //await message.react("🧑‍🚀");
+
+  // Enregistrer l'ID du message pour les futures références
+  worldBossData.warriorId = message.id;
+  fs.writeFileSync("worldBoss.json", JSON.stringify(worldBossData, null, 2));
+}
+
+// Embed mage
+async function mageNewMessage() {
+  // Vérification channel City
+  const channel = client.channels.cache.get(channelCity);
+  if (!channel) return console.error("Le canal est introuvable.");
+
+  // Création et envoi Embed
+  const message = await channel.send({
+    embeds: [mageEmbedBuilder()],
+  });
+
+  // Ajouter des réactions à l'embed
+  //await message.react("🧑‍🚀");
+
+  // Enregistrer l'ID du message pour les futures références
+  worldBossData.mageId = message.id;
+  fs.writeFileSync("worldBoss.json", JSON.stringify(worldBossData, null, 2));
+}
+
+// Embed tireur
+async function rogueNewMessage() {
+  // Vérification channel City
+  const channel = client.channels.cache.get(channelCity);
+  if (!channel) return console.error("Le canal est introuvable.");
+
+  // Création et envoi Embed
+  const message = await channel.send({
+    embeds: [rogueEmbedBuilder()],
+  });
+
+  // Ajouter des réactions à l'embed
+  //await message.react("🧑‍🚀");
+
+  // Enregistrer l'ID du message pour les futures références
+  worldBossData.rogueId = message.id;
+  fs.writeFileSync("worldBoss.json", JSON.stringify(worldBossData, null, 2));
+}
+
+// Embed tireur
+async function adventurerNewMessage() {
+  // Vérification channel City
+  const channel = client.channels.cache.get(channelCity);
+  if (!channel) return console.error("Le canal est introuvable.");
+
+  // Création et envoi Embed
+  const message = await channel.send({
+    embeds: [adventurerEmbedBuilder()],
+  });
+
+  // Ajouter des réactions à l'embed
+  //await message.react("🧑‍🚀");
+
+  // Enregistrer l'ID du message pour les futures références
+  worldBossData.adventurerId = message.id;
+  fs.writeFileSync("worldBoss.json", JSON.stringify(worldBossData, null, 2));
+}
+
+function cityEmbedBuilder() {
+  return new EmbedBuilder()
+    .setTitle("Ville")
+    .setDescription("Voici la ville.")
+    .addFields({
+      name: "Choisissez votre classe",
+      value:
+        " | 🧑‍🚀 | Guerrier :  \n" +
+        " | 🧙‍♂️ | Mage : \n" +
+        " | 🧝‍♀️ | Tireur : \n" +
+        " | 🧑‍🎤  | Aventurier : \n",
+    })
+    .setFooter({
+      text: "Réagissez pour choisir votre classe",
+    });
+}
+
+function warriorEmbedBuilder() {
+  const embed = new EmbedBuilder()
+    .setTitle("Guerrier")
+    .setDescription("Voici le repaire des guerriers.")
+    .addFields(
+      { name: "Fortune du repaire", value: worldBossData.warrior.toString() },
+      {
+        name: "Dons",
+        value:
+          "Vous pouvez donner des golds pour le repaire avec la commande /donate [golds]",
+      },
+      { name: "\u200B", value: "\u200B" },
+      {
+        name: "Choisissez votre attaque spéciale",
+        value: "\u200B",
+      }
+    )
+    .setFooter({
+      text: "Réagissez pour choisir votre attaque",
+    });
+
+  if (worldBossData.warrior > 1) {
+    embed.addFields({
+      name: "| ? | Coup de bouclier",
+      value: "Donne un coup de bouclier (dmg x2 | +10 PV)",
+      inline: true,
+    });
+  }
+  if (worldBossData.warrior > 1001) {
+    embed.addFields({
+      name: "| ? | En formation !",
+      value: "Votre défense augmente (dmg subit - lvl joueur)",
+      inline: true,
+    });
+  }
+  if (worldBossData.warrior > 100001) {
+    embed.addFields({
+      name: "| ? | Salut divin",
+      value:
+        "Vous récupérer de la vie en plus de votre attaque (dmg x2 | dmg subit x1 max)",
+      inline: true,
+    });
+  }
+  if (worldBossData.warrior > 1000001) {
+    embed.addFields({
+      name: "| ? | Pour la justice",
+      value:
+        "Attaque dévastatrice mais inflige des dégats en retour (dmg x4 | dmg subit x2)",
+      inline: true,
+    });
+  }
+
+  return embed;
+}
+
+function mageEmbedBuilder() {
+  const embed = new EmbedBuilder()
+    .setTitle("Mage")
+    .setDescription("Voici le repaire des mages.")
+    .addFields(
+      { name: "Fortune du repaire", value: worldBossData.mage.toString() },
+      {
+        name: "Dons",
+        value:
+          "Vous pouvez donner des golds pour le repaire avec la commande /donate [golds]",
+      },
+      { name: "\u200B", value: "\u200B" },
+      {
+        name: "Choisissez votre attaque spéciale",
+        value: "\u200B",
+      }
+    )
+    .setFooter({
+      text: "Réagissez pour choisir votre attaque",
+    });
+
+  if (worldBossData.mage > 1) {
+    embed.addFields({
+      name: "| ? | Éclair",
+      value: "Envoi un coup d'éclair (dmg x2)",
+      inline: true,
+    });
+  }
+  if (worldBossData.mage > 1001) {
+    embed.addFields({
+      name: "| ? | Boule de feu",
+      value: "Envoi une boule de feu (dmg x2 + lvl joueur )",
+      inline: true,
+    });
+  }
+  if (worldBossData.mage > 100001) {
+    embed.addFields({
+      name: "| ? | Transformation",
+      value:
+        "Vous vous transformez en une bête férroce (1 chance sur 4 (+PV | +Att | +Crit | +Res))",
+      inline: true,
+    });
+  }
+  if (worldBossData.mage > 1000001) {
+    embed.addFields({
+      name: "| ? | Tempète de glace",
+      value: "Envoi une (dmg x2 | crit x2)",
+      inline: true,
+    });
+  }
+
+  return embed;
+}
+
+function rogueEmbedBuilder() {
+  const embed = new EmbedBuilder()
+    .setTitle("Tireur")
+    .setDescription("Voici le repaire des tireurs.")
+    .addFields(
+      { name: "Fortune du repaire", value: worldBossData.rogue.toString() },
+      {
+        name: "Dons",
+        value:
+          "Vous pouvez donner des golds pour le repaire avec la commande '/donate [golds]'",
+      },
+      { name: "\u200B", value: "\u200B" },
+      {
+        name: "Choisissez votre attaque spéciale",
+        value: "\u200B",
+      }
+    )
+    .setFooter({
+      text: "Réagissez pour choisir votre attaque",
+    });
+
+  if (worldBossData.rogue > 1) {
+    embed.addFields({
+      name: "| ? | Tir précis",
+      value: "Envoi un coup d'éclair (crit x2)",
+      inline: true,
+    });
+  }
+  if (worldBossData.rogue > 1001) {
+    embed.addFields({
+      name: "| ? | ?",
+      value: "?",
+      inline: true,
+    });
+  }
+  if (worldBossData.rogue > 100001) {
+    embed.addFields({
+      name: "| ? | ?",
+      value: ".",
+      inline: true,
+    });
+  }
+  if (worldBossData.rogue > 1000001) {
+    embed.addFields({
+      name: "| ? | ?",
+      value: "?",
+      inline: true,
+    });
+  }
+
+  return embed;
+}
+
+function adventurerEmbedBuilder() {
+  const embed = new EmbedBuilder()
+    .setTitle("Aventurier")
+    .setDescription("Voici le repaire des aventuriers.")
+    .addFields(
+      {
+        name: "Fortune du repaire",
+        value: worldBossData.adventurer.toString(),
+      },
+      {
+        name: "Dons",
+        value:
+          "Vous pouvez donner des golds pour le repaire avec la commande '/donate [golds]'",
+      },
+      { name: "\u200B", value: "\u200B" },
+      {
+        name: "Choisissez votre attaque spéciale",
+        value: "\u200B",
+      }
+    )
+    .setFooter({
+      text: "Réagissez pour choisir votre attaque",
+    });
+
+  if (worldBossData.adventurer > 1) {
+    embed.addFields({
+      name: "| ? | ?",
+      value: "?",
+      inline: true,
+    });
+  }
+  if (worldBossData.adventurer > 1001) {
+    embed.addFields({
+      name: "| ? | ?",
+      value: "?",
+      inline: true,
+    });
+  }
+  if (worldBossData.adventurer > 100001) {
+    embed.addFields({
+      name: "| ? | ?",
+      value: "?",
+      inline: true,
+    });
+  }
+  if (worldBossData.adventurer > 1000001) {
+    embed.addFields({
+      name: "| ? | ?",
+      value: "?",
+      inline: true,
+    });
+  }
+  return embed;
 }
 
 //
@@ -163,9 +497,10 @@ function getRandomMultiplier() {
 
 async function worldBossAttack(player, dataDamages, dataLife) {
   player.action -= 1;
-  player.damages = player.damages + (dataDamages - worldBossData.level + 1);
+  player.damages =
+    player.damages + (dataDamages - worldBossData.level + player.level);
   worldBossData.damages =
-    worldBossData.damages + (dataDamages - worldBossData.level + 1);
+    worldBossData.damages + (dataDamages - worldBossData.level + player.level);
   player.life = player.life - (dataLife - player.level);
   player.experience = player.experience + worldBossData.level;
   player.golds = player.golds + worldBossData.level;
@@ -178,7 +513,7 @@ async function worldBossAttack(player, dataDamages, dataLife) {
         name: "Point de dégats",
         value:
           "(" +
-          (dataDamages - worldBossData.level).toString() +
+          (dataDamages - worldBossData.level + player.level).toString() +
           ") => " +
           worldBossData.damages.toString(),
         inline: true,
@@ -395,8 +730,15 @@ client.once("ready", async () => {
   worldBossNewMessage();
   worldBossTimeout();
 
+  // Ville
+  cityNewMessage();
+  warriorNewMessage();
+  mageNewMessage();
+  rogueNewMessage();
+  adventurerNewMessage();
+
+  // Maj embed 1000 ms = 1 sec
   setInterval(async () => {
-    // Maj embed
     try {
       const message = await fetchMessageById(channelWB, worldBossData.id);
       if (message) {
@@ -413,10 +755,10 @@ client.once("ready", async () => {
     } catch (error) {
       console.error("Erreur lors de la mise à jour du message :", error);
     }
-  }, 1000); // 1000 ms = 1 sec
+  }, 1000);
 
+  // Maj joueurs action pv +1 | timerinterval * 1000 ms
   setInterval(async () => {
-    // Maj pv + action
     playersData.players.forEach((player) => {
       if (player.life > 0 && player.life > 100) {
         player.life += 1;
@@ -425,50 +767,87 @@ client.once("ready", async () => {
         player.action += 1;
       }
     });
-    fs.writeFileSync("worldBoss.json", JSON.stringify(worldBossData, null, 2));
     fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
-  }, worldBossData.interval * 1000); // 10000 ms = 10 sec
+  }, worldBossData.interval * 1000);
 });
 
 client.on("messageReactionAdd", async (reaction, user) => {
   // Ignore les réactions du bot lui-même
   if (user.bot) return;
 
-  // Vérifie si la réaction est sur le message que nous suivons
-  if (reaction.message.id === worldBossData.id) {
-    try {
-      // Enlève la réaction ajoutée
-      await reaction.users.remove(user.id);
-    } catch (error) {
-      console.error("Erreur en enlevant la réaction:", error);
+  let player = findPlayerById(user.id);
+  if (!player) {
+    player = {
+      id: user.id,
+      username: user.username,
+      class: "N/A",
+      level: 1,
+      life: 100,
+      action: 5,
+      experience: 0,
+      golds: 0,
+      damages: 0,
+      donation: 0,
+    };
+    playersData.players.push(player);
+    fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+    return;
+  } else {
+    if (reaction.message.id === worldBossData.cityId) {
+      const userReactions = reaction.message.reactions.cache.filter(
+        (reaction) => reaction.users.cache.has(user.id)
+      );
+      if (userReactions.size > 1) {
+        try {
+          // Enlève la réaction ajoutée
+          await reaction.users.remove(user.id);
+        } catch (error) {
+          console.error("Erreur en enlevant la réaction:", error);
+        }
+        client.users.send(user.id, `Vous avez déjà une classe`);
+        return; // L'utilisateur a déjà une classe, on ne fait rien
+      }
+
+      if (reaction.emoji.name === "🧑‍🚀") {
+        player.class = "Guerrier";
+        client.users.send(user.id, `Vous êtes devenu guerrier !`);
+      } else if (reaction.emoji.name === "🧙‍♂️") {
+        player.class = "Mage";
+        client.users.send(user.id, `Vous êtes devenu mage !`);
+      } else if (reaction.emoji.name === "🧝‍♀️") {
+        player.class = "Tireur";
+        client.users.send(user.id, `Vous êtes devenu tireur !`);
+      } else if (reaction.emoji.name === "🧑‍🎤") {
+        player.class = "Aventurier";
+        client.users.send(user.id, `Vous êtes devenu aventurier !`);
+      } else {
+        return;
+      }
+
+      fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
     }
 
-    let player = findPlayerById(user.id);
-    if (!player) {
-      client.users.send(
-        user.id,
-        `Vous n'avez pas de personnage. Entrez !worldboss pour jouer et créer votre personnage.`
-      );
-      return;
-    } else {
+    // Vérifie si la réaction est sur le message que nous suivons
+    else if (reaction.message.id === worldBossData.id) {
+      try {
+        // Enlève la réaction ajoutée
+        await reaction.users.remove(user.id);
+      } catch (error) {
+        console.error("Erreur en enlevant la réaction:", error);
+      }
       if (player.life > 0) {
         if (player.action > 0) {
           if (reaction.emoji.name === "🗡️") {
-            //
             const dataDamages = player.level * getRandomMultiplier();
             const dataLife = worldBossData.level * getRandomMultiplier();
-
             worldBossAttack(player, dataDamages, dataLife);
-          } else if (reaction.emoji.name === "🏹") {
+          } else if (reaction.emoji.name === "🐴") {
             const dataExperince = player.level * getRandomMultiplier();
             const dataGolds = player.level * getRandomMultiplier();
             worldBossAdventure(player, dataExperince, dataGolds);
           } else if (reaction.emoji.name === "💤") {
             const dataLife = player.level * getRandomMultiplier();
             const dataGolds = player.level * getRandomMultiplier();
-
-            //player.golds - worldBossData.level * getRandomMultiplier()
-
             worldBossRest(player, dataLife, dataGolds);
           }
         } else {
