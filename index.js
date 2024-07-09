@@ -1,6 +1,11 @@
 const { Client, GatewayIntentBits, EmbedBuilder } = require("discord.js");
 
-const { token, channelWB, channelCity } = require("./config.json");
+const {
+  token,
+  channelWB,
+  channelCity,
+  channelGraveyard,
+} = require("./config.json");
 
 const client = new Client({
   intents: [
@@ -132,7 +137,18 @@ async function warriorNewMessage() {
   });
 
   // Ajouter des réactions à l'embed
-  //await message.react("🧑‍🚀");
+  if (worldBossData.warrior > 1) {
+    await message.react("🛡️");
+  }
+  if (worldBossData.warrior > 1001) {
+    await message.react("🫡");
+  }
+  if (worldBossData.warrior > 100001) {
+    await message.react("🪽");
+  }
+  if (worldBossData.warrior > 1000001) {
+    await message.react("⚖️");
+  }
 
   // Enregistrer l'ID du message pour les futures références
   worldBossData.warriorId = message.id;
@@ -151,7 +167,18 @@ async function mageNewMessage() {
   });
 
   // Ajouter des réactions à l'embed
-  //await message.react("🧑‍🚀");
+  if (worldBossData.mage > 1) {
+    await message.react("⚡");
+  }
+  if (worldBossData.mage > 1001) {
+    await message.react("🔥");
+  }
+  if (worldBossData.mage > 100001) {
+    await message.react("🧬");
+  }
+  if (worldBossData.mage > 1000001) {
+    await message.react("❄️");
+  }
 
   // Enregistrer l'ID du message pour les futures références
   worldBossData.mageId = message.id;
@@ -170,7 +197,19 @@ async function rogueNewMessage() {
   });
 
   // Ajouter des réactions à l'embed
-  //await message.react("🧑‍🚀");
+
+  if (worldBossData.rogue > 1) {
+    await message.react("🔭");
+  }
+  if (worldBossData.rogue > 1001) {
+    await message.react("💣");
+  }
+  if (worldBossData.rogue > 100001) {
+    await message.react("🕸️");
+  }
+  if (worldBossData.rogue > 1000001) {
+    await message.react("🅰️");
+  }
 
   // Enregistrer l'ID du message pour les futures références
   worldBossData.rogueId = message.id;
@@ -189,7 +228,18 @@ async function adventurerNewMessage() {
   });
 
   // Ajouter des réactions à l'embed
-  //await message.react("🧑‍🚀");
+  if (worldBossData.adventurer > 1) {
+    await message.react("🛡️");
+  }
+  if (worldBossData.adventurer > 1001) {
+    await message.react("🅰️");
+  }
+  if (worldBossData.adventurer > 100001) {
+    await message.react("💣");
+  }
+  if (worldBossData.adventurer > 1000001) {
+    await message.react("⚖️");
+  }
 
   // Enregistrer l'ID du message pour les futures références
   worldBossData.adventurerId = message.id;
@@ -203,10 +253,10 @@ function cityEmbedBuilder() {
     .addFields({
       name: "Choisissez votre classe",
       value:
-        " | 🧑‍🚀 | Guerrier :  \n" +
-        " | 🧙‍♂️ | Mage : \n" +
-        " | 🧝‍♀️ | Tireur : \n" +
-        " | 🧑‍🎤  | Aventurier : \n",
+        " | 🧑‍🚀 | Guerrier : DMG - | DMG subit - \n" +
+        " | 🧙‍♂️ | Mage : DMG + | DMG subit + \n" +
+        " | 🧝‍♀️ | Tireur : Critique + | DMG subit + \n" +
+        " | 🧑‍🎤 | Aventurier : Exp + | Golds + \n",
     })
     .setFooter({
       text: "Réagissez pour choisir votre classe",
@@ -236,21 +286,21 @@ function warriorEmbedBuilder() {
 
   if (worldBossData.warrior > 1) {
     embed.addFields({
-      name: "| ? | Coup de bouclier",
+      name: "| 🛡️ | Coup de bouclier",
       value: "Donne un coup de bouclier (dmg x2 | +10 PV)",
       inline: true,
     });
   }
   if (worldBossData.warrior > 1001) {
     embed.addFields({
-      name: "| ? | En formation !",
+      name: "| 🫡 | En formation !",
       value: "Votre défense augmente (dmg subit - lvl joueur)",
       inline: true,
     });
   }
   if (worldBossData.warrior > 100001) {
     embed.addFields({
-      name: "| ? | Salut divin",
+      name: "| 🪽 | Salut divin",
       value:
         "Vous récupérer de la vie en plus de votre attaque (dmg x2 | dmg subit x1 max)",
       inline: true,
@@ -258,7 +308,7 @@ function warriorEmbedBuilder() {
   }
   if (worldBossData.warrior > 1000001) {
     embed.addFields({
-      name: "| ? | Pour la justice",
+      name: "| ⚖️ | Pour la justice",
       value:
         "Attaque dévastatrice mais inflige des dégats en retour (dmg x4 | dmg subit x2)",
       inline: true,
@@ -291,21 +341,21 @@ function mageEmbedBuilder() {
 
   if (worldBossData.mage > 1) {
     embed.addFields({
-      name: "| ? | Éclair",
-      value: "Envoi un coup d'éclair (dmg x2)",
+      name: "| ⚡ | Éclair",
+      value: "Envoi un coup d'éclair (dmg x2 + lvl joueur)",
       inline: true,
     });
   }
   if (worldBossData.mage > 1001) {
     embed.addFields({
-      name: "| ? | Boule de feu",
-      value: "Envoi une boule de feu (dmg x2 + lvl joueur )",
+      name: "| 🔥 | Boule de feu",
+      value: "Envoi une boule de feu (dmg x3)",
       inline: true,
     });
   }
   if (worldBossData.mage > 100001) {
     embed.addFields({
-      name: "| ? | Transformation",
+      name: "| 🧬 | Transformation",
       value:
         "Vous vous transformez en une bête férroce (1 chance sur 4 (+PV | +Att | +Crit | +Res))",
       inline: true,
@@ -313,7 +363,7 @@ function mageEmbedBuilder() {
   }
   if (worldBossData.mage > 1000001) {
     embed.addFields({
-      name: "| ? | Tempète de glace",
+      name: "| ❄️ | Tempète de glace",
       value: "Envoi une (dmg x2 | crit x2)",
       inline: true,
     });
@@ -345,22 +395,22 @@ function rogueEmbedBuilder() {
 
   if (worldBossData.rogue > 1) {
     embed.addFields({
-      name: "| ? | Tir précis",
-      value: "Envoi un coup d'éclair (crit x2)",
+      name: "| 🔭 | Tir précis",
+      value: "Cible les points vitaux (crit x3)",
       inline: true,
     });
   }
   if (worldBossData.rogue > 1001) {
     embed.addFields({
-      name: "| ? | ?",
-      value: "?",
+      name: "| 💣 | A couvert !",
+      value: "Envoi une bombe sur l'adversaire (Dmg x3)",
       inline: true,
     });
   }
   if (worldBossData.rogue > 100001) {
     embed.addFields({
-      name: "| ? | ?",
-      value: ".",
+      name: "| 🕸️ | Filet",
+      value: "Vous ralentissez votre cible (Crit x2 | Dmg subit x2 max)",
       inline: true,
     });
   }
@@ -371,7 +421,6 @@ function rogueEmbedBuilder() {
       inline: true,
     });
   }
-
   return embed;
 }
 
@@ -401,33 +450,49 @@ function adventurerEmbedBuilder() {
 
   if (worldBossData.adventurer > 1) {
     embed.addFields({
-      name: "| ? | ?",
-      value: "?",
+      name: "| ? | L'ermite",
+      value: "Attaque l'adversaire (Exp x4 + lvl joueur)",
       inline: true,
     });
   }
   if (worldBossData.adventurer > 1001) {
     embed.addFields({
-      name: "| ? | ?",
-      value: "?",
+      name: "| ? | Vous appelez ca voler ?",
+      value: "Attaque l'adversaire (Golds x4 + lvl joueur)",
       inline: true,
     });
   }
   if (worldBossData.adventurer > 100001) {
     embed.addFields({
-      name: "| ? | ?",
-      value: "?",
+      name: "| ? | L'art de l'aventure",
+      value: "Vous partez en aventure (Exp x4 | Golds x4)",
       inline: true,
     });
   }
   if (worldBossData.adventurer > 1000001) {
     embed.addFields({
-      name: "| ? | ?",
+      name: "| ? | ",
       value: "?",
       inline: true,
     });
   }
   return embed;
+}
+
+function passifClass(player, dataDamages, dataLife, dataExperience, dataGolds) {
+  if ((player.class = "Guerrier")) {
+    dataDamages = dataDamages + player.level;
+    dataLife = dataLife - player.level;
+  } else if ((player.class = "Mage")) {
+    dataDamages = dataDamages + player.level * 2;
+    dataLife = dataLife + player.level;
+  } else if ((player.class = "Tireur")) {
+    dataDamages = player.level * (getRandomMultiplier() + 1);
+    dataLife = dataLife + player.level;
+  } else if ((player.class = "Aventurier")) {
+    dataExperience = dataExperience + player.level;
+    dataGolds = dataGolds + player.level;
+  }
 }
 
 //
@@ -482,108 +547,7 @@ async function fetchMessageById(channelId, messageId) {
   }
 }
 
-// Fonction pour trouver un joueur par son ID
-function findPlayerById(playerId) {
-  return playersData.players.find((player) => player.id === playerId);
-}
-
-function getRandomMultiplier() {
-  const random = Math.random(); // Génère un nombre aléatoire entre 0 et 1
-  if (random < 1 / 10) return 0;
-  else if (random < 6 / 10) return 1;
-  else if (random < 9 / 10) return 2;
-  else return 4;
-}
-
-async function worldBossAttack(player, dataDamages, dataLife) {
-  player.action -= 1;
-  player.damages =
-    player.damages + (dataDamages - worldBossData.level + player.level);
-  worldBossData.damages =
-    worldBossData.damages + (dataDamages - worldBossData.level + player.level);
-  player.life = player.life - (dataLife - player.level);
-  player.experience = player.experience + worldBossData.level;
-  player.golds = player.golds + worldBossData.level;
-
-  let embed = new EmbedBuilder()
-    .setTitle("WorldBoss Attaque")
-    .setDescription("Voici le rapport de combat de votre attaque.")
-    .addFields(
-      {
-        name: "Point de dégats",
-        value:
-          "(" +
-          (dataDamages - worldBossData.level + player.level).toString() +
-          ") => " +
-          worldBossData.damages.toString(),
-        inline: true,
-      },
-      {
-        name: "Point de vie",
-        value:
-          "(" +
-          (dataLife - player.level).toString() +
-          ") => " +
-          player.life.toString(),
-        inline: true,
-      },
-      { name: "\u200B", value: "\u200B" },
-      {
-        name: "Point d'expériences",
-        value:
-          "(+" +
-          worldBossData.level.toString() +
-          ") => " +
-          player.experience.toString(),
-        inline: true,
-      },
-      {
-        name: "golds",
-        value:
-          "(+" +
-          worldBossData.level.toString() +
-          ") => " +
-          player.golds.toString(),
-        inline: true,
-      },
-      { name: "\u200B", value: "\u200B" }
-    );
-
-  if (player.experience >= player.level * 13) {
-    player.experience = 0;
-    player.level += 1;
-    player.life += 50;
-    player.action += 5;
-    embed.addFields(
-      {
-        name: "Gain de Niveau",
-        value: "(+1) => " + player.level.toString(),
-      },
-      {
-        name: "Point de vie",
-        value: "(+50) => " + player.life.toString(),
-        inline: true,
-      },
-      { name: "\u200B", value: "\u200B", inline: true },
-      {
-        name: "Point d'action",
-        value: "(+5) => " + player.action.toString(),
-        inline: true,
-      }
-    );
-  } else {
-    embed.addFields({
-      name: "Point d'action",
-      value: "(-1) => " + player.action.toString(),
-    });
-  }
-
-  client.users.send(player.id, { embeds: [embed] });
-
-  //save
-  fs.writeFileSync("worldBoss.json", JSON.stringify(worldBossData, null, 2));
-  fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
-
+async function worldBossMessageEdit() {
   try {
     const message = await fetchMessageById(channelWB, worldBossData.id);
     if (message) {
@@ -621,6 +585,461 @@ async function worldBossAttack(player, dataDamages, dataLife) {
     }
     worldBossNewMessage();
     worldBossTimeout();
+  }
+}
+
+// Fonction pour trouver un joueur par son ID
+function findPlayerById(playerId) {
+  return playersData.players.find((player) => player.id === playerId);
+}
+
+function getRandomMultiplier() {
+  const random = Math.random(); // Génère un nombre aléatoire entre 0 et 1
+  if (random < 1 / 10) return 0;
+  else if (random < 6 / 10) return 1;
+  else if (random < 9 / 10) return 2;
+  else return 4;
+}
+
+function sendPrivateEmbed(
+  dataDamages,
+  dataLife,
+  dataExperience,
+  dataGolds,
+  special,
+  action
+) {
+  let embed = new EmbedBuilder()
+    .setTitle("WorldBoss Attaque")
+    .setDescription("Voici le rapport de combat de votre attaque " + special)
+    .addFields(
+      {
+        name: "Point de dégats",
+        value:
+          "(" +
+          dataDamages.toString() +
+          ") => " +
+          worldBossData.damages.toString(),
+        inline: true,
+      },
+      {
+        name: "Point de vie",
+        value: "(" + dataLife.toString() + ") => " + player.life.toString(),
+        inline: true,
+      },
+      { name: "\u200B", value: "\u200B" },
+      {
+        name: "Point d'expériences",
+        value:
+          "(+" +
+          dataExperience.toString() +
+          ") => " +
+          player.experience.toString(),
+        inline: true,
+      },
+      {
+        name: "golds",
+        value: "(+" + dataGolds.toString() + ") => " + player.golds.toString(),
+        inline: true,
+      },
+      { name: "\u200B", value: "\u200B" }
+    );
+
+  if (player.experience >= player.level * 13) {
+    player.experience = 0;
+    player.level += 1;
+    player.life += 50;
+    player.action += 5;
+    embed.addFields(
+      {
+        name: "Gain de Niveau",
+        value: "(+1) => " + player.level.toString(),
+      },
+      {
+        name: "Point de vie",
+        value: "(+50) => " + player.life.toString(),
+        inline: true,
+      },
+      { name: "\u200B", value: "\u200B", inline: true },
+      {
+        name: "Point d'action",
+        value: "(+5) => " + player.action.toString(),
+        inline: true,
+      }
+    );
+  } else {
+    embed.addFields({
+      name: "Point d'action",
+      value: "(-" + action + ") => " + player.action.toString(),
+    });
+  }
+
+  client.users.send(player.id, { embeds: [embed] });
+}
+
+async function worldBossAttack(
+  player,
+  dataDamages,
+  dataLife,
+  dataExperience,
+  dataGolds
+) {
+  player.action -= 1;
+  player.damages = player.damages + dataDamages - worldBossData.level;
+  worldBossData.damages =
+    worldBossData.damages + dataDamages - worldBossData.level;
+  player.life = player.life - (dataLife - player.level);
+  player.experience = player.experience + dataExperience;
+  player.golds = player.golds + dataGolds;
+
+  sendPrivateEmbed(
+    dataDamages - worldBossData.level,
+    dataLife - player.level,
+    dataExperience,
+    dataGolds,
+    "",
+    1
+  );
+
+  //save
+  fs.writeFileSync("worldBoss.json", JSON.stringify(worldBossData, null, 2));
+  fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+
+  worldBossEdit();
+}
+
+async function worldBossSpecial(
+  player,
+  dataDamages,
+  dataLife,
+  dataExperience,
+  dataGolds
+) {
+  if (player.class === "Guerrier") {
+    // Récupérer le message
+    const message = fetchMessageById(channelCity, worldBossData.warriorId);
+    // Récupérer toutes les réactions de l'utilisateur sur ce message
+    const reactionsFromUser = message.reactions.cache.filter((r) =>
+      r.users.cache.has(user.id)
+    );
+    // Effectuer des actions en fonction des réactions
+    for (const r of reactionsFromUser.values()) {
+      if (r.emoji.name === "🛡️") {
+        player.action -= 2;
+        player.damages = player.damages + dataDamages * 2 - worldBossData.level;
+        worldBossData.damages =
+          worldBossData.damages + player.level * 2 - worldBossData.level;
+        player.life = player.life - dataLife + 10;
+        player.experience = player.experience + dataExperience;
+        player.golds = player.golds + dataGolds;
+
+        //ENVOI MP
+        sendPrivateEmbed(
+          dataDamages * 2 - worldBossData.level,
+          -dataLife + 10,
+          dataExperience,
+          dataGolds,
+          "🛡️",
+          2
+        );
+
+        //save
+        fs.writeFileSync(
+          "worldBoss.json",
+          JSON.stringify(worldBossData, null, 2)
+        );
+        fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+
+        worldBossMessageEdit();
+      } else if (r.emoji.name === "🫡") {
+        player.action -= 2;
+        player.damages =
+          player.damages + dataDamages - worldBossData.level + player.level;
+        worldBossData.damages =
+          worldBossData.damages +
+          dataDamages -
+          worldBossData.level +
+          player.level;
+        player.life = player.life - (dataLife - player.level * 2);
+        player.experience = player.experience + dataExperience;
+        player.golds = player.golds + dataGolds;
+
+        //ENVOI MP
+        sendPrivateEmbed(
+          dataDamages - worldBossData.level + player.level,
+          -(dataLife - player.level * 2),
+          dataExperience,
+          dataGolds,
+          "🫡",
+          2
+        );
+
+        //save
+        fs.writeFileSync(
+          "worldBoss.json",
+          JSON.stringify(worldBossData, null, 2)
+        );
+        fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+
+        worldBossEdit();
+      } else if (r.emoji.name === "🪽") {
+        player.action -= 2;
+        player.damages =
+          player.damages + (dataDamages * 2 - worldBossData.level);
+        worldBossData.damages =
+          worldBossData.damages + (dataDamages * 2 - worldBossData.level);
+        player.life = player.life - (worldBossData.level - player.level * 2);
+        player.experience = player.experience + worldBossData.level;
+        player.golds = player.golds + worldBossData.level;
+
+        //ENVOI MP
+        sendPrivateEmbed(
+          dataDamages * 2 - worldBossData.level,
+          -worldBossData.level,
+          worldBossData.level,
+          worldBossData.dataGolds,
+          "🪽",
+          2
+        );
+
+        //save
+        fs.writeFileSync(
+          "worldBoss.json",
+          JSON.stringify(worldBossData, null, 2)
+        );
+        fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+
+        worldBossEdit();
+      } else if (r.emoji.name === "⚖️") {
+        player.action -= 2;
+        player.damages =
+          player.damages + (dataDamages * 4 - worldBossData.level);
+        worldBossData.damages =
+          worldBossData.damages + (dataDamages * 4 - worldBossData.level);
+        player.life = player.life - (dataLife * 2 - player.level);
+        player.experience = player.experience + worldBossData.level;
+        player.golds = player.golds + worldBossData.level;
+        //ENVOI MP
+        sendPrivateEmbed(
+          dataDamages * 4 - worldBossData.level,
+          -(dataLife * 2 - player.level),
+          worldBossData.level,
+          worldBossData.dataGolds,
+          "🪽",
+          2
+        );
+
+        //save
+        fs.writeFileSync(
+          "worldBoss.json",
+          JSON.stringify(worldBossData, null, 2)
+        );
+        fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+
+        worldBossEdit();
+      } else {
+        return;
+      }
+    }
+  } else if (player.class === "Mage") {
+    // Récupérer le message
+    const message = fetchMessageById(channelCity, worldBossData.warriorId);
+    // Récupérer toutes les réactions de l'utilisateur sur ce message
+    const reactionsFromUser = message.reactions.cache.filter((r) =>
+      r.users.cache.has(user.id)
+    );
+    // Effectuer des actions en fonction des réactions
+    for (const r of reactionsFromUser.values()) {
+      if (r.emoji.name === "⚡") {
+        player.action -= 2;
+        player.damages =
+          player.damages + dataDamages * 2 - worldBossData.level + player.level;
+        worldBossData.damages =
+          worldBossData.damages +
+          (dataDamages * 2 - worldBossData.level + player.level);
+        player.life = player.life - dataLife;
+        player.experience = player.experience + dataExperience;
+        player.golds = player.golds + dataGolds;
+        //ENVOI MP
+        sendPrivateEmbed(
+          dataDamages * 2 - worldBossData.level + player.level,
+          -dataLife,
+          dataExperience,
+          dataGolds,
+          "⚡",
+          2
+        );
+
+        //save
+        fs.writeFileSync(
+          "worldBoss.json",
+          JSON.stringify(worldBossData, null, 2)
+        );
+        fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+
+        worldBossEdit();
+      } else if (r.emoji.name === "🔥") {
+        player.action -= 2;
+        player.damages =
+          player.damages + (dataDamages * 3 - worldBossData.level);
+        worldBossData.damages =
+          worldBossData.damages + (dataDamages * 3 - worldBossData.level);
+        player.life = player.life - dataLife;
+        player.experience = player.experience + worldBossData.level;
+        player.golds = player.golds + worldBossData.level;
+        //ENVOI MP
+        sendPrivateEmbed(
+          dataDamages * 3 - worldBossData.level,
+          -dataLife,
+          dataExperience,
+          dataGolds,
+          "⚡",
+          2
+        );
+
+        //save
+        fs.writeFileSync(
+          "worldBoss.json",
+          JSON.stringify(worldBossData, null, 2)
+        );
+        fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+
+        worldBossEdit();
+      } else if (r.emoji.name === "🧬") {
+        //TODO
+        //ENVOI MP
+        //SAVE
+      } else if (r.emoji.name === "❄️") {
+        player.action -= 2;
+        player.damages = player.damages + dataDamages * 2;
+        worldBossData.damages = worldBossData.damages + dataDamages * 2;
+        player.life = player.life - dataLife;
+        player.experience = player.experience + dataExperience;
+        player.golds = player.golds + dataGolds;
+        //ENVOI MP
+        sendPrivateEmbed(
+          dataDamages * 3 - worldBossData.level,
+          -dataLife,
+          dataExperience,
+          dataGolds,
+          "⚡",
+          2
+        );
+
+        //save
+        fs.writeFileSync(
+          "worldBoss.json",
+          JSON.stringify(worldBossData, null, 2)
+        );
+        fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+
+        worldBossEdit();
+      } else {
+        return;
+      }
+    }
+  } else if (player.class === "Tireur") {
+    // Récupérer le message
+    const message = fetchMessageById(channelCity, worldBossData.warriorId);
+    // Récupérer toutes les réactions de l'utilisateur sur ce message
+    const reactionsFromUser = message.reactions.cache.filter((r) =>
+      r.users.cache.has(user.id)
+    );
+    // Effectuer des actions en fonction des réactions
+    for (const r of reactionsFromUser.values()) {
+      if (r.emoji.name === "🔭") {
+        player.action -= 2;
+        const crit = level.player * 3 * getRandomMultiplier();
+        player.damages = player.damages + crit;
+        worldBossData.damages = worldBossData.damages + crit;
+        player.life = player.life - dataLife;
+        player.experience = player.experience + dataExperience;
+        player.golds = player.golds + dataGolds;
+        //ENVOI MP
+        sendPrivateEmbed(crit, -dataLife, dataExperience, dataGolds, "🔭", 2);
+
+        //save
+        fs.writeFileSync(
+          "worldBoss.json",
+          JSON.stringify(worldBossData, null, 2)
+        );
+        fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+
+        worldBossEdit();
+      } else if (r.emoji.name === "💣") {
+        player.action -= 2;
+        player.damages = player.damages + dataDamages * 3;
+        worldBossData.damages = worldBossData.damages + dataDamages * 2;
+        player.life = player.life - dataLife;
+        player.experience = player.experience + dataExperience;
+        player.golds = player.golds + dataGolds;
+        //ENVOI MP
+        sendPrivateEmbed(
+          dataDamages * 2,
+          -dataLife,
+          dataExperience,
+          dataGolds,
+          "💣",
+          2
+        );
+
+        //save
+        fs.writeFileSync(
+          "worldBoss.json",
+          JSON.stringify(worldBossData, null, 2)
+        );
+        fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+
+        worldBossEdit();
+      } else if (r.emoji.name === "🕸️") {
+        player.action -= 2;
+        player.damages = player.damages + dataDamages * 2;
+        worldBossData.damages = worldBossData.damages + dataDamages * 2;
+        player.life = player.life - player.level * 2;
+        player.experience = player.experience + dataExperience;
+        player.golds = player.golds + dataGolds;
+        //ENVOI MP
+        sendPrivateEmbed(
+          dataDamages * 2,
+          -player.level * 2,
+          dataExperience,
+          dataGolds,
+          "🕸️",
+          2
+        );
+
+        //save
+        fs.writeFileSync(
+          "worldBoss.json",
+          JSON.stringify(worldBossData, null, 2)
+        );
+        fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
+
+        worldBossEdit();
+      } else if (r.emoji.name === "") {
+        //TODO
+      } else {
+        return;
+      }
+    }
+  } else if (player.class === "Aventurier") {
+    // // Récupérer le message
+    // const message = fetchMessageById(channelCity, worldBossData.warriorId);
+    // // Récupérer toutes les réactions de l'utilisateur sur ce message
+    // const reactionsFromUser = message.reactions.cache.filter(r => r.users.cache.has(user.id));
+    // // Effectuer des actions en fonction des réactions
+    // for (const r of reactionsFromUser.values()) {
+    //   if (r.emoji.name === '🛡️') {
+    //   }else if(r.emoji.name === '🫡'){
+    //   }else if(r.emoji.name === '🪽'){
+    //   }else if(r.emoji.name === '⚖️'){
+    //   }
+    // }
+  } else {
+    client.users.send(
+      player.id,
+      "Vous n'avez pas de classe. Veuillez en choisir une dans la ville."
+    );
   }
 }
 
@@ -825,10 +1244,75 @@ client.on("messageReactionAdd", async (reaction, user) => {
       }
 
       fs.writeFileSync("players.json", JSON.stringify(playersData, null, 2));
-    }
-
-    // Vérifie si la réaction est sur le message que nous suivons
-    else if (reaction.message.id === worldBossData.id) {
+    } else if (reaction.message.id === worldBossData.warriorId) {
+      if (player.class != "Guerrier") {
+        try {
+          // Enlève la réaction ajoutée
+          await reaction.users.remove(user.id);
+        } catch (error) {
+          console.error("Erreur en enlevant la réaction:", error);
+        }
+      } else {
+        const userReactions = reaction.message.reactions.cache.filter(
+          (r) =>
+            r.users.cache.has(user.id) && r.emoji.name !== reaction.emoji.name
+        );
+        for (const r of userReactions.values()) {
+          await r.users.remove(user.id);
+        }
+      }
+    } else if (reaction.message.id === worldBossData.mageId) {
+      if (player.class != "Mage") {
+        try {
+          // Enlève la réaction ajoutée
+          await reaction.users.remove(user.id);
+        } catch (error) {
+          console.error("Erreur en enlevant la réaction:", error);
+        }
+      } else {
+        const userReactions = reaction.message.reactions.cache.filter(
+          (r) =>
+            r.users.cache.has(user.id) && r.emoji.name !== reaction.emoji.name
+        );
+        for (const r of userReactions.values()) {
+          await r.users.remove(user.id);
+        }
+      }
+    } else if (reaction.message.id === worldBossData.rogueId) {
+      if (player.class != "Tireur") {
+        try {
+          // Enlève la réaction ajoutée
+          await reaction.users.remove(user.id);
+        } catch (error) {
+          console.error("Erreur en enlevant la réaction:", error);
+        }
+      } else {
+        const userReactions = reaction.message.reactions.cache.filter(
+          (r) =>
+            r.users.cache.has(user.id) && r.emoji.name !== reaction.emoji.name
+        );
+        for (const r of userReactions.values()) {
+          await r.users.remove(user.id);
+        }
+      }
+    } else if (reaction.message.id === worldBossData.adventurerId) {
+      if (player.class != "Aventurier") {
+        try {
+          // Enlève la réaction ajoutée
+          await reaction.users.remove(user.id);
+        } catch (error) {
+          console.error("Erreur en enlevant la réaction:", error);
+        }
+      } else {
+        const userReactions = reaction.message.reactions.cache.filter(
+          (r) =>
+            r.users.cache.has(user.id) && r.emoji.name !== reaction.emoji.name
+        );
+        for (const r of userReactions.values()) {
+          await r.users.remove(user.id);
+        }
+      }
+    } else if (reaction.message.id === worldBossData.id) {
       try {
         // Enlève la réaction ajoutée
         await reaction.users.remove(user.id);
@@ -840,11 +1324,50 @@ client.on("messageReactionAdd", async (reaction, user) => {
           if (reaction.emoji.name === "🗡️") {
             const dataDamages = player.level * getRandomMultiplier();
             const dataLife = worldBossData.level * getRandomMultiplier();
-            worldBossAttack(player, dataDamages, dataLife);
+            const dataExperience = worldBossData.level;
+            const dataGolds = worldBossData.level;
+            passifClass(
+              player,
+              dataDamages,
+              dataLife,
+              dataExperience,
+              dataGolds
+            );
+            worldBossAttack(
+              player,
+              dataDamages,
+              dataLife,
+              dataExperience,
+              dataGolds
+            );
           } else if (reaction.emoji.name === "🐴") {
-            const dataExperince = player.level * getRandomMultiplier();
+            const dataExperience = player.level * getRandomMultiplier();
             const dataGolds = player.level * getRandomMultiplier();
-            worldBossAdventure(player, dataExperince, dataGolds);
+            worldBossAdventure(player, dataExperience, dataGolds);
+          } else if (reaction.emoji.name === "🏹") {
+            if (player.action > 1) {
+              const dataDamages = player.level * getRandomMultiplier();
+              const dataLife = worldBossData.level * getRandomMultiplier();
+              const dataExperience = worldBossData.level;
+              const dataGolds = worldBossData.level;
+              passifClass(
+                player,
+                dataDamages,
+                dataLife,
+                dataExperience,
+                dataGolds
+              );
+              worldBossSpecial(
+                player,
+                dataDamages,
+                dataLife,
+                dataExperience,
+                dataGolds
+              );
+            } else {
+              client.users.send(user.id, `Pas assez de points d'actions`);
+              return;
+            }
           } else if (reaction.emoji.name === "💤") {
             const dataLife = player.level * getRandomMultiplier();
             const dataGolds = player.level * getRandomMultiplier();
@@ -863,6 +1386,11 @@ client.on("messageReactionAdd", async (reaction, user) => {
       }
     }
   }
+});
+
+client.on("messageReactionRemove", async (reaction, user) => {
+  // Ignore les réactions du bot lui-même
+  if (user.bot) return;
 });
 
 client.on("messageCreate", (message) => {});
