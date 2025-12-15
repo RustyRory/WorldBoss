@@ -1,0 +1,55 @@
+name: Check commit message
+
+on:
+  pull_request:
+
+jobs:
+  check-commit-message:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate commit message
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+
+          echo "🔎 Vérification du message de commit"
+          echo "----------------------------------"
+          echo "$COMMIT_MSG"
+          echo ""
+
+          REGEX="^(feat|fix|hotfix|docs|refactor|test|chore)(\([a-zA-Z0-9_-]+\))?: .+"
+
+          if [[ ! "$COMMIT_MSG" =~ $REGEX ]]; then
+            echo "❌ Message de commit non conforme"
+            echo ""
+            echo "👉 Format attendu :"
+            echo "   type(scope): description courte"
+            echo ""
+            echo "👉 Types autorisés : feat, fix, hotfix, docs, refactor, test, chore"
+            echo ""
+            echo "📌 Exemples valides :"
+            echo "   feat(auth): ajout du login"
+            echo "   fix(button): correction du style"
+            echo ""
+            echo "🛠️ Action attendue :"
+            echo "   modifie ton commit avec :"
+            echo "   git commit --amend"
+            exit 1
+          fi
+
+          if ! echo "$COMMIT_MSG" | grep -qiE "(fixes|closes|resolves) #[0-9]+"; then
+            echo "⚠️ Aucun lien avec une issue détecté"
+            echo ""
+            echo "👉 Bonne pratique recommandée :"
+            echo "   ajoute dans le message : Fixes #<numéro>"
+            echo ""
+            echo "ℹ️ Exemple :"
+            echo "   Fixes #12"
+          fi
+
+          echo "✅ Message de commit conforme"

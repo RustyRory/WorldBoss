@@ -1,0 +1,44 @@
+name: Check branch name
+
+on:
+  pull_request:
+
+jobs:
+  check-branch-name:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate branch name
+        run: |
+          BRANCH_NAME="${GITHUB_HEAD_REF}"
+
+          echo "🔎 Vérification du nom de la branche"
+          echo "➡️ Branche détectée : $BRANCH_NAME"
+          echo ""
+
+          REGEX="^(main|dev|feat\/.+|feature\/.+|fix\/.+|hotfix\/.+)$"
+
+          if [[ ! "$BRANCH_NAME" =~ $REGEX ]]; then
+            echo "❌ Nom de branche invalide"
+            echo ""
+            echo "👉 Branche détectée : $BRANCH_NAME"
+            echo ""
+            echo "📌 Conventions de nommage attendues :"
+            echo "   - main"
+            echo "   - dev"
+            echo "   - feat/ma-feature ou feature/ma-feature"
+            echo "   - fix/mon-correctif"
+            echo "   - hotfix/incident-production"
+            echo ""
+            echo "🛠️ Action attendue :"
+            echo "   - renomme ta branche localement"
+            echo "   - puis pousse-la à nouveau avant de créer la PR"
+            echo ""
+            echo "ℹ️ Exemple :"
+            echo "   git branch -m ancienne-branche feat/ma-feature"
+            echo "   git push origin feat/ma-feature"
+            exit 1
+          fi
+
+          echo "✅ Nom de branche conforme aux conventions"
+          echo "🚀 Tu peux continuer avec la Pull Request"
