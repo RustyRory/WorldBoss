@@ -1,31 +1,27 @@
-name: Check commit message
+name: Check PR title
 
 on:
   pull_request:
+    types: [opened, edited, synchronize]
 
 jobs:
-  check-commit-message:
+  check-pr-title:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Validate commit message
+      - name: Validate PR title
         run: |
-          COMMIT_MSG=$(git log -1 --pretty=%B)
+          PR_TITLE="${{ github.event.pull_request.title }}"
 
-          echo "🔎 Vérification du message de commit"
-          echo "----------------------------------"
-          echo "$COMMIT_MSG"
+          echo "🔎 Vérification du titre de la Pull Request"
+          echo "------------------------------------------"
+          echo "$PR_TITLE"
           echo ""
 
           REGEX="^(feat|fix|hotfix|docs|refactor|test|chore)(\([a-zA-Z0-9_-]+\))?: .+"
 
-          if [[ ! "$COMMIT_MSG" =~ $REGEX ]]; then
-            echo "❌ Message de commit non conforme"
+          if [[ ! "$PR_TITLE" =~ $REGEX ]]; then
+            echo "❌ Titre de PR non conforme"
             echo ""
             echo "👉 Format attendu :"
             echo "   type(scope): description courte"
@@ -33,23 +29,16 @@ jobs:
             echo "👉 Types autorisés : feat, fix, hotfix, docs, refactor, test, chore"
             echo ""
             echo "📌 Exemples valides :"
-            echo "   feat(auth): ajout du login"
-            echo "   fix(button): correction du style"
-            echo ""
-            echo "🛠️ Action attendue :"
-            echo "   modifie ton commit avec :"
-            echo "   git commit --amend"
+            echo "   docs(database): ajout du dictionnaire"
+            echo "   fix(auth): correction login"
             exit 1
           fi
 
-          if ! echo "$COMMIT_MSG" | grep -qiE "(fixes|closes|resolves) #[0-9]+"; then
+          if ! echo "$PR_TITLE" | grep -qiE "(fix|fixes|closes|resolves) #[0-9]+"; then
             echo "⚠️ Aucun lien avec une issue détecté"
             echo ""
             echo "👉 Bonne pratique recommandée :"
-            echo "   ajoute dans le message : Fixes #<numéro>"
-            echo ""
-            echo "ℹ️ Exemple :"
-            echo "   Fixes #12"
+            echo "   ajoute dans le titre : Fixes #<numéro>"
           fi
 
-          echo "✅ Message de commit conforme"
+          echo "✅ Titre de PR conforme"
