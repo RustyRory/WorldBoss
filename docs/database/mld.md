@@ -14,7 +14,7 @@ merchant_channel_id, merchant_message_id, event_id, general_channel_id)
 
 PLAYERS (id, discord_id, name, level, exp, hp, hp_max, attack, attack_max,
 defense, defense_max, crit_rate, crit_rate_max, gold,
-actions_points, skills_points, alive,
+actions_points, skills_points,
 [server_id])
 
 ---

@@ -40,7 +40,6 @@ CREATE TABLE players (
     gold INT DEFAULT 0,
     actions_points INT DEFAULT 0,
     skills_points INT DEFAULT 0,
-    alive TINYINT(1) DEFAULT 1,
 
     CONSTRAINT fk_players_server
         FOREIGN KEY (server_id) REFERENCES servers(id)
