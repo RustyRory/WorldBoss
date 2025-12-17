@@ -55,7 +55,6 @@
 | gold           | int                       | Or détenu par le joueur               |
 | actions_points | int                       | Points d’action                       |
 | skills_points  | int                       | Points de compétence                  |
-| alive          | tinyint(1)                | Joueur vivant ou non                  |
 
 **Relations principales :**
 
