@@ -1,0 +1,44 @@
+name: Check PR title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  check-pr-title:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate PR title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+
+          echo "🔎 Vérification du titre de la Pull Request"
+          echo "------------------------------------------"
+          echo "$PR_TITLE"
+          echo ""
+
+          REGEX="^(feat|fix|hotfix|docs|refactor|test|chore)(\([a-zA-Z0-9_-]+\))?: .+"
+
+          if [[ ! "$PR_TITLE" =~ $REGEX ]]; then
+            echo "❌ Titre de PR non conforme"
+            echo ""
+            echo "👉 Format attendu :"
+            echo "   type(scope): description courte"
+            echo ""
+            echo "👉 Types autorisés : feat, fix, hotfix, docs, refactor, test, chore"
+            echo ""
+            echo "📌 Exemples valides :"
+            echo "   docs(database): ajout du dictionnaire"
+            echo "   fix(auth): correction login"
+            exit 1
+          fi
+
+          if ! echo "$PR_TITLE" | grep -qiE "(fix|fixes|closes|resolves) #[0-9]+"; then
+            echo "⚠️ Aucun lien avec une issue détecté"
+            echo ""
+            echo "👉 Bonne pratique recommandée :"
+            echo "   ajoute dans le titre : Fixes #<numéro>"
+          fi
+
+          echo "✅ Titre de PR conforme"
