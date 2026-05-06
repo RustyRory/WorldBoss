@@ -1,0 +1,41 @@
+# Snippet à intégrer dans /var/www/docker-compose.yml sur le VPS
+# Ajouter les services ci-dessous dans la section `services:`
+
+# -------------------------------------------------------
+# WORLDBOSS — Discord RPG Bot (Node.js + PostgreSQL + Redis)
+# Pas d'interface HTTP, pas d'entrée nginx nécessaire
+# -------------------------------------------------------
+
+  worldboss-bot:
+    build:
+      context: ./WorldBoss/worldboss-app
+      dockerfile: deployment/Dockerfile
+    container_name: worldboss-bot
+    env_file:
+      - ./WorldBoss/worldboss-app/.env
+    depends_on:
+      - worldboss-db
+      - worldboss-redis
+    restart: unless-stopped
+
+  worldboss-db:
+    image: postgres:16-alpine
+    container_name: worldboss-db
+    restart: always
+    volumes:
+      - ./data/worldboss/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: worldboss
+      POSTGRES_PASSWORD: ${WORLDBOSS_DB_PASSWORD}
+      POSTGRES_DB: worldboss
+    expose:
+      - "5432"
+
+  worldboss-redis:
+    image: redis:7-alpine
+    container_name: worldboss-redis
+    restart: always
+    volumes:
+      - ./data/worldboss/redis:/data
+    expose:
+      - "6379"

@@ -1,0 +1,59 @@
+# ── Environnement ─────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Dépendances ───────────────────────────────────────────────────────────────
+node_modules/
+.npm/
+.yarn/
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── Build / dist ──────────────────────────────────────────────────────────────
+dist/
+build/
+out/
+
+# ── Prisma ────────────────────────────────────────────────────────────────────
+# Garder schema.prisma et les migrations, ignorer la DB locale si utilisée
+*.db
+*.db-journal
+*.sqlite
+*.sqlite-journal
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+# Garder les fichiers Docker mais ignorer les volumes locaux
+docker-volumes/
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ── Éditeurs ──────────────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Tests / coverage ──────────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+*.pem
+*.key
+*.cert
