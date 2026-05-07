@@ -1,6 +1,6 @@
 'use strict';
 
-const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const { characterExists, createCharacter } = require('../../services/player.service');
 const { computeStats, xpRequired } = require('../../utils/stats');
 const { errorEmbed } = require('../../utils/embed');
@@ -13,9 +13,8 @@ module.exports = {
     .setDescription('Crée ton personnage et commence l\'aventure !'),
 
   async execute(interaction) {
-    const userId   = interaction.user.id;
-    const guildId  = interaction.guildId;
-    const username = interaction.user.username;
+    const userId  = interaction.user.id;
+    const guildId = interaction.guildId;
 
     try {
       if (await characterExists(userId, guildId)) {
@@ -25,14 +24,56 @@ module.exports = {
         });
       }
 
-      const { character, loadout } = await createCharacter(userId, username, guildId);
+      const modal = new ModalBuilder()
+        .setCustomId('start_modal')
+        .setTitle('Créer ton personnage');
+
+      modal.addComponents(
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('character_name')
+            .setLabel('Nom de ton personnage')
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(2)
+            .setMaxLength(24)
+            .setPlaceholder('ex: Aldric, Kael, Mira...')
+            .setRequired(true),
+        ),
+      );
+
+      return interaction.showModal(modal);
+    } catch (err) {
+      console.error('[/start]', err);
+      return interaction.reply({
+        embeds: [errorEmbed('Une erreur est survenue.')],
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+  },
+
+  // Appelé depuis interactionCreate après soumission du modal
+  async handleModal(interaction) {
+    const userId   = interaction.user.id;
+    const guildId  = interaction.guildId;
+    const username = interaction.user.username;
+    const characterName = interaction.fields.getTextInputValue('character_name').trim();
+
+    try {
+      if (await characterExists(userId, guildId)) {
+        return interaction.reply({
+          embeds: [errorEmbed('Tu as déjà un personnage sur ce serveur !')],
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      const { character, loadout } = await createCharacter(userId, username, guildId, characterName);
       const stats = computeStats(character, loadout);
       const xpReq = xpRequired(character.level);
 
       const embed = new EmbedBuilder()
         .setTitle('⚔️  WorldBoss — Ton aventure commence !')
         .setDescription(
-          `> Bienvenue, **${username}** !\n` +
+          `> Bienvenue, **${characterName}** !\n` +
           '> Tu viens de créer ton personnage et de recevoir ton équipement de départ.\n' +
           '> Explore les donjons, bats des ennemis et monte en puissance.\n' +
           `\`${SEP}\``,
@@ -43,7 +84,7 @@ module.exports = {
           {
             name: '🧑 Personnage',
             value: [
-              `> Nom    **${username}**`,
+              `> Nom    **${characterName}**`,
               `> Niveau **${character.level}**`,
               `> XP     **0** / ${xpReq}`,
               `> Or     **${character.gold}** 🪙`,
@@ -87,7 +128,7 @@ module.exports = {
 
       return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     } catch (err) {
-      console.error('[/start]', err);
+      console.error('[/start modal]', err);
       return interaction.reply({
         embeds: [errorEmbed('Une erreur est survenue lors de la création de ton personnage.')],
         flags: MessageFlags.Ephemeral,

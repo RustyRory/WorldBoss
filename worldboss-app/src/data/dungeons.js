@@ -78,48 +78,41 @@ const DUNGEONS = {
   4: {
     id: 4,
     name: 'Les Catacombes - Part 4',
-    lore: 'Les squelettes sont de plus en plus nombreux et agressifs dans les profondeurs des catacombes...',
+    lore: 'Les profondeurs des catacombes abritent des guerriers squelettes d\'une autre époque, tombés au combat et relevés par une force obscure...',
     levelRequired: 4,
     rooms: [
       {
         room: 1,
         enemies: ['skeleton_knight', 'skeleton_archer'],
-        description: 'L\'entrée de l\'hôtel. Un squelette décharné avance sur vous tandis qu\'un mage osseux lève les bras, prêt à invoquer.',
+        description: 'Une antichambre aux murs gravés d\'armoiries oubliées. Un chevalier squelette en armure rouillée s\'avance lentement, pendant qu\'un archer embusqué derrière une colonne brisée vous prend en ligne de mire.',
       },
       {
         room: 2,
         enemies: ['skeleton_knight', 'skeleton_knight'],
-        description: 'Le hall de l\'hôtel. Derrière le comptoir, un squelette se précipite vers vous pendant qu\'un archer vise depuis la mezzanine.',
+        description: 'Une salle de garde désaffectée. Deux chevaliers squelettes se font face de part et d\'autre d\'un trône vide — comme s\'ils montaient encore la garde pour un roi mort depuis longtemps. Ils se retournent vers vous à l\'unisson.',
       },
       {
         room: 3,
-        enemies: ['skeleton_warlord', 'skeleton_mage', 'skeleton_archer', 'skeleton_knight'],
-        description: 'Le bar de l\'hôtel. Quatre silhouettes osseuses encerclent un marchand tremblant dans un coin. *"Au secours !"* crie Aldric en vous apercevant — il se joint au combat !',
-        
+        enemies: ['skeleton_warlord', 'skeleton_mage', 'skeleton_archer'],
+        description: 'La salle du conseil. Un chef de guerre osseux trône au centre, flanqué d\'un mage dont les orbites luisent d\'un bleu sinistre. Un chevalier barre la sortie pendant qu\'un archer surveille les hauteurs. Ils n\'ont pas l\'intention de vous laisser passer.',
       },
     ],
   },
   5: {
     id: 5,
     name: 'Les Catacombes - Part 5',
-    lore: 'Les squelettes sont de plus en plus nombreux et agressifs dans les profondeurs des catacombes...',
+    lore: 'Vous trouvez la source de la corruption : un nécromancien maléfique qui a pris le contrôle des squelettes. Il doit être arrêté avant que les catacombes ne deviennent un véritable cimetière pour les vivants...',
     levelRequired: 5,
     rooms: [
-      {
+            {
         room: 1,
-        enemies: ['skeleton_knight', 'skeleton_archer'],
-        description: 'L\'entrée de l\'hôtel. Un squelette décharné avance sur vous tandis qu\'un mage osseux lève les bras, prêt à invoquer.',
+        enemies: ['skeleton_warlord', 'skeleton_warlord'],
+        description: 'La salle des champions déchus. Deux chefs de guerre squelettes se tiennent côte à côte — les lieutenants du nécromancien. Leurs armures brisées portent encore les stigmates de batailles épiques. Un cri de guerre résonne dans la pierre.',
       },
       {
         room: 2,
-        enemies: ['skeleton_warlord', 'skeleton_knight'],
-        description: 'Le hall de l\'hôtel. Derrière le comptoir, un squelette se précipite vers vous pendant qu\'un archer vise depuis la mezzanine.',
-      },
-      {
-        room: 3,
-        enemies: ['skeleton_warlord', 'skeleton_mage', 'skeleton_archer', 'skeleton_king'],
-        description: 'Le bar de l\'hôtel. Quatre silhouettes osseuses encerclent un marchand tremblant dans un coin. *"Au secours !"* crie Aldric en vous apercevant — il se joint au combat !',
-        
+        enemies: ['skeleton_king', 'necromancer'],
+        description: 'La chambre profanée. Un nécromancien en robe noire psalmodie au centre d\'un cercle runique, ses mains levées vers un roi squelette couronné qui flotte au-dessus du sol. *"Encore un intrus... Montre-lui la puissance de la mort, mon roi !"*',
       },
     ],
   },

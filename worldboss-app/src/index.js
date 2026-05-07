@@ -7,6 +7,7 @@ const fs = require('fs');
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const { redis } = require('./cache/redis');
 const { startAuctionWorker } = require('./services/market.service');
+const { startMerchantWorker } = require('./services/merchant.service');
 
 // ── Discord client ───────────────────────────────────────────────────────────
 const client = new Client({
@@ -82,6 +83,7 @@ process.on('unhandledRejection', (err) => {
 client.login(token).then(() => {
   console.log('[Bot] Login en cours...');
   startAuctionWorker(client);
+  startMerchantWorker(client);
 }).catch((err) => {
   console.error('[Bot] Impossible de se connecter:', err.message);
   process.exit(1);

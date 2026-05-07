@@ -106,6 +106,13 @@ async function sellToMerchant(characterId, itemId, guildId, discordClient) {
     prisma.character.update({ where: { id: characterId }, data: { gold: { increment: goldEarned } } }),
   ]);
 
+  // Le marchand paie ce qu'il rachète — son or diminue
+  await prisma.$executeRaw`
+    UPDATE "MerchantShop"
+    SET gold = GREATEST(gold - ${goldEarned}, 0)
+    WHERE "guildId" = ${guildId}
+  `;
+
   return { success: true, message: `**${itemDef.name}** vendu pour **${goldEarned}** 🪙`, goldEarned };
 }
 
@@ -307,13 +314,15 @@ function buildAuctionEmbed(listing, itemDef, sellerId, sellerName, bidderName) {
 
   const color = isActive ? 0xf39c12 : isSold ? 0x2ecc71 : 0x95a5a6;
 
-  const timeLeft = listing.expiresAt && isActive
-    ? formatDuration(Math.max(0, new Date(listing.expiresAt).getTime() - Date.now()))
+  const expiresTimestamp = listing.expiresAt
+    ? Math.floor(new Date(listing.expiresAt).getTime() / 1000)
     : null;
 
-  const statusLine = isActive
-    ? `> ⏳ Expire dans **${timeLeft}**`
-    : isSold
+  const statusLine = isActive && expiresTimestamp
+    ? `> ⏳ Expire <t:${expiresTimestamp}:R>`
+    : isActive
+      ? '> ⏳ En cours'
+      : isSold
       ? `> ✅ Vendu à **${bidderName ?? 'un joueur'}** pour **${listing.currentBid}** 🪙`
       : '> ❌ Expirée — aucune enchère';
 
@@ -395,4 +404,4 @@ async function refreshAuctionEmbed(listing, discordClient) {
   }
 }
 
-module.exports = { startAuctionWorker, sellToMerchant, createAuction, placeBid, finaliseBuyout, buildAuctionEmbed, DURATIONS_MS };
+module.exports = { startAuctionWorker, checkMarketAccess, sellToMerchant, createAuction, placeBid, finaliseBuyout, buildAuctionEmbed, DURATIONS_MS };

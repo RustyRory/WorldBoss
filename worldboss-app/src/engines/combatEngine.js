@@ -54,14 +54,14 @@ function resolveEnemyTurn(enemy, player, logs, allies = []) {
   const choice = Math.floor(Math.random() * 3);
 
   if (choice === 2) {
-    const heal = Math.max(1, Math.floor(enemy.maxHp * 0.15));
+    const heal = enemy.restHeal ?? Math.max(1, Math.floor(enemy.maxHp * 0.15));
     enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
     logs.push(`💤 **${enemy.name}** se repose et récupère **${heal}** HP.`);
   } else if (choice === 1 && enemy.ability && !isAlly) {
     // Abilities always target the player (complex effects)
     const ability = ABILITIES[enemy.ability];
     if (ability) {
-      ability.resolve(enemy, player, logs);
+      ability.resolve(enemy, player, logs, { enemies });
     } else {
       const raw = rawDamage(enemy.atk, player.def);
       const dmg = Math.max(1, Math.round(raw));
@@ -269,4 +269,4 @@ function resolveTurn(state, playerAction, targetIndex = 0) {
   return { playerState: player, enemiesState: enemies, alliesState: allies, logs, fled: false, playerDied, allEnemiesDead };
 }
 
-module.exports = { resolveTurn, playerAttack };
+module.exports = { resolveTurn, playerAttack, rawDamage };

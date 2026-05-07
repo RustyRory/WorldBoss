@@ -9,11 +9,26 @@ const { buildLeaderboardEmbed } = require('../services/infoPanel.service');
 const { buildWikiEmbed } = require('../services/wiki.service');
 const { equipItem, sellItem, getInventory, getOrCreateLoadout, unequipSlot, useConsumable } = require('../services/inventory.service');
 const { sellToMerchant, createAuction, placeBid, finaliseBuyout } = require('../services/market.service');
+const { buyFromShop } = require('../services/merchant.service');
+const {
+  createPrime,
+  joinPrime,
+  leavePrime,
+  startPrime,
+  handlePrimeAttack,
+  handlePrimeItemOpen,
+  handlePrimeItemSelect,
+  handleNextRoom,
+  handleClaimLoot,
+  handlePrimeLootChoice,
+  handleRestItemOpen,
+  handleRestItemUse,
+} = require('../services/prime.service');
 const { getAP } = require('../services/actionPoints.service');
 const { errorEmbed } = require('../utils/embed');
 const { prisma } = require('../db/prisma');
 
-const ALL_BOT_COMMANDS = ['start', 'profile', 'inventory', 'setup', 'dungeon'];
+const ALL_BOT_COMMANDS = ['start', 'profile', 'inventory', 'setup', 'dungeon', 'prime'];
 
 async function getGuildChannels(guildId) {
   return prisma.guildChannels.findUnique({ where: { guildId } });
@@ -67,6 +82,13 @@ module.exports = {
           if (interaction.commandName === 'dungeon' && channels.dungeonChannelId && interaction.channelId !== channels.dungeonChannelId) {
             return interaction.reply({
               embeds: [errorEmbed(`La commande \`/dungeon\` est réservée à <#${channels.dungeonChannelId}>.`)],
+              flags: MessageFlags.Ephemeral,
+            });
+          }
+
+          if (interaction.commandName === 'prime' && channels.dungeonChannelId && interaction.channelId !== channels.dungeonChannelId) {
+            return interaction.reply({
+              embeds: [errorEmbed(`La commande \`/prime\` est réservée à <#${channels.dungeonChannelId}>.`)],
               flags: MessageFlags.Ephemeral,
             });
           }
@@ -161,6 +183,41 @@ module.exports = {
         const itemId = interaction.values[0];
         interaction.customId = `combat_item_${itemId}`;
         return await handleCombatButton(interaction);
+      } else if (interaction.customId === 'shop_buy' || interaction.customId === 'shop_buy_equip' || interaction.customId === 'shop_buy_cons') {
+        try {
+          const itemId      = interaction.values[0];
+          const guildId     = interaction.guildId;
+          const characterId = await resolveCharacterId(interaction);
+          if (!characterId) return interaction.reply({ embeds: [errorEmbed('Personnage introuvable.')], flags: MessageFlags.Ephemeral });
+
+          await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+          const result = await buyFromShop(characterId, itemId, guildId, interaction.client);
+          const color  = result.success ? 0x2ecc71 : 0xe74c3c;
+          return interaction.editReply({ embeds: [{ color, description: result.success ? `✅ ${result.message}` : `❌ ${result.message}` }] });
+        } catch (err) {
+          console.error('[Shop/buy]', err);
+        }
+      } else if (interaction.customId === 'prime_select') {
+        try {
+          const primeId = parseInt(interaction.values[0], 10);
+          return await createPrime(interaction, primeId);
+        } catch (err) {
+          console.error('[Prime/select]', err);
+        }
+      } else if (interaction.customId.startsWith('prime_item_select:')) {
+        try {
+          const primeRunId = parseInt(interaction.customId.split(':')[1], 10);
+          return await handlePrimeItemSelect(interaction, primeRunId);
+        } catch (err) {
+          console.error('[Prime/item_select]', err);
+        }
+      } else if (interaction.customId.startsWith('prime_rest_item_select:')) {
+        try {
+          const primeRunId = parseInt(interaction.customId.split(':')[1], 10);
+          return await handleRestItemUse(interaction, primeRunId);
+        } catch (err) {
+          console.error('[Prime/rest_item_select]', err);
+        }
       } else if (interaction.customId === 'dungeon_select') {
         try {
           const chapter     = parseInt(interaction.values[0], 10);
@@ -177,6 +234,12 @@ module.exports = {
     // ── Modal submissions ──────────────────────────────────────────────────
     if (interaction.isModalSubmit()) {
       const { customId } = interaction;
+
+      if (customId === 'start_modal') {
+        const startCmd = interaction.client.commands.get('start');
+        if (startCmd?.handleModal) return startCmd.handleModal(interaction);
+        return;
+      }
 
       if (customId.startsWith('market_auction_modal:')) {
         const [, itemId, duration] = customId.split(':');
@@ -227,6 +290,54 @@ module.exports = {
       const { customId } = interaction;
 
       try {
+        // ── Prime buttons ──────────────────────────────────────────────────
+        if (customId.startsWith('prime_join:')) {
+          const primeRunId = parseInt(customId.split(':')[1], 10);
+          return await joinPrime(interaction, primeRunId);
+        }
+
+        if (customId.startsWith('prime_leave:')) {
+          const primeRunId = parseInt(customId.split(':')[1], 10);
+          return await leavePrime(interaction, primeRunId);
+        }
+
+        if (customId.startsWith('prime_start:')) {
+          const primeRunId = parseInt(customId.split(':')[1], 10);
+          return await startPrime(interaction, primeRunId);
+        }
+
+        if (customId.startsWith('prime_attack:')) {
+          const parts       = customId.split(':');
+          const primeRunId  = parseInt(parts[1], 10);
+          const targetIndex = parseInt(parts[2], 10);
+          return await handlePrimeAttack(interaction, primeRunId, targetIndex);
+        }
+
+        if (customId.startsWith('prime_item_open:')) {
+          const primeRunId = parseInt(customId.split(':')[1], 10);
+          return await handlePrimeItemOpen(interaction, primeRunId);
+        }
+
+        if (customId.startsWith('prime_rest_item:')) {
+          const primeRunId = parseInt(customId.split(':')[1], 10);
+          return await handleRestItemOpen(interaction, primeRunId);
+        }
+
+        if (customId.startsWith('prime_next_room:')) {
+          const primeRunId = parseInt(customId.split(':')[1], 10);
+          return await handleNextRoom(interaction, primeRunId);
+        }
+
+        if (customId.startsWith('prime_claim_loot:')) {
+          const primeRunId = parseInt(customId.split(':')[1], 10);
+          return await handleClaimLoot(interaction, primeRunId);
+        }
+
+        if (customId.startsWith('prime_loot:')) {
+          const idx = parseInt(customId.split(':')[1], 10);
+          return await handlePrimeLootChoice(interaction, idx);
+        }
+
         if (customId.startsWith('unequip:')) {
           const slot        = customId.split(':')[1];
           const characterId = await resolveCharacterId(interaction);

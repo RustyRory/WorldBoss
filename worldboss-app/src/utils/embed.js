@@ -309,8 +309,10 @@ function buildProfileEmbed(user, stats, loadout, xpReq, interaction = null, ap =
   const hpPct  = Math.round((user.hp / stats.hp) * 100);
   const hpIcon = hpPct > 50 ? '🟩' : hpPct > 25 ? '🟨' : '🟥';
 
+  const displayName = user.name || user.user?.username || 'Aventurier';
+
   const embed = new EmbedBuilder()
-    .setTitle(`📋  Profil — ${user.username}`)
+    .setTitle(`📋  Profil — ${displayName}`)
     .setDescription(
       `> Aventurier de niveau **${user.level}**, continuez à explorer les donjons !\n` +
       `\`${SEP}\``,
