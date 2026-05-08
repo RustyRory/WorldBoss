@@ -12,9 +12,21 @@ const { ITEMS }     = require('../data/items');
  * @param {object} primeState - full prime combat state from Redis
  * @returns {{ players, enemies, logs, allEnemiesDead, allPlayersDead }}
  */
-function resolvePrimeRound(primeState) {
-  const logs = [];
+class CombatLog extends Array {
+  constructor(snap) {
+    super();
+    this._snap = snap;
+    this.initialSnapshot = snap();
+    this.frames = [];
+  }
+  push(...items) {
+    const r = super.push(...items);
+    this.frames.push(this._snap());
+    return r;
+  }
+}
 
+function resolvePrimeRound(primeState) {
   // Deep-clone mutable arrays to avoid mutating the original state
   const players = primeState.players.map((p) => ({
     ...p,
@@ -31,12 +43,17 @@ function resolvePrimeRound(primeState) {
     dots: [...(e.dots ?? [])],
   }));
 
+  const logs = new CombatLog(() => ({
+    playersHp: players.map((p) => p.hp),
+    enemiesHp: enemies.map((e) => e.hp),
+  }));
+
   // ── Player DoTs ────────────────────────────────────────────────────────────
   for (const player of players.filter((p) => p.hp > 0)) {
     if (player.dots.length > 0) {
       player.dots = player.dots.map((dot) => {
         player.hp = Math.max(0, player.hp - dot.value);
-        logs.push(`☠️ Poison : **${player.name}** perd **${dot.value}** HP.`);
+        logs.push(`☠️ **${dot.label ?? 'Poison'}** : **${player.name}** perd **${dot.value}** HP *(${player.hp}/${player.maxHp} HP)*.`);
         return { ...dot, turns: dot.turns - 1 };
       }).filter((d) => d.turns > 0);
     }
@@ -47,7 +64,7 @@ function resolvePrimeRound(primeState) {
     if (enemy.dots.length > 0) {
       enemy.dots = enemy.dots.map((dot) => {
         enemy.hp = Math.max(0, enemy.hp - dot.value);
-        logs.push(`🔥 ${dot.label ?? 'DoT'} : **${enemy.name}** perd **${dot.value}** HP.`);
+        logs.push(`🔥 **${dot.label ?? 'DoT'}** : **${enemy.name}** perd **${dot.value}** HP *(${enemy.hp}/${enemy.maxHp} HP)*.`);
         return { ...dot, turns: dot.turns - 1 };
       }).filter((d) => d.turns > 0);
     }
@@ -70,7 +87,7 @@ function resolvePrimeRound(primeState) {
   for (const player of sortedPlayers) {
     if (player.hp <= 0) continue;
     if (player.stunned) {
-      logs.push(`**${player.name}** est étourdi et passe son tour.`);
+      logs.push(`💫 **${player.name}** est **étourdi** et passe son tour.`);
       player.stunned = false;
       continue;
     }
@@ -88,7 +105,7 @@ function resolvePrimeRound(primeState) {
     if (action.type === 'attack') {
       const result = playerAttack(player, target, 1.0);
       target.hp = Math.max(0, target.hp - result.damage);
-      logs.push(`**${player.name}** → ${result.log}`);
+      logs.push(`⚔️ **${player.name}** — Attaque : ${result.log}.`);
       if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
 
       for (const passiveKey of (player.activePassives ?? [])) {
@@ -125,7 +142,7 @@ function resolvePrimeRound(primeState) {
 
       if (effect?.type === 'heal') {
         player.hp = Math.min(player.maxHp, player.hp + effect.value);
-        logs.push(`💊 **${player.name}** utilise **${itemDef.name}** : +**${effect.value}** HP.`);
+        logs.push(`💊 **${player.name}** utilise **${itemDef.name}** : +**${effect.value}** HP *(${player.hp}/${player.maxHp} HP)*.`);
       } else if (effect?.type === 'damage') {
         const targets = effect.aoe ? aliveEnemiesNow : [target];
         for (const t of targets) {
@@ -150,7 +167,7 @@ function resolvePrimeRound(primeState) {
 
   // ── Check victory ──────────────────────────────────────────────────────────
   if (enemies.every((e) => e.hp <= 0)) {
-    return { players, enemies, logs, allEnemiesDead: true, allPlayersDead: false };
+    return { players, enemies, logs: Array.from(logs), frames: logs.frames, initialSnapshot: logs.initialSnapshot, allEnemiesDead: true, allPlayersDead: false };
   }
 
   // ── Enemy turns ────────────────────────────────────────────────────────────
@@ -159,7 +176,7 @@ function resolvePrimeRound(primeState) {
     if (alivePlayers.length === 0) break;
 
     if (enemy.stunned) {
-      logs.push(`**${enemy.name}** est étourdi et passe son tour.`);
+      logs.push(`💫 **${enemy.name}** est **étourdi** et passe son tour.`);
       enemy.stunned = false;
       continue;
     }
@@ -171,7 +188,7 @@ function resolvePrimeRound(primeState) {
     if (choice === 2) {
       const heal = enemy.restHeal ?? Math.max(1, Math.floor(enemy.maxHp * 0.15));
       enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
-      logs.push(`💤 **${enemy.name}** se repose (+**${heal}** HP).`);
+      logs.push(`💤 **${enemy.name}** se repose et récupère **${heal}** HP *(${enemy.hp}/${enemy.maxHp} HP)*.`);
     } else if (choice === 1 && enemy.ability) {
       const ability = ABILITIES[enemy.ability];
       if (ability) {
@@ -180,17 +197,17 @@ function resolvePrimeRound(primeState) {
       } else {
         const dmg = Math.max(1, Math.round(rawDamage(enemy.atk, randomTarget.def)));
         randomTarget.hp = Math.max(0, randomTarget.hp - dmg);
-        logs.push(`**${enemy.name}** attaque **${randomTarget.name}** pour **${dmg}** dégâts.`);
+        logs.push(`🗡️ **${enemy.name}** attaque **${randomTarget.name}** pour **${dmg}** dégâts *(${randomTarget.hp}/${randomTarget.maxHp} HP)*${randomTarget.hp <= 0 ? ' 💀' : ''}.`);
       }
     } else {
       const dmg = Math.max(1, Math.round(rawDamage(enemy.atk, randomTarget.def)));
       randomTarget.hp = Math.max(0, randomTarget.hp - dmg);
-      logs.push(`**${enemy.name}** attaque **${randomTarget.name}** pour **${dmg}** dégâts${randomTarget.hp <= 0 ? ' 💀' : ''}.`);
+      logs.push(`🗡️ **${enemy.name}** attaque **${randomTarget.name}** pour **${dmg}** dégâts *(${randomTarget.hp}/${randomTarget.maxHp} HP)*${randomTarget.hp <= 0 ? ' 💀' : ''}.`);
     }
   }
 
   const allPlayersDead = players.every((p) => p.hp <= 0);
-  return { players, enemies, logs, allEnemiesDead: false, allPlayersDead };
+  return { players, enemies, logs: Array.from(logs), frames: logs.frames, initialSnapshot: logs.initialSnapshot, allEnemiesDead: false, allPlayersDead };
 }
 
 module.exports = { resolvePrimeRound };

@@ -5,8 +5,9 @@ const { getCombatState, setCombatState, deleteCombatState, deleteDungeonState, g
 const { resolveTurn } = require('../engines/combatEngine');
 const { applyLoot } = require('../engines/lootEngine');
 const { addXp, addGold, computeRegenedHp } = require('./player.service');
-const { computeStats } = require('../utils/stats');
+const { computeStats, xpRequired } = require('../utils/stats');
 const { buildCombatEmbed, buildCombatRow, buildDungeonNextRow, errorEmbed } = require('../utils/embed');
+const { animateCombatLogs, sleep, animateXpGain } = require('../utils/animate');
 const { EmbedBuilder, MessageFlags } = require('discord.js');
 const { DUNGEONS } = require('../data/dungeons');
 
@@ -14,7 +15,7 @@ const { DUNGEONS } = require('../data/dungeons');
  * Build combat state from character + list of enemies.
  * Uses the character's current HP (with regen applied).
  */
-function buildCombatState({ characterId, guildId, messageId, channelId, character, loadout, enemies, allies = [], dungeonChapter, currentRoom, totalRooms }) {
+function buildCombatState({ characterId, guildId, messageId, channelId, character, loadout, enemies, allies = [], dungeonChapter, currentRoom, totalRooms, replayMode = false }) {
   const stats = computeStats(character, loadout);
   const maxHp = stats.hp;
   const currentHp = computeRegenedHp(character.hp, character.hpUpdatedAt, maxHp);
@@ -61,6 +62,7 @@ function buildCombatState({ characterId, guildId, messageId, channelId, characte
     turn: 1,
     log: [],
     status: 'active',
+    replayMode,
   };
 }
 
@@ -97,12 +99,25 @@ async function handleCombatButton(interaction) {
   // Snapshot consumable quantities before turn to detect usage
   const consumablesBefore = (state.player.consumables ?? []).map((c) => ({ ...c }));
 
-  const result = resolveTurn(state, action, targetIndex);
+  const result    = resolveTurn(state, action, targetIndex);
+  const newLogs   = result.logs;
+  const frames    = result.frames;
+  const snap      = result.initialSnapshot;
+  const prevLog   = [...state.log];
+
+  // preAnimState: post-turn HP values but pre-turn HP from snapshot for animation
+  const preAnimState = {
+    ...state,
+    log: prevLog,
+    player:  { ...state.player,  ...snap && { hp: snap.playerHp } },
+    enemies: state.enemies.map((e, i) => ({ ...e, hp: snap?.enemiesHp[i] ?? e.hp })),
+    allies:  (state.allies ?? []).map((a, i) => ({ ...a, hp: snap?.alliesHp?.[i] ?? a.hp })),
+  };
 
   state.player  = result.playerState;
   state.enemies = result.enemiesState;
   state.allies  = result.alliesState ?? state.allies ?? [];
-  state.log     = [...state.log, ...result.logs];
+  state.log     = [...prevLog, ...newLogs];
   state.turn   += 1;
 
   // Sync consumed items to DB (skip infiniteUse items)
@@ -161,11 +176,14 @@ async function handleCombatButton(interaction) {
       data: { status: 'failed' },
     });
 
-    const embed = new EmbedBuilder()
+    const defeatEmbed = new EmbedBuilder()
       .setTitle('💀 Défaite')
-      .setDescription(result.logs.join('\n') + '\n\n*Vous vous réveillez à l\'entrée avec 1 HP...*')
+      .setDescription('*Vous vous réveillez à l\'entrée avec 1 HP...*')
       .setColor(0x2c2c2c);
-    return interaction.editReply({ embeds: [embed], components: [] });
+
+    await animateCombatLogs((p) => interaction.editReply(p), preAnimState, newLogs, frames, buildCombatEmbed, []);
+    await sleep(600);
+    return interaction.editReply({ embeds: [defeatEmbed], components: [] });
   }
 
   // ── ALL ENEMIES DEAD (room cleared) ───────────────────────────────────────
@@ -178,6 +196,10 @@ async function handleCombatButton(interaction) {
       if (!e.gold) return sum;
       return sum + Math.floor(Math.random() * (e.gold.max - e.gold.min + 1)) + e.gold.min;
     }, 0);
+    const { xp: startXp, level: startLevel } = await prisma.character.findUnique({
+      where:  { id: characterId },
+      select: { xp: true, level: true },
+    });
     const xpResult = await addXp(characterId, totalXp);
 
     const levelUpText = xpResult.leveledUp
@@ -209,24 +231,25 @@ async function handleCombatButton(interaction) {
         }
         await addGold(characterId, finalGold);
 
-        // Loot lottery: each enemy rolls independently; collect winners, pick one random drop
-        const { ENEMIES } = require('../data/enemies');
-        const { ITEMS } = require('../data/items');
-        // Each enemy contributes one candidate item to the pool, then ONE is picked at random
-        const pool = [];
-        for (const enemyId of allEnemiesFought) {
-          const enemyDef = ENEMIES[enemyId];
-          if (!enemyDef?.loot?.length) continue;
-          pool.push(enemyDef.loot[Math.floor(Math.random() * enemyDef.loot.length)]);
-        }
+        // Loot lottery (désactivé en rejeu)
         const droppedNames = [];
-        if (pool.length > 0) {
-          const itemId = pool[Math.floor(Math.random() * pool.length)];
-          await applyLoot(prisma, characterId, itemId);
-          droppedNames.push(ITEMS[itemId]?.name ?? itemId);
+        if (!state.replayMode) {
+          const { ENEMIES } = require('../data/enemies');
+          const { ITEMS } = require('../data/items');
+          const pool = [];
+          for (const enemyId of allEnemiesFought) {
+            const enemyDef = ENEMIES[enemyId];
+            if (!enemyDef?.loot?.length) continue;
+            pool.push(enemyDef.loot[Math.floor(Math.random() * enemyDef.loot.length)]);
+          }
+          if (pool.length > 0) {
+            const itemId = pool[Math.floor(Math.random() * pool.length)];
+            await applyLoot(prisma, characterId, itemId);
+            droppedNames.push(ITEMS[itemId]?.name ?? itemId);
+          }
         }
 
-        // If leveled up, addXp already set HP to max — don't overwrite
+        // Si level up, addXp a déjà mis les HP à fond — ne pas écraser
         if (!xpResult.leveledUp) {
           await prisma.character.update({
             where: { id: characterId },
@@ -239,10 +262,10 @@ async function handleCombatButton(interaction) {
         const finalMaxHp = computeStats(finalChar, finalChar.loadout ?? {}).hp;
         const finalHp    = finalChar.hp;
 
-        const lootLines = droppedNames.map((n) => `> 🎁 **${n}**`).join('\n');
-        const specialMsg = dungeon?.reward?.message ?? null;
+        const lootLines  = droppedNames.map((n) => `> 🎁 **${n}**`).join('\n');
+        const specialMsg = !state.replayMode ? (dungeon?.reward?.message ?? null) : null;
 
-        const embed = new EmbedBuilder()
+        const buildVictoryEmbed = (xpBarLine) => new EmbedBuilder()
           .setTitle('🏆 Donjon terminé !')
           .setDescription(
             (specialMsg ? specialMsg + '\n\n' : '') +
@@ -250,10 +273,16 @@ async function handleCombatButton(interaction) {
             `**Récompenses**\n` +
             `> 🪙 **${finalGold}** or\n` +
             (lootLines ? lootLines + '\n' : '') +
+            (state.replayMode ? `> *Mode rejeu — items désactivés*\n` : '') +
+            `\n> \`${xpBarLine}\`\n` +
             `\n*Vous ressortez avec ${finalHp}/${finalMaxHp} HP.*`,
           )
           .setColor(0xf1c40f);
-        return interaction.editReply({ embeds: [embed], components: [] });
+
+        await animateCombatLogs((p) => interaction.editReply(p), preAnimState, newLogs, frames, buildCombatEmbed, []);
+        await sleep(600);
+        await interaction.editReply({ embeds: [buildVictoryEmbed(`${'▱'.repeat(12)} 0/${xpRequired(xpResult.leveledUp ? xpResult.newLevel : startLevel)} XP`)], components: [] });
+        return animateXpGain((p) => interaction.editReply(p), buildVictoryEmbed, startXp, startLevel, xpResult, xpRequired);
 
       } else {
         // ── NEXT ROOM ───────────────────────────────────────────────────────
@@ -261,14 +290,22 @@ async function handleCombatButton(interaction) {
 
         let newHp, newMaxHp, healDesc;
         if (xpResult.leveledUp) {
-          // addXp already set HP to full — read it back
           const afterLvl = await prisma.character.findUnique({ where: { id: characterId }, include: { loadout: true } });
           const { computeStats } = require('../utils/stats');
           newMaxHp = computeStats(afterLvl, afterLvl.loadout ?? {}).hp;
           newHp    = afterLvl.hp;
           healDesc = `✨ Level up — HP restaurés à **${newHp}/${newMaxHp}** !`;
+        } else if (state.replayMode) {
+          // Rejeu : pas de heal entre les salles
+          newMaxHp = state.player.maxHp;
+          newHp    = state.player.hp;
+          healDesc = `*Mode rejeu — pas de soin entre les salles.*`;
+          await prisma.character.update({
+            where: { id: characterId },
+            data: { hp: newHp, hpUpdatedAt: new Date() },
+          });
         } else {
-          // Heal 15% maxHp between rooms
+          // Heal 15% maxHp entre les salles
           const healAmt = Math.max(5, Math.floor(state.player.maxHp * 0.15));
           newMaxHp = state.player.maxHp;
           newHp    = Math.min(newMaxHp, state.player.hp + healAmt);
@@ -286,20 +323,21 @@ async function handleCombatButton(interaction) {
           await setDungeonState(characterId, dungeonState);
         }
 
-        const embed = new EmbedBuilder()
+        const buildNextRoomEmbed = (xpBarLine) => new EmbedBuilder()
           .setTitle(`✅ Salle ${state.currentRoom}/${state.totalRooms} terminée !`)
           .setDescription(
             `+**${totalXp}** XP${levelUpText}\n` +
             (roomGold > 0 ? `+**${roomGold}** 🪙\n` : '') +
             `\n${healDesc}\n` +
             `❤️ HP : **${newHp}/${newMaxHp}**\n\n` +
-            `*La prochaine salle vous attend...*`,
+            `> \`${xpBarLine}\``,
           )
           .setColor(0x2ecc71);
-        return interaction.editReply({
-          embeds: [embed],
-          components: [buildDungeonNextRow('Salle suivante ➡️')],
-        });
+
+        await animateCombatLogs((p) => interaction.editReply(p), preAnimState, newLogs, frames, buildCombatEmbed, []);
+        await sleep(600);
+        await interaction.editReply({ embeds: [buildNextRoomEmbed(`${'▱'.repeat(12)} 0/${xpRequired(xpResult.leveledUp ? xpResult.newLevel : startLevel)} XP`)], components: [] });
+        return animateXpGain((p) => interaction.editReply(p), buildNextRoomEmbed, startXp, startLevel, xpResult, xpRequired, [buildDungeonNextRow('Salle suivante ➡️')]);
       }
     }
 
@@ -310,19 +348,27 @@ async function handleCombatButton(interaction) {
         data: { hp: state.player.hp, hpUpdatedAt: new Date() },
       });
     }
-    const embed = new EmbedBuilder()
+    const buildStandaloneEmbed = (xpBarLine) => new EmbedBuilder()
       .setTitle('🏆 Victoire !')
-      .setDescription(`+**${totalXp}** XP${levelUpText}`)
+      .setDescription(`+**${totalXp}** XP${levelUpText}\n\n> \`${xpBarLine}\``)
       .setColor(0x2ecc71);
-    return interaction.editReply({ embeds: [embed], components: [] });
+
+    await animateCombatLogs((p) => interaction.editReply(p), preAnimState, newLogs, frames, buildCombatEmbed, []);
+    await sleep(600);
+    await interaction.editReply({ embeds: [buildStandaloneEmbed(`${'▱'.repeat(12)} 0/${xpRequired(xpResult.leveledUp ? xpResult.newLevel : startLevel)} XP`)], components: [] });
+    return animateXpGain((p) => interaction.editReply(p), buildStandaloneEmbed, startXp, startLevel, xpResult, xpRequired);
   }
 
   // ── ONGOING ───────────────────────────────────────────────────────────────
   await setCombatState(characterId, state);
-  return interaction.editReply({
-    embeds: [buildCombatEmbed(state)],
-    components: buildCombatRow(state),
-  });
+  await animateCombatLogs(
+    (p) => interaction.editReply(p),
+    preAnimState,
+    newLogs,
+    frames,
+    buildCombatEmbed,
+    buildCombatRow(state),
+  );
 }
 
 module.exports = { buildCombatState, handleCombatButton };

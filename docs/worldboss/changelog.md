@@ -2,6 +2,59 @@
 
 ---
 
+## [Unreleased] — en cours
+
+### Ajouté
+
+#### Animation des combats
+- **`utils/animate.js`** (nouveau) : fonctions `animateLore`, `animateCombatLogs`, `animateXpGain`
+  - `animateLore` : révèle la description d'une salle phrase par phrase (split sur `.!?…`)
+  - `animateCombatLogs` : rejoue les logs d'un tour action par action, anime les barres HP bloc par bloc entre chaque ligne
+  - `animateXpGain` : (à venir)
+- **`CombatLog`** (classe interne, `combatEngine.js` et `primeCombatEngine.js`) : étend `Array` et prend un snapshot HP après chaque `push`. Les moteurs retournent maintenant `{ logs, frames, initialSnapshot }` en plus du résultat habituel
+- **`combat.service.js`** et **`prime.service.js`** : intègrent `animateCombatLogs` pour afficher les combats en temps réel via `interaction.editReply`
+
+#### Arc 2 — Bandits (nouveau contenu)
+- **4 nouveaux ennemis** dans `enemies/arc2_chateau.js` :
+  - `bandit_scout` (HP 120, ATK 18, SPD 16) — capacité `quick_strike`
+  - `bandit_thief` (HP 130, ATK 20) — capacité `steal`
+  - `bandit_brute` (HP 175, ATK 24, DEF 12) — capacité `smash` (debuff DEF)
+  - `bandit_leader` (HP 190, ATK 26) — capacité `intimidate` (debuff ATK)
+- **5 nouvelles capacités ennemies** dans `abilities/arc2_chateau.js` :
+  - `quick_strike` : ATK pleine, ignore toute la DEF
+  - `steal` : dégâts normaux dans la mêlée
+  - `smash` : ×1,4 ATK + réduit DEF joueur de 4 pour 2 tours
+  - `intimidate` : réduit ATK joueur de 5 pour 2 tours (pas de dégâts)
+  - `shadow_strike` : ×1,6 ATK, ignore 40% DEF, 30% chance de crit ×1,5
+
+#### Donjon 5 — restructuré (3 salles)
+- **Salle 1** : `skeleton_knight` + `skeleton_archer` (inchangé)
+- **Salle 2** : remplace `necromancer` par `skeleton_warlord` — boss intermédiaire plus robuste
+- **Salle 3** (nouvelle) : `necromancer` seul — climax du chapitre
+- **Récompense** `unlockPrimes: true` : déclenche le déblockage du mode prime à la victoire
+
+#### Primes — balance 4v4
+- Champ `enemyStats` par salle dans `primes.js` pour surcharger les stats des ennemis en contexte 4v4 :
+  - Salle 1 — `skeleton_warlord` : HP 420 (×3,5 solo), ATK 22 (×1,5), restHeal 25
+  - Salle 2 — `skeleton_king` : HP 600, ATK 40, crit 12 ; `necromancer` : HP 280, ATK 24 ; `skeleton_warlord` : HP 420
+
+### Modifié
+
+- **`abilities/index.js`** : arcs 3, 4, 6, 8 retirés (fichiers supprimés, évite les crash au démarrage)
+- **`enemies/index.js`** : même nettoyage pour les arcs non implémentés
+- **`deploy-commands.js`** : ajout du dossier `commands/admin` dans `commandDirs`
+- **`dungeonEngine.js`** : `createDungeonState` accepte un paramètre `replayMode` (booléen, défaut `false`)
+- **`potion_mana`** renommée en **`potion_boost`** (effet réel : buff ATK +5 / 2 tours)
+
+### Corrigé
+
+- HP négatifs impossibles dans tous les moteurs et skills (`Math.max(0, ...)`)
+- Stun appliqué sur cible morte (`lance_de_glace` : stun conditionnel si HP > 0 après l'attaque)
+- Messages de logs uniformisés : affichage `*(HP courant/maxHP)*` après chaque action
+- Équilibrage arc 1 : `skeleton_king.def` 7 → 1 (moins tanky), `necromancer.hp` 80 → 100
+
+---
+
 ## [0.2.0] — 2026-05-03
 
 ### Ajouté

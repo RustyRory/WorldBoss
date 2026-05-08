@@ -74,19 +74,21 @@ async function startDungeon(interaction, chapter, characterId) {
     data: { status: 'failed' },
   });
 
-  const dungeonState = createDungeonState(characterId, interaction.guildId, chapter);
+  const alreadyCompleted = await prisma.dungeonRun.findFirst({
+    where: { characterId, chapter, status: 'completed' },
+  });
+  const dungeonState = createDungeonState(characterId, interaction.guildId, chapter, !!alreadyCompleted);
   await setDungeonState(characterId, dungeonState);
   await prisma.dungeonRun.create({ data: { characterId, chapter, status: 'active' } });
 
   const firstRoom = getCurrentRoom(dungeonState);
-
-  const embed = new EmbedBuilder()
-    .setTitle(`🏰 ${dungeon.name} — Salle 1/${dungeonState.totalRooms}`)
-    .setDescription(`*${firstRoom.description}*\n\nPréparez-vous au combat !`)
-    .setColor(0x8e44ad);
+  const roomTitle = `🏰 ${dungeon.name} — Salle 1/${dungeonState.totalRooms}`;
 
   return interaction.update({
-    embeds: [embed],
+    embeds: [new EmbedBuilder()
+      .setTitle(roomTitle)
+      .setDescription(`*${firstRoom.description}*\n\n*Préparez-vous au combat !*`)
+      .setColor(0x8e44ad)],
     components: [buildDungeonNextRow('Entrer dans la salle ⚔️')],
   });
 }
@@ -138,6 +140,7 @@ async function handleDungeonNext(interaction, characterId) {
     dungeonChapter: dungeonState.chapter,
     currentRoom:    dungeonState.currentRoom,
     totalRooms:     dungeonState.totalRooms,
+    replayMode:     dungeonState.replayMode ?? false,
   });
 
   // Load consumables into combat state:
@@ -158,7 +161,8 @@ async function handleDungeonNext(interaction, characterId) {
   await setCombatState(characterId, combatState);
 
   const embed = buildCombatEmbed(combatState);
-  embed.setDescription(`**Salle ${dungeonState.currentRoom}/${dungeonState.totalRooms}** — *${room.description}*`);
+  const existingDesc = embed.data.description ?? '';
+  embed.setDescription(`*${room.description}*\n\n${existingDesc}`);
 
   return interaction.editReply({ embeds: [embed], components: buildCombatRow(combatState) });
 }

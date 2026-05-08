@@ -7,8 +7,8 @@ module.exports = {
     resolve(enemy, player, logs) {
       const raw = enemy.atk * (100 / (100 + player.def * 0.5));
       const dmg = Math.max(1, Math.round(raw));
-      player.hp -= dmg;
-      logs.push(`🏹 **${enemy.name}** utilise **Tir précis** et inflige **${dmg}** dégâts (ignore 50% de votre DEF).`);
+      player.hp = Math.max(0, player.hp - dmg);
+      logs.push(`🏹 **${enemy.name}** utilise **Tir précis** — **${dmg}** dégâts (ignore 50% DEF) *(${player.hp}/${player.maxHp} HP)*.`);
     },
   },
 
@@ -19,8 +19,8 @@ module.exports = {
       const base = Math.round(enemy.atk * 1.8);
       const defReduction = Math.floor(player.def * 0.7);
       const dmg = Math.max(1, base - defReduction);
-      player.hp -= dmg;
-      logs.push(`🔥 **${enemy.name}** lance une **Boule de feu** et inflige **${dmg}** dégâts (ignore 30% DEF).`);
+      player.hp = Math.max(0, player.hp - dmg);
+      logs.push(`🔥 **${enemy.name}** lance une **Boule de feu** — **${dmg}** dégâts (ignore 30% DEF) *(${player.hp}/${player.maxHp} HP)*.`);
     },
   },
 
@@ -29,9 +29,9 @@ module.exports = {
     emoji: '🛡️',
     resolve(enemy, player, logs) {
       const dmg = Math.max(1, enemy.atk - player.def);
-      player.hp -= dmg;
+      player.hp = Math.max(0, player.hp - dmg);
       player.stunned = true;
-      logs.push(`🛡️ **${enemy.name}** utilise **Coup de bouclier** et inflige **${dmg}** dégâts. Vous êtes étourdi pour 1 tour !`);
+      logs.push(`🛡️ **${enemy.name}** utilise **Coup de bouclier** — **${dmg}** dégâts + vous êtes **étourdi** ! *(${player.hp}/${player.maxHp} HP)*.`);
     },
   },
 

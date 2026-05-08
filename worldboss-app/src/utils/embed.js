@@ -20,76 +20,106 @@ function hpBar(current, max, size = 10) {
   const clamped = Math.max(0, Math.min(current, max));
   const filled = Math.round((clamped / max) * size);
   const empty = size - filled;
-  return `${'█'.repeat(filled)}${'░'.repeat(empty)} ${clamped}/${max} HP`;
+  return `${'▰'.repeat(filled)}${'▱'.repeat(empty)} ${clamped}/${max} HP`;
 }
 
 /**
- * Build the combat embed (supports multiple enemies via state.enemies array).
+ * HP bar with ANSI color for use inside ```ansi``` blocks.
+ * delta < 0 → red, delta > 0 → green, 0 → no color.
  */
+function hpBarAnsi(current, max, delta, size = 10) {
+  const clamped     = Math.max(0, Math.min(current, max));
+  const prevClamped = Math.max(0, Math.min(current - delta, max));
+  const currFilled  = Math.round((clamped / max) * size);
+  const prevFilled  = Math.round((prevClamped / max) * size);
+  const suffix      = ` ${clamped}/${max} HP`;
+
+  if (delta < 0) {
+    // blocs qui viennent d'être perdus → rouge
+    const kept  = '▰'.repeat(currFilled);
+    const lost  = `\x1b[1;31m${'▱'.repeat(Math.max(0, prevFilled - currFilled))}\x1b[0m`;
+    const empty = '▱'.repeat(Math.max(0, size - prevFilled));
+    return `${kept}${lost}${empty}${suffix}`;
+  }
+  if (delta > 0) {
+    // blocs qui viennent d'être gagnés → vert
+    const kept   = '▰'.repeat(prevFilled);
+    const gained = `\x1b[1;32m${'▰'.repeat(Math.max(0, currFilled - prevFilled))}\x1b[0m`;
+    const empty  = '▱'.repeat(Math.max(0, size - currFilled));
+    return `${kept}${gained}${empty}${suffix}`;
+  }
+  return `${'▰'.repeat(currFilled)}${'▱'.repeat(size - currFilled)}${suffix}`;
+}
+
 function buildCombatEmbed(state) {
   const { player, enemies, log, turn } = state;
+  const deltas = state.hpDeltas ?? {};
 
-  const lines = [];
+  const ansi = [];
 
   // ── Player ────────────────────────────────────────────────────────────────
-  lines.push(`**🧑 Vous** — Tour **${turn}**`);
-  lines.push(`\`${hpBar(player.hp, player.maxHp)}\``);
+  ansi.push(`\x1b[1m🧑 Vous\x1b[0m — Tour ${turn}`);
+  ansi.push(hpBarAnsi(player.hp, player.maxHp, deltas.player ?? 0));
 
-  // Player status effects
   const playerStatus = [];
-  for (const dot of (player.dots ?? [])) {
-    playerStatus.push(`☠️ ${dot.label ?? 'DoT'} (${dot.turns}t)`);
-  }
-  for (const buf of (player.buffs ?? [])) {
-    playerStatus.push(`⚡ ${buf.stat.toUpperCase()}+${buf.value} (${buf.turns}t)`);
-  }
-  if (playerStatus.length > 0) lines.push(`-# ${playerStatus.join(' · ')}`);
+  for (const dot of (player.dots ?? [])) playerStatus.push(`☠️ ${dot.label ?? 'DoT'} (${dot.turns}t)`);
+  for (const buf of (player.buffs ?? [])) playerStatus.push(`⚡ ${buf.stat.toUpperCase()}+${buf.value} (${buf.turns}t)`);
+  if (playerStatus.length > 0) ansi.push(playerStatus.join(' · '));
 
-  // Skill cooldowns
   const cdLines = Object.entries(player.skillCooldowns ?? {})
     .filter(([, cd]) => cd > 0)
     .map(([key, cd]) => {
       const sk = (player.activeSkills ?? []).find((s) => s.key === key);
       return `⏳ ${sk?.name ?? key} (${cd}t)`;
     });
-  if (cdLines.length > 0) lines.push(`-# ${cdLines.join(' · ')}`);
+  if (cdLines.length > 0) ansi.push(cdLines.join(' · '));
 
   // ── Allies ───────────────────────────────────────────────────────────────
-  for (const ally of (state.allies ?? [])) {
+  for (const [ai, ally] of (state.allies ?? []).entries()) {
+    ansi.push('');
     if (ally.hp <= 0) {
-      lines.push(`~~**${ally.emoji ?? '🧑‍💼'} ${ally.name}**~~ — *K.O.*`);
+      ansi.push(`\x1b[2m${ally.emoji ?? '🧑‍💼'} ${ally.name} — K.O.\x1b[0m`);
     } else {
-      lines.push(`**${ally.emoji ?? '🧑‍💼'} ${ally.name}** *(allié)*`);
-      lines.push(`\`${hpBar(ally.hp, ally.maxHp)}\``);
+      ansi.push(`\x1b[1m${ally.emoji ?? '🧑‍💼'} ${ally.name}\x1b[0m`);
+      ansi.push(hpBarAnsi(ally.hp, ally.maxHp, deltas.allies?.[ai] ?? 0));
     }
   }
 
-  lines.push('');
+  ansi.push('');
 
   // ── Enemies ───────────────────────────────────────────────────────────────
-  for (const enemy of enemies) {
+  for (const [ei, enemy] of enemies.entries()) {
     if (enemy.hp <= 0) {
-      lines.push(`~~**☠️ ${enemy.name}**~~ — *Vaincu*`);
+      ansi.push(`\x1b[2m☠️ ${enemy.name} — Vaincu\x1b[0m`);
     } else {
-      lines.push(`**💀 ${enemy.name}**`);
-      lines.push(`\`${hpBar(enemy.hp, enemy.maxHp)}\``);
+      ansi.push(`\x1b[1m💀 ${enemy.name}\x1b[0m`);
+      ansi.push(hpBarAnsi(enemy.hp, enemy.maxHp, deltas.enemies?.[ei] ?? 0));
       const enemyStatus = [];
       if (enemy.stunned) enemyStatus.push('💫 Étourdi');
-      for (const dot of (enemy.dots ?? [])) {
-        enemyStatus.push(`🔥 ${dot.label ?? 'DoT'} (${dot.turns}t)`);
-      }
-      if (enemyStatus.length > 0) lines.push(`-# ${enemyStatus.join(' · ')}`);
+      for (const dot of (enemy.dots ?? [])) enemyStatus.push(`🔥 ${dot.label ?? 'DoT'} (${dot.turns}t)`);
+      if (enemyStatus.length > 0) ansi.push(enemyStatus.join(' · '));
     }
   }
 
-  lines.push('');
-
   // ── Journal ───────────────────────────────────────────────────────────────
-  const lastLogs = (log || []).slice(-4);
-  if (lastLogs.length > 0) {
-    lines.push('**📜 Journal**');
-    lines.push(lastLogs.map((l) => `> ${l}`).join('\n'));
+  const activeIdx = state.activeLogIndex ?? -1;
+  const allLogs   = (log || []);
+  if (allLogs.length > 0) {
+    ansi.push('');
+    ansi.push('\x1b[1m📜 Journal\x1b[0m');
+    const lastLogs = allLogs.slice(-6);
+    const offset   = allLogs.length - lastLogs.length;
+    for (let li = 0; li < lastLogs.length; li++) {
+      const globalIdx = offset + li;
+      if (globalIdx === activeIdx) {
+        ansi.push(`\x1b[1;33m▶ ${lastLogs[li]}\x1b[0m`);
+      } else {
+        ansi.push(`\x1b[2m${lastLogs[li]}\x1b[0m`);
+      }
+    }
   }
+
+  const lines = ['```ansi', ...ansi, '```'];
 
   const footerParts = [];
   if (state.currentRoom && state.totalRooms) footerParts.push(`Salle ${state.currentRoom}/${state.totalRooms}`);
@@ -590,6 +620,7 @@ function successEmbed(message) {
 
 module.exports = {
   hpBar,
+  hpBarAnsi,
   buildCombatEmbed,
   buildCombatRow,
   buildDungeonNextRow,

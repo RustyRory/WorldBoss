@@ -72,7 +72,7 @@ const DUNGEONS = {
     ],
     reward: {
       unlockMarket: true,
-      message: '🏪 **Aldric** te serre la main avec gratitude.\n*"Tu m\'as sauvé la mise, ami. Ma boutique te sera désormais ouverte — et je ferai passer le mot au marché."*\n\n**Le marché est maintenant débloqué !**',
+      message: '**Aldric** te serre la main avec gratitude.\n*"Tu m\'as sauvé la mise, ami. Ma boutique te sera désormais ouverte — et je ferai passer le mot au marché."*\n\n**Le marché est maintenant débloqué !**',
     },
   },
   4: {
@@ -111,10 +111,19 @@ const DUNGEONS = {
       },
       {
         room: 2,
-        enemies: ['skeleton_king', 'necromancer'],
+        enemies: ['skeleton_king', 'skeleton_warlord'],
         description: 'La chambre profanée. Un nécromancien en robe noire psalmodie au centre d\'un cercle runique, ses mains levées vers un roi squelette couronné qui flotte au-dessus du sol. *"Encore un intrus... Montre-lui la puissance de la mort, mon roi !"*',
       },
+      {
+        room: 3,
+        enemies: ['necromancer'],
+        description: 'Vous avez vaincu le roi squelette, mais le nécromancien est furieux. Il se jette sur vous, entouré de ses lieutenants restants. *"Vous ne pouvez pas arrêter la mort ! Je suis son maître !"*',
+      },
     ],
+    reward: {
+      unlockPrimes: true,
+      message: '**Necromancien :** "Ma mort engendra un chaos indescriptible !"*\n\n**Les primes sont maintenant débloquées !**',
+    },
   },
 };
 
@@ -128,7 +137,21 @@ const ALLIES = {
     atk: 8,
     def: 3,
     spd: 5,
+    restHeal: 5,
     emoji: '🧑‍💼',
+  },
+  castle_king: {
+    id: 'castle_king',
+    name: 'Roi du château',
+    hp: 200,
+    maxHp: 200,
+    atk: 25,
+    def: 15,
+    spd: 8,
+    crit: 5,
+    restHeal: 12,
+    ability: 'rally',
+    emoji: '👑',
   },
 };
 

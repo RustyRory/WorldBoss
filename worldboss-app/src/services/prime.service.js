@@ -20,7 +20,8 @@ const {
   StringSelectMenuBuilder,
   MessageFlags,
 } = require('discord.js');
-const { errorEmbed } = require('../utils/embed');
+const { errorEmbed, hpBarAnsi } = require('../utils/embed');
+const { animateCombatLogs, sleep } = require('../utils/animate');
 
 const PRIME_MIN_PLAYERS   = 4;
 const PRIME_MIN_LVL       = 5;
@@ -46,7 +47,7 @@ async function checkPrimeAccess(characterId) {
 function hpBar(current, max, size = 8) {
   const clamped = Math.max(0, Math.min(current, max));
   const filled  = Math.round((clamped / max) * size);
-  return `${'█'.repeat(filled)}${'░'.repeat(size - filled)} ${clamped}/${max}`;
+  return `${'▰'.repeat(filled)}${'▱'.repeat(size - filled)} ${clamped}/${max}`;
 }
 
 function getCharName(character) {
@@ -100,43 +101,60 @@ function buildLobbyComponents(primeRun, participants) {
 }
 
 function buildCombatEmbed(state) {
-  const lines = [];
   const alive  = state.players.filter((p) => p.hp > 0);
   const acted  = Object.keys(state.pendingActions).length;
+  const deltas = state.hpDeltas ?? {};
+
+  const ansi = [];
 
   // Players
-  lines.push('**⚔️ Groupe**');
-  for (const p of state.players) {
+  ansi.push('\x1b[1m⚔️ Groupe\x1b[0m');
+  state.players.forEach((p, pi) => {
     const status   = state.pendingActions[p.characterId] ? '✅' : (p.hp > 0 ? '⏳' : '💀');
     const dotsLine = (p.dots ?? []).map((d) => `☠️${d.label ?? 'DoT'}(${d.turns}t)`).join(' ');
     const bufLine  = (p.buffs ?? []).map((b) => `⚡${b.stat}+${b.value}(${b.turns}t)`).join(' ');
     const suffix   = [dotsLine, bufLine].filter(Boolean).join(' ');
-    lines.push(`${status} **${p.name}** \`${hpBar(p.hp, p.maxHp)}\`${suffix ? `  -# ${suffix}` : ''}`);
-  }
+    ansi.push(`${status} \x1b[1m${p.name}\x1b[0m`);
+    ansi.push(hpBarAnsi(p.hp, p.maxHp, deltas.players?.[pi] ?? 0, 8));
+    if (suffix) ansi.push(suffix);
+  });
 
-  lines.push('');
+  ansi.push('');
 
   // Enemies
-  lines.push('**💀 Ennemis**');
+  ansi.push('\x1b[1m💀 Ennemis\x1b[0m');
   state.enemies.forEach((e, idx) => {
     if (e.hp <= 0) {
-      lines.push(`~~**[${idx + 1}] ${e.name}**${e.elite ? ' ⭐' : ''}~~ — *Vaincu*`);
+      ansi.push(`\x1b[2m[${idx + 1}] ${e.name}${e.elite ? ' ⭐' : ''} — Vaincu\x1b[0m`);
     } else {
-      const status = [];
-      if (e.stunned) status.push('💫 Étourdi');
-      (e.dots ?? []).forEach((d) => status.push(`🔥 DoT(${d.turns}t)`));
-      lines.push(`**[${idx + 1}] ${e.name}**${e.elite ? ' ⭐' : ''} \`${hpBar(e.hp, e.maxHp)}\`${status.length ? `  -# ${status.join(' ')}` : ''}`);
+      const statusParts = [];
+      if (e.stunned) statusParts.push('💫 Étourdi');
+      (e.dots ?? []).forEach((d) => statusParts.push(`🔥 DoT(${d.turns}t)`));
+      ansi.push(`\x1b[1m[${idx + 1}] ${e.name}${e.elite ? ' ⭐' : ''}\x1b[0m`);
+      ansi.push(hpBarAnsi(e.hp, e.maxHp, deltas.enemies?.[idx] ?? 0, 8));
+      if (statusParts.length) ansi.push(statusParts.join(' '));
     }
   });
 
-  lines.push('');
-
-  // Log (last 5 lines)
-  const lastLogs = (state.log ?? []).slice(-5);
-  if (lastLogs.length > 0) {
-    lines.push('**📜 Journal**');
-    lines.push(lastLogs.map((l) => `> ${l}`).join('\n'));
+  // Log
+  const activeIdx = state.activeLogIndex ?? -1;
+  const allLogs   = state.log ?? [];
+  if (allLogs.length > 0) {
+    ansi.push('');
+    ansi.push('\x1b[1m📜 Journal\x1b[0m');
+    const lastLogs = allLogs.slice(-6);
+    const offset   = allLogs.length - lastLogs.length;
+    for (let li = 0; li < lastLogs.length; li++) {
+      const globalIdx = offset + li;
+      if (globalIdx === activeIdx) {
+        ansi.push(`\x1b[1;33m▶ ${lastLogs[li]}\x1b[0m`);
+      } else {
+        ansi.push(`\x1b[2m${lastLogs[li]}\x1b[0m`);
+      }
+    }
   }
+
+  const lines = ['```ansi', ...ansi, '```'];
 
   return new EmbedBuilder()
     .setTitle(`🏆 Prime — ${state.primeName}`)
@@ -203,6 +221,34 @@ function buildRoomClearComponents(state) {
         .setStyle(ButtonStyle.Primary),
     ),
   ];
+}
+
+// ── Enemy loader with prime stat overrides ───────────────────────────────────
+
+function buildRoomEnemies(room) {
+  return room.enemies.map((eId) => {
+    const e   = ENEMIES[eId];
+    if (!e) throw new Error(`Unknown enemy: ${eId}`);
+    const ov  = room.enemyStats?.[eId] ?? {};
+    const hp  = ov.hp ?? e.hp;
+    return {
+      id:         e.id,
+      name:       e.name,
+      hp,
+      maxHp:      ov.maxHp ?? hp,
+      atk:        ov.atk        ?? e.atk,
+      def:        ov.def        ?? e.def,
+      spd:        ov.spd        ?? e.spd,
+      crit:       ov.crit       ?? e.crit       ?? 0,
+      restHeal:   ov.restHeal   ?? e.restHeal   ?? 5,
+      ability:    ov.ability    ?? e.ability    ?? null,
+      elite:      e.elite       ?? false,
+      eliteDrops: e.eliteDrops  ?? [],
+      loot:       e.loot        ?? [],
+      stunned:    false,
+      dots:       [],
+    };
+  });
 }
 
 // ── Load participants with character data ─────────────────────────────────────
@@ -410,27 +456,7 @@ async function startPrime(interaction, primeRunId) {
   // Build initial prime combat state
   const primeDef   = PRIMES[primeRun.primeId];
   const firstRoom  = primeDef.rooms[0];
-  const roomEnemies = firstRoom.enemies.map((eId) => {
-    const e = ENEMIES[eId];
-    if (!e) throw new Error(`Unknown enemy: ${eId}`);
-    return {
-      id:          e.id,
-      name:        e.name,
-      hp:          e.hp,
-      maxHp:       e.maxHp ?? e.hp,
-      atk:         e.atk,
-      def:         e.def,
-      spd:         e.spd,
-      crit:        e.crit ?? 0,
-      restHeal:    e.restHeal ?? 5,
-      ability:     e.ability ?? null,
-      elite:       e.elite ?? false,
-      eliteDrops:  e.eliteDrops ?? [],
-      loot:        e.loot ?? [],
-      stunned:     false,
-      dots:        [],
-    };
-  });
+  const roomEnemies = buildRoomEnemies(firstRoom);
 
   const players = await Promise.all(participants.map(async (p) => {
     const char    = p.character;
@@ -676,28 +702,18 @@ async function handleNextRoom(interaction, primeRunId) {
   }
 
   const nextRoom    = primeDef.rooms[nextRoomIdx];
-  const roomEnemies = nextRoom.enemies.map((eId) => {
-    const e = ENEMIES[eId];
-    return {
-      id: e.id, name: e.name,
-      hp: e.hp, maxHp: e.maxHp ?? e.hp,
-      atk: e.atk, def: e.def, spd: e.spd, crit: e.crit ?? 0,
-      restHeal: e.restHeal ?? 5,
-      ability: e.ability ?? null,
-      elite: e.elite ?? false,
-      eliteDrops: e.eliteDrops ?? [],
-      loot: e.loot ?? [],
-      stunned: false, dots: [],
-    };
-  });
+  const roomEnemies = buildRoomEnemies(nextRoom);
 
   state.currentRoomIndex = nextRoomIdx;
   state.enemies          = roomEnemies;
   state.pendingActions   = {};
   state.roundNumber      = 1;
-  state.log              = [`📍 **Salle ${nextRoomIdx + 1}** — *${nextRoom.description}*`];
+  state.log              = [`📍 **Salle ${nextRoomIdx + 1}/${state.totalRooms}** — Nouvelle salle !`];
 
   await prisma.primeRun.update({ where: { id: primeRunId }, data: { roomIndex: nextRoomIdx } });
+  await setPrimeCombatState(primeRunId, state);
+
+  state.log = [`📍 **Salle ${nextRoomIdx + 1}** — *${nextRoom.description}*`];
   await setPrimeCombatState(primeRunId, state);
 
   const embed      = buildCombatEmbed(state);
@@ -815,9 +831,21 @@ async function handlePrimeLootChoice(interaction, idx) {
 // ── Internal round resolution ─────────────────────────────────────────────────
 
 async function _resolveRound(state, interaction) {
-  const result = resolvePrimeRound(state);
+  await interaction.deferUpdate();
 
-  // Track newly killed elites
+  const result   = resolvePrimeRound(state);
+  const newLogs  = result.logs;
+  const frames   = result.frames;
+  const snap     = result.initialSnapshot;
+  const prevLog  = [...(state.log ?? [])];
+
+  const preAnimState = {
+    ...state,
+    log:     prevLog,
+    players: state.players.map((p, i) => ({ ...p, hp: snap?.playersHp[i] ?? p.hp })),
+    enemies: state.enemies.map((e, i) => ({ ...e, hp: snap?.enemiesHp[i] ?? e.hp })),
+  };
+
   for (let i = 0; i < state.enemies.length; i++) {
     const wasAlive = state.enemies[i].hp > 0;
     const nowDead  = result.enemies[i].hp <= 0;
@@ -830,7 +858,7 @@ async function _resolveRound(state, interaction) {
 
   state.players        = result.players;
   state.enemies        = result.enemies;
-  state.log            = [...(state.log ?? []), ...result.logs].slice(-20);
+  state.log            = [...prevLog, ...newLogs].slice(-20);
   state.pendingActions = {};
   state.roundNumber   += 1;
 
@@ -840,7 +868,6 @@ async function _resolveRound(state, interaction) {
 
     if (isLastRoom) {
       await prisma.primeRun.update({ where: { id: state.primeRunId }, data: { status: 'completed' } });
-      // Distribute XP and gold to all players
       await _distributeRewards(state);
       state.log.push('🏆 **Prime terminée ! Victoire !**');
     } else {
@@ -848,32 +875,50 @@ async function _resolveRound(state, interaction) {
     }
 
     await setPrimeCombatState(state.primeRunId, state);
-    const embed      = buildVictoryEmbed(state);
-    const components = buildRoomClearComponents(state);
-    return interaction.update({ embeds: [embed], components });
+    await animateCombatLogs((p) => interaction.editReply(p), preAnimState, newLogs, frames, buildCombatEmbed, []);
+    await sleep(600);
+    return interaction.editReply({ embeds: [buildVictoryEmbed(state)], components: buildRoomClearComponents(state) });
   }
 
   if (result.allPlayersDead) {
     state.status = 'defeated';
     await prisma.primeRun.update({ where: { id: state.primeRunId }, data: { status: 'failed' } });
     await deletePrimeCombatState(state.primeRunId);
-    state.log.push('💀 **Tous les joueurs sont tombés. Prime échouée.**');
 
-    const embed = new EmbedBuilder()
+    const defeatEmbed = new EmbedBuilder()
       .setTitle('💀 Prime échouée')
-      .setDescription((state.log ?? []).slice(-6).map((l) => `> ${l}`).join('\n'))
+      .setDescription('*Tous les joueurs sont tombés.*')
       .setColor(0x2c3e50);
-    return interaction.update({ embeds: [embed], components: [] });
+
+    await animateCombatLogs((p) => interaction.editReply(p), preAnimState, newLogs, frames, buildCombatEmbed, []);
+    await sleep(600);
+    return interaction.editReply({ embeds: [defeatEmbed], components: [] });
   }
 
   await setPrimeCombatState(state.primeRunId, state);
-  const embed      = buildCombatEmbed(state);
-  const components = buildCombatComponents(state);
-  return interaction.update({ embeds: [embed], components });
+  await animateCombatLogs(
+    (p) => interaction.editReply(p),
+    preAnimState,
+    newLogs,
+    frames,
+    buildCombatEmbed,
+    buildCombatComponents(state),
+  );
 }
 
 async function _resolveRoundFromMessage(state, message) {
-  const result = resolvePrimeRound(state);
+  const result   = resolvePrimeRound(state);
+  const newLogs  = result.logs;
+  const frames   = result.frames;
+  const snap     = result.initialSnapshot;
+  const prevLog  = [...(state.log ?? [])];
+
+  const preAnimState = {
+    ...state,
+    log:     prevLog,
+    players: state.players.map((p, i) => ({ ...p, hp: snap?.playersHp[i] ?? p.hp })),
+    enemies: state.enemies.map((e, i) => ({ ...e, hp: snap?.enemiesHp[i] ?? e.hp })),
+  };
 
   for (let i = 0; i < state.enemies.length; i++) {
     const wasAlive = state.enemies[i].hp > 0;
@@ -887,7 +932,7 @@ async function _resolveRoundFromMessage(state, message) {
 
   state.players        = result.players;
   state.enemies        = result.enemies;
-  state.log            = [...(state.log ?? []), ...result.logs].slice(-20);
+  state.log            = [...prevLog, ...newLogs].slice(-20);
   state.pendingActions = {};
   state.roundNumber   += 1;
 
@@ -904,6 +949,8 @@ async function _resolveRoundFromMessage(state, message) {
     }
 
     await setPrimeCombatState(state.primeRunId, state);
+    await animateCombatLogs((p) => message.edit(p), preAnimState, newLogs, frames, buildCombatEmbed, []);
+    await sleep(600);
     await message.edit({ embeds: [buildVictoryEmbed(state)], components: buildRoomClearComponents(state) });
     return;
   }
@@ -913,16 +960,26 @@ async function _resolveRoundFromMessage(state, message) {
     await prisma.primeRun.update({ where: { id: state.primeRunId }, data: { status: 'failed' } });
     await deletePrimeCombatState(state.primeRunId);
 
-    const embed = new EmbedBuilder()
+    const defeatEmbed = new EmbedBuilder()
       .setTitle('💀 Prime échouée')
-      .setDescription((state.log ?? []).slice(-6).map((l) => `> ${l}`).join('\n'))
+      .setDescription('*Tous les joueurs sont tombés.*')
       .setColor(0x2c3e50);
-    await message.edit({ embeds: [embed], components: [] });
+
+    await animateCombatLogs((p) => message.edit(p), preAnimState, newLogs, frames, buildCombatEmbed, []);
+    await sleep(600);
+    await message.edit({ embeds: [defeatEmbed], components: [] });
     return;
   }
 
   await setPrimeCombatState(state.primeRunId, state);
-  await message.edit({ embeds: [buildCombatEmbed(state)], components: buildCombatComponents(state) });
+  await animateCombatLogs(
+    (p) => message.edit(p),
+    preAnimState,
+    newLogs,
+    frames,
+    buildCombatEmbed,
+    buildCombatComponents(state),
+  );
 }
 
 function buildVictoryEmbed(state) {

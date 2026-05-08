@@ -12,6 +12,7 @@ const commandDirs = [
   path.join(__dirname, 'commands', 'player'),
   path.join(__dirname, 'commands', 'inventory'),
   path.join(__dirname, 'commands', 'dungeon'),
+  path.join(__dirname, 'commands', 'admin'),
 ];
 
 for (const dir of commandDirs) {

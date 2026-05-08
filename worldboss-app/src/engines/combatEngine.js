@@ -22,24 +22,25 @@ function playerAttack(player, enemy, skillMult = 1.0) {
   const { damage: afterCrit, isCrit } = applyCrit(raw, player.crit ?? 0, player.critMult ?? 1.5);
   const finalDmg = Math.max(1, Math.round(afterCrit));
   const critText = isCrit ? ' 💥 **CRITIQUE!**' : '';
-  return { damage: finalDmg, isCrit, log: `Vous infligez **${finalDmg}** dégâts à ${enemy.name}${critText}.` };
+  const hpAfter = Math.max(0, enemy.hp - finalDmg);
+  return { damage: finalDmg, isCrit, critText, log: `**${finalDmg}** dégâts à **${enemy.name}**${critText} *(${hpAfter}/${enemy.maxHp} HP)*` };
 }
 
-function resolveEnemyTurn(enemy, player, logs, allies = []) {
+function resolveEnemyTurn(enemy, player, logs, allies = [], enemies = []) {
   if (enemy.hp <= 0) return;
 
   // Enemy DoTs (e.g. fire_dot from player passive)
   if (enemy.dots && enemy.dots.length > 0) {
     enemy.dots = enemy.dots.map((dot) => {
       enemy.hp -= dot.value;
-      logs.push(`🔥 **${dot.label ?? 'DoT'}** : ${enemy.name} perd **${dot.value}** HP.`);
+      logs.push(`🔥 **${dot.label ?? 'DoT'}** : **${enemy.name}** perd **${dot.value}** HP *(${Math.max(0, enemy.hp)}/${enemy.maxHp} HP)*.`);
       return { ...dot, turns: dot.turns - 1 };
     }).filter((d) => d.turns > 0);
     if (enemy.hp <= 0) { enemy.hp = 0; return; }
   }
 
   if (enemy.stunned) {
-    logs.push(`${enemy.name} est étourdi et passe son tour.`);
+    logs.push(`💫 **${enemy.name}** est **étourdi** et passe son tour.`);
     enemy.stunned = false;
     return;
   }
@@ -56,7 +57,7 @@ function resolveEnemyTurn(enemy, player, logs, allies = []) {
   if (choice === 2) {
     const heal = enemy.restHeal ?? Math.max(1, Math.floor(enemy.maxHp * 0.15));
     enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
-    logs.push(`💤 **${enemy.name}** se repose et récupère **${heal}** HP.`);
+    logs.push(`💤 **${enemy.name}** se repose et récupère **${heal}** HP *(${enemy.hp}/${enemy.maxHp} HP)*.`);
   } else if (choice === 1 && enemy.ability && !isAlly) {
     // Abilities always target the player (complex effects)
     const ability = ABILITIES[enemy.ability];
@@ -65,17 +66,17 @@ function resolveEnemyTurn(enemy, player, logs, allies = []) {
     } else {
       const raw = rawDamage(enemy.atk, player.def);
       const dmg = Math.max(1, Math.round(raw));
-      player.hp -= dmg;
-      logs.push(`${enemy.name} vous inflige **${dmg}** dégâts.`);
+      player.hp = Math.max(0, player.hp - dmg);
+      logs.push(`🗡️ **${enemy.name}** vous attaque pour **${dmg}** dégâts *(${player.hp}/${player.maxHp} HP)*.`);
     }
   } else {
     const raw = rawDamage(enemy.atk, target.def);
     const dmg = Math.max(1, Math.round(raw));
     target.hp = Math.max(0, target.hp - dmg);
     if (isAlly) {
-      logs.push(`${enemy.name} attaque **${target.name}** et inflige **${dmg}** dégâts${target.hp <= 0 ? ' — *il tombe !*' : ''}.`);
+      logs.push(`🗡️ **${enemy.name}** attaque **${target.name}** pour **${dmg}** dégâts *(${target.hp}/${target.maxHp} HP)*${target.hp <= 0 ? ' — *il tombe !*' : ''}.`);
     } else {
-      logs.push(`${enemy.name} vous inflige **${dmg}** dégâts.`);
+      logs.push(`🗡️ **${enemy.name}** vous attaque pour **${dmg}** dégâts *(${player.hp}/${player.maxHp} HP)*.`);
     }
   }
 }
@@ -106,6 +107,21 @@ function resolveAllyTurn(ally, enemies, logs) {
   }
 }
 
+// Auto-snapshots HP after every push so the animation can replay per-action.
+class CombatLog extends Array {
+  constructor(snap) {
+    super();
+    this._snap = snap;
+    this.initialSnapshot = snap();
+    this.frames = [];
+  }
+  push(...items) {
+    const r = super.push(...items);
+    this.frames.push(this._snap());
+    return r;
+  }
+}
+
 function resolveTurn(state, playerAction, targetIndex = 0) {
   const player = {
     ...state.player,
@@ -119,7 +135,11 @@ function resolveTurn(state, playerAction, targetIndex = 0) {
   };
   const enemies = state.enemies.map((e) => ({ ...e, dots: [...(e.dots ?? [])] }));
   const allies  = (state.allies ?? []).map((a) => ({ ...a }));
-  const logs = [];
+  const logs = new CombatLog(() => ({
+    playerHp:  player.hp,
+    enemiesHp: enemies.map((e) => e.hp),
+    alliesHp:  allies.map((a) => a.hp),
+  }));
 
   // ── Flee ──────────────────────────────────────────────────────────────────
   if (playerAction === 'flee') {
@@ -127,7 +147,7 @@ function resolveTurn(state, playerAction, targetIndex = 0) {
     const fleeChance = aliveEnemy ? 0.4 + (player.spd / (player.spd + aliveEnemy.spd)) * 0.3 : 1;
     if (Math.random() < fleeChance) {
       logs.push('Vous avez **fui** le combat !');
-      return { playerState: player, enemiesState: enemies, logs, fled: true, playerDied: false, allEnemiesDead: false };
+      return { playerState: player, enemiesState: enemies, logs: Array.from(logs), frames: logs.frames, initialSnapshot: logs.initialSnapshot, fled: true, playerDied: false, allEnemiesDead: false };
     }
     logs.push('Fuite **échouée** !');
   }
@@ -135,8 +155,8 @@ function resolveTurn(state, playerAction, targetIndex = 0) {
   // ── Player DoTs ───────────────────────────────────────────────────────────
   if (player.dots.length > 0) {
     player.dots = player.dots.map((dot) => {
-      player.hp -= dot.value;
-      logs.push(`☠️ Poison: vous perdez **${dot.value}** HP.`);
+      player.hp = Math.max(0, player.hp - dot.value);
+      logs.push(`☠️ **${dot.label ?? 'Poison'}** : vous perdez **${dot.value}** HP *(${player.hp}/${player.maxHp} HP)*.`);
       return { ...dot, turns: dot.turns - 1 };
     }).filter((d) => d.turns > 0);
   }
@@ -144,7 +164,7 @@ function resolveTurn(state, playerAction, targetIndex = 0) {
   // ── Buffs decay ───────────────────────────────────────────────────────────
   if (player.buffs.length > 0) {
     player.buffs = player.buffs.map((b) => ({ ...b, turns: b.turns - 1 })).filter((b) => {
-      if (b.turns <= 0) { player[b.stat] -= b.value; logs.push(`Buff **${b.stat}** expiré.`); return false; }
+      if (b.turns <= 0) { player[b.stat] -= b.value; logs.push(`🔻 Buff **${b.stat}** expiré (-${b.value}).`); return false; }
       return true;
     });
   }
@@ -169,8 +189,8 @@ function resolveTurn(state, playerAction, targetIndex = 0) {
 
     if (playerAction === 'attack') {
       const result = playerAttack(player, target, 1.0);
-      target.hp -= result.damage;
-      logs.push(result.log);
+      target.hp = Math.max(0, target.hp - result.damage);
+      logs.push(`⚔️ **Attaque** : ${result.log}.`);
       if (target.hp <= 0) {
         target.hp = 0;
         logs.push(`☠️ **${target.name}** est vaincu !`);
@@ -214,23 +234,23 @@ function resolveTurn(state, playerAction, targetIndex = 0) {
       const effect = itemDef.effect;
       if (effect?.type === 'heal') {
         player.hp = Math.min(player.maxHp, player.hp + effect.value);
-        logs.push(`💊 **${itemDef.name}** : vous récupérez **${effect.value}** HP.`);
+        logs.push(`💊 **${itemDef.name}** : vous récupérez **${effect.value}** HP *(${player.hp}/${player.maxHp} HP)*.`);
       } else if (effect?.type === 'damage') {
         const targets = effect.aoe ? enemies.filter((e) => e.hp > 0) : [target];
         for (const t of targets) {
           t.hp = Math.max(0, t.hp - effect.value);
-          logs.push(`💣 **${itemDef.name}** inflige **${effect.value}** dégâts à **${t.name}**${t.hp <= 0 ? ' ☠️' : ''}.`);
+          logs.push(`💣 **${itemDef.name}** inflige **${effect.value}** dégâts à **${t.name}** *(${t.hp}/${t.maxHp} HP)*${t.hp <= 0 ? ' ☠️' : ''}.`);
         }
       } else if (effect?.type === 'stun') {
         target.stunned = true;
-        logs.push(`❄️ **${itemDef.name}** : **${target.name}** est étourdi pour **${effect.turns}** tour(s) !`);
+        logs.push(`❄️ **${itemDef.name}** : **${target.name}** est **étourdi** !`);
       } else if (effect?.type === 'buff') {
         player[effect.stat] = (player[effect.stat] ?? 0) + effect.value;
         player.buffs = [...(player.buffs ?? []), { stat: effect.stat, value: effect.value, turns: effect.turns }];
-        logs.push(`⚡ **${itemDef.name}** : **${effect.stat}** +${effect.value} pendant **${effect.turns}** tours.`);
+        logs.push(`⚡ **${itemDef.name}** : **${effect.stat}** +${effect.value} pendant **${effect.turns}** tours (total : ${player[effect.stat]}).`);
       } else if (effect?.type === 'dot') {
         target.dots = [...(target.dots ?? []), { id: itemId, label: itemDef.name, value: effect.value, turns: effect.turns }];
-        logs.push(`☠️ **${itemDef.name}** : **${target.name}** est empoisonné (**${effect.value}** dégâts/tour).`);
+        logs.push(`☠️ **${itemDef.name}** : **${target.name}** est empoisonné (**${effect.value}** dégâts/tour, **${effect.turns}** tours).`);
       } else if (effect?.type === 'cure_dot') {
         const count = (player.dots ?? []).length;
         player.dots = [];
@@ -245,13 +265,13 @@ function resolveTurn(state, playerAction, targetIndex = 0) {
     executePlayerAction();
     const stillAlive = enemies.filter((e) => e.hp > 0);
     for (const enemy of stillAlive) {
-      resolveEnemyTurn(enemy, player, logs, allies);
+      resolveEnemyTurn(enemy, player, logs, allies, enemies);
       if (player.hp <= 0) break;
     }
   } else {
     const stillAlive = enemies.filter((e) => e.hp > 0);
     for (const enemy of stillAlive) {
-      resolveEnemyTurn(enemy, player, logs, allies);
+      resolveEnemyTurn(enemy, player, logs, allies, enemies);
       if (player.hp <= 0) break;
     }
     if (player.hp > 0) executePlayerAction();
@@ -266,7 +286,7 @@ function resolveTurn(state, playerAction, targetIndex = 0) {
   const playerDied = player.hp <= 0;
   if (playerDied) { player.hp = 0; logs.push('💀 Vous êtes **tombé** au combat.'); }
 
-  return { playerState: player, enemiesState: enemies, alliesState: allies, logs, fled: false, playerDied, allEnemiesDead };
+  return { playerState: player, enemiesState: enemies, alliesState: allies, logs: Array.from(logs), frames: logs.frames, initialSnapshot: logs.initialSnapshot, fled: false, playerDied, allEnemiesDead };
 }
 
 module.exports = { resolveTurn, playerAttack, rawDamage };

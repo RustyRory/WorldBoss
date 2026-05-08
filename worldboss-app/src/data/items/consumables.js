@@ -73,7 +73,7 @@ module.exports = {
   // ── Arc 1-2 ──────────────────────────────────────────────────────────────
   potion_mana: {
     id: 'potion_mana',
-    name: 'Potion de mana',
+    name: 'Potion de boost',
     type: 'consumable',
     rarity: 'common',
     effect: { type: 'buff', stat: 'atk', value: 5, turns: 2 },
