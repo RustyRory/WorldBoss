@@ -2,6 +2,7 @@
 
 const { ABILITIES } = require('../data/abilities');
 const { PASSIVES }  = require('../data/passives');
+const { SKILLS }    = require('../data/skills');
 
 function rollInitiative(spd) {
   return spd + Math.random() * spd * 0.1;
@@ -202,25 +203,29 @@ function resolveTurn(state, playerAction, targetIndex = 0) {
       }
     } else if (playerAction.startsWith('skill_')) {
       const skillKey = playerAction.slice(6); // strip 'skill_'
-      const skill = (player.activeSkills ?? []).find((s) => s.key === skillKey);
-      if (!skill) { logs.push('Skill introuvable !'); return; }
+      const skillMeta = (player.activeSkills ?? []).find((s) => s.key === skillKey);
+      if (!skillMeta) { logs.push('Skill introuvable !'); return; }
+
+      // resolve is not serialisable — always pull it from the live registry
+      const skillDef = SKILLS[skillKey];
+      if (!skillDef?.resolve) { logs.push(`Skill **${skillKey}** non défini.`); return; }
 
       const cd = player.skillCooldowns[skillKey] ?? 0;
       if (cd > 0) {
-        logs.push(`**${skill.name}** en recharge encore **${cd}** tour(s) !`);
+        logs.push(`**${skillMeta.name}** en recharge encore **${cd}** tour(s) !`);
         return;
       }
-      if (skill.oncePerCombat && player.usedOnceSkills.includes(skillKey)) {
-        logs.push(`**${skill.name}** déjà utilisé ce combat !`);
+      if (skillMeta.oncePerCombat && player.usedOnceSkills.includes(skillKey)) {
+        logs.push(`**${skillMeta.name}** déjà utilisé ce combat !`);
         return;
       }
 
-      skill.resolve(player, target, logs, { playerAttack });
+      skillDef.resolve(player, target, logs, { playerAttack });
 
-      if (skill.oncePerCombat) {
+      if (skillMeta.oncePerCombat) {
         player.usedOnceSkills.push(skillKey);
       } else {
-        player.skillCooldowns[skillKey] = skill.cooldown ?? 0;
+        player.skillCooldowns[skillKey] = skillMeta.cooldown ?? 0;
       }
     } else if (playerAction.startsWith('item_')) {
       const { ITEMS } = require('../data/items');

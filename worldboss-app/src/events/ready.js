@@ -1,6 +1,7 @@
 'use strict';
 
 const { Events } = require('discord.js');
+const { prisma } = require('../db/prisma');
 const { ensureItemsSeeded } = require('../services/player.service');
 const { ensureGuildInDb, initGuildChannels, updateGuildChannels } = require('../services/guild.service');
 const { refreshInfoPanel } = require('../services/infoPanel.service');
@@ -49,5 +50,19 @@ module.exports = {
     } catch (err) {
       console.error('[Merchant] Erreur restauration boutiques:', err.message);
     }
+
+    // Rafraîchit le panel wb-info toutes les heures sur tous les serveurs
+    setInterval(async () => {
+      for (const guild of client.guilds.cache.values()) {
+        try {
+          const guildChannels = await prisma.guildChannels.findUnique({ where: { guildId: guild.id } });
+          if (guildChannels?.infoChannelId) {
+            await refreshInfoPanel(client, guild, guildChannels.infoChannelId);
+          }
+        } catch (err) {
+          console.error(`[InfoPanel] Erreur refresh ${guild.name}:`, err.message);
+        }
+      }
+    }, 60 * 60 * 1000);
   },
 };
