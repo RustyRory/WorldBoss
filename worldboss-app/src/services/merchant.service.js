@@ -14,10 +14,11 @@ const SHOP_PRICE_MULT   = 3;
 
 const EQUIP_TYPES = ['weapon', 'armor', 'helmet', 'boots', 'accessory'];
 
+const _redisUrl = process.env.REDIS_URL ? new URL(process.env.REDIS_URL) : null;
 const redisConnection = {
-  host: process.env.REDIS_HOST ?? 'localhost',
-  port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
-  password: process.env.REDIS_PASSWORD ?? undefined,
+  host: _redisUrl?.hostname ?? process.env.REDIS_HOST ?? 'localhost',
+  port: _redisUrl ? parseInt(_redisUrl.port || '6379', 10) : parseInt(process.env.REDIS_PORT ?? '6379', 10),
+  password: _redisUrl?.password || process.env.REDIS_PASSWORD || undefined,
 };
 
 const shopResetQueue   = new Queue('shop-reset',   { connection: redisConnection });
