@@ -632,17 +632,16 @@ Lvl 50  → Boss final : Empereur des Sables
 
 ### Phase 3
 
-- [ ] PvP 1v1
-- [ ] Leaderboard global
-- [ ] Quêtes journalières/hebdomadaires
-- [ ] Hauts faits + rôles Discord automatiques
+- [ ] Arènes 4v4
+- [ ] Guild Wars inter-serveurs
+- [ ] Ranked ELO + saisons
 
 ### Phase 4
 
-- [ ] Arènes 3v3 / 4v4
-- [ ] Guild Wars inter-serveurs
-- [ ] Ranked ELO + saisons
 - [ ] Infinite Dungeon
+- [ ] Leaderboard global
+- [ ] Quêtes journalières/hebdomadaires
+- [ ] Hauts faits + rôles Discord automatiques
 
 ### Phase 5
 

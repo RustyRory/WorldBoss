@@ -7,7 +7,7 @@ const { ITEMS } = require('../data/items');
 async function getCharacter(userId, guildId) {
   return prisma.character.findUnique({
     where: { userId_guildId: { userId, guildId } },
-    include: { loadout: true },
+    include: { loadout: true, user: { select: { username: true } } },
   });
 }
 
@@ -23,7 +23,7 @@ async function characterExists(userId, guildId) {
  * Create a brand-new character for a player on a guild.
  * Gives starting items and equips weapon + armor by default.
  */
-async function createCharacter(userId, username, guildId) {
+async function createCharacter(userId, username, guildId, characterName) {
   const base = baseStats(1);
 
   await ensureItemsSeeded();
@@ -40,6 +40,7 @@ async function createCharacter(userId, username, guildId) {
       data: {
         userId,
         guildId,
+        name: characterName || username,
         level: 1,
         xp: 0,
         gold: 0,

@@ -6,7 +6,8 @@ const AP_MAX = 10;
 const AP_RECHARGE_MS = 2 * 60 * 60 * 1000; // 1 PA toutes les 2 heures
 
 const AP_COST = {
-  sell: 1,
+  sell:  1,
+  prime: 1,
 };
 
 function computeCurrentAP(character) {

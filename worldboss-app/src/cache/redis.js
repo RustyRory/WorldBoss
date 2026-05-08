@@ -63,6 +63,22 @@ async function deleteDungeonState(characterId) {
   await redis.del(`dungeon:${characterId}`);
 }
 
+// ── Helper: prime combat state ──────────────────────────────────────────────
+const PRIME_TTL = 60 * 60 * 2; // 2 hours
+
+async function getPrimeCombatState(primeRunId) {
+  const raw = await redis.get(`prime:${primeRunId}`);
+  return raw ? JSON.parse(raw) : null;
+}
+
+async function setPrimeCombatState(primeRunId, state) {
+  await redis.set(`prime:${primeRunId}`, JSON.stringify(state), 'EX', PRIME_TTL);
+}
+
+async function deletePrimeCombatState(primeRunId) {
+  await redis.del(`prime:${primeRunId}`);
+}
+
 module.exports = {
   redis,
   getCombatState,
@@ -74,4 +90,7 @@ module.exports = {
   getDungeonState,
   setDungeonState,
   deleteDungeonState,
+  getPrimeCombatState,
+  setPrimeCombatState,
+  deletePrimeCombatState,
 };

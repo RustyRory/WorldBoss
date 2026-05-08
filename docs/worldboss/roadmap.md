@@ -2,7 +2,7 @@
 
 ---
 
-## MVP — Jouable solo donjon lvl 1 à 3 *(en cours)*
+## MVP — Jouable solo donjon lvl 1 à 5 *(en cours)*
 
 Objectif : un bot jouable sur un serveur, avec les donjons solo du chapitre 1 (3 salles + boss), la structure de channels automatique, et le World Boss coopératif de base.
 
@@ -56,10 +56,8 @@ Structure : **3 salles** progressives, déblocables par niveau + progression.
 
 ## Phase 2 — Économie & Contenu
 
-- [ ] **Marchand** — channel `wb-marchand` actif après le boss donjon 3 : vente/achat entre joueurs (enchères), achat direct, stock marchand refresh toutes les heures
-- [ ] **Loot complet** — tables de drop par salle, choix parmi 2–3 items après boss
-- [ ] **Reset automatique World Boss** — cron BullMQ (lundi 00h00 UTC)
-- [ ] **Chapitres 4–6** (suite de la progression donjon solo)
+- [ ] **Marchand** — channel `wb-marchand` actif après le boss donjon 3 : vente/achat entre joueurs (enchères), achat direct, stock marchand refresh toutes les 8 heures
+- [ ] **Loot complet** — tables de drop par salle.
 
 ---
 
@@ -68,7 +66,6 @@ Structure : **3 salles** progressives, déblocables par niveau + progression.
 - [ ] **Quêtes journalières / hebdomadaires**
 - [ ] **Leaderboard global** inter-serveurs
 - [ ] **Hauts faits** + rôles Discord automatiques
-- [ ] **PvP 1v1** entre joueurs du même serveur
 
 ---
 

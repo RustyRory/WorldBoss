@@ -3,7 +3,7 @@
 const { DUNGEONS } = require('../data/dungeons');
 const { ENEMIES } = require('../data/enemies');
 
-function createDungeonState(characterId, guildId, chapter) {
+function createDungeonState(characterId, guildId, chapter, replayMode = false) {
   const dungeon = DUNGEONS[chapter];
   if (!dungeon) throw new Error(`Unknown chapter: ${chapter}`);
 
@@ -15,6 +15,7 @@ function createDungeonState(characterId, guildId, chapter) {
     totalRooms: dungeon.rooms.length,
     rooms: dungeon.rooms.map((r) => ({ ...r, completed: false })),
     enemiesFought: [],
+    replayMode,
     status: 'active',
   };
 }
