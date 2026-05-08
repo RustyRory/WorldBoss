@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Identité Discord — existe indépendamment des serveurs
+model User {
+  id         String   @id // Discord user ID
+  username   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  characters Character[]
+}
+
+// Personnage d'un joueur sur un serveur Discord spécifique
+model Character {
+  id                    Int      @id @default(autoincrement())
+  userId                String
+  guildId               String
+  name                  String   @default("")
+  level                 Int      @default(1)
+  xp                    Int      @default(0)
+  gold                  Int      @default(0)
+  hp                    Int      @default(120)
+  hpUpdatedAt           DateTime @default(now())
+  actionPoints          Int      @default(10)
+  actionPointsUpdatedAt DateTime @default(now())
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guild           Guild           @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  items           CharacterItem[]
+  loadout         Loadout?
+  dungeonRuns     DungeonRun[]
+  marketListings      MarketListing[]    @relation("MarketSeller")
+  marketBids          MarketListing[]    @relation("MarketBidder")
+  primeParticipations PrimeParticipant[]
+
+  @@unique([userId, guildId])
+}
+
+model Item {
+  id            String @id // e.g. 'sword_rusty'
+  name          String
+  type          String // weapon | armor | helmet | boots | accessory | consumable
+  rarity        String // common | rare | epic | legendary
+  statsJson     Json   @default("{}")
+  skillJson     Json?
+  effectJson    Json?
+  price         Int    @default(0)
+  levelRequired Int    @default(1)
+
+  characterItems CharacterItem[]
+}
+
+model CharacterItem {
+  id          Int      @id @default(autoincrement())
+  characterId Int
+  itemId      String
+  quantity    Int      @default(1)
+  createdAt   DateTime @default(now())
+
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  item        Item      @relation(fields: [itemId], references: [id])
+
+  @@unique([characterId, itemId])
+}
+
+model Loadout {
+  id           Int     @id @default(autoincrement())
+  characterId  Int     @unique
+  weaponId     String?
+  armorId      String?
+  helmetId     String?
+  bootsId      String?
+  accessory1Id String?
+  accessory2Id String?
+
+  character    Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+}
+
+model DungeonRun {
+  id          Int      @id @default(autoincrement())
+  characterId Int
+  chapter     Int
+  status      String   @default("active") // active | completed | failed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+}
+
+// ── Guildes (serveurs Discord) ────────────────────────────────────────────────
+
+model Guild {
+  id        String   @id // Discord guild ID
+  name      String
+  ownerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  channels      GuildChannels?
+  characters    Character[]
+  merchantShop  MerchantShop?
+}
+
+model GuildChannels {
+  id               Int     @id @default(autoincrement())
+  guildId          String  @unique
+  categoryId       String?
+  infoChannelId    String?
+  generalChannelId String?
+  dungeonChannelId String?
+  marketChannelId  String?
+
+  guild            Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+}
+
+model MerchantShop {
+  id        Int      @id @default(autoincrement())
+  guildId   String   @unique
+  gold      Int      @default(5000)
+  stockJson String   @default("[]")
+  messageId String?
+  resetAt   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  guild     Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+}
+
+model PrimeRun {
+  id          Int      @id @default(autoincrement())
+  guildId     String
+  primeId     Int
+  leaderId    Int
+  status      String   @default("recruiting") // recruiting | active | completed | failed
+  messageId   String?
+  channelId   String?
+  roomIndex   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  participants PrimeParticipant[]
+}
+
+model PrimeParticipant {
+  id          Int      @id @default(autoincrement())
+  primeRunId  Int
+  characterId Int
+  isLeader    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  primeRun    PrimeRun  @relation(fields: [primeRunId], references: [id], onDelete: Cascade)
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([primeRunId, characterId])
+}
+
+model MarketListing {
+  id          Int       @id @default(autoincrement())
+  guildId     String
+  sellerId    Int
+  itemId      String
+  quantity    Int       @default(1)
+  type        String    // "auction" | "merchant"
+  startPrice  Int
+  buyoutPrice Int?
+  currentBid  Int?
+  bidderId    Int?
+  messageId   String?   // Discord message ID pour éditer l'embed
+  status      String    @default("active") // active | sold | expired | cancelled
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  seller      Character  @relation("MarketSeller", fields: [sellerId], references: [id])
+  bidder      Character? @relation("MarketBidder", fields: [bidderId], references: [id])
+}

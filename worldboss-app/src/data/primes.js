@@ -1,0 +1,34 @@
+'use strict';
+
+const PRIMES = {
+  1: {
+    id: 1,
+    name: 'Les Catacombes — Expédition Élite',
+    lore: 'Vous trouvez la source de la corruption : un nécromancien maléfique a pris le contrôle des squelettes. Il doit être arrêté avant que les catacombes ne deviennent un véritable cimetière pour les vivants...',
+    levelRequired: 5,
+    rooms: [
+      {
+        room: 1,
+        enemies: ['skeleton_warlord', 'skeleton_warlord', 'skeleton_warlord', 'skeleton_warlord'],
+        description: 'La salle des champions déchus. Quatre chefs de guerre squelettes se tiennent côte à côte — les lieutenants du nécromancien. Leurs armures brisées portent encore les stigmates de batailles épiques. Un cri de guerre résonne dans la pierre.',
+        // Stats adaptées 4v4 : HP ×3.5, ATK ×1.5 par rapport au solo
+        enemyStats: {
+          skeleton_warlord: { hp: 420, maxHp: 420, atk: 22, def: 9, restHeal: 25 },
+        },
+      },
+      {
+        room: 2,
+        enemies: ['skeleton_king', 'necromancer', 'skeleton_warlord', 'skeleton_warlord'],
+        description: 'La chambre profanée. Un nécromancien en robe noire psalmodie au centre d\'un cercle runique, ses mains levées vers un roi squelette couronné qui flotte au-dessus du sol. *"Encore des intrus... Montrez-leur la puissance de la mort !"*',
+        // Élites boostés davantage (HP ×4, ATK ×1.8) pour une boss room menaçante
+        enemyStats: {
+          skeleton_king:    { hp: 600, maxHp: 600, atk: 40, def: 1,  restHeal: 35, crit: 12 },
+          necromancer:      { hp: 280, maxHp: 280, atk: 24, def: 5,  restHeal: 20 },
+          skeleton_warlord: { hp: 420, maxHp: 420, atk: 22, def: 9,  restHeal: 25 },
+        },
+      },
+    ],
+  },
+};
+
+module.exports = { PRIMES };

@@ -1,0 +1,26 @@
+{
+  "name": "worldboss",
+  "version": "1.0.0",
+  "description": "WorldBoss — Discord RPG Bot",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "deploy": "node src/deploy-commands.js",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.10.2",
+    "bullmq": "^5.4.2",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "ioredis": "^5.3.2",
+    "prisma": "^5.10.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

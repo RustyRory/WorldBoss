@@ -1,0 +1,148 @@
+'use strict';
+
+// usableOutOfCombat : peut être utilisé depuis l'inventaire hors combat
+// infiniteUse       : non consommé quand utilisé en combat (usage illimité)
+module.exports = {
+  potion_heal: {
+    id: 'potion_heal',
+    name: 'Potion de soin',
+    type: 'consumable',
+    rarity: 'common',
+    effect: { type: 'heal', value: 30 },
+    usableOutOfCombat: true,
+    infiniteUse: false,
+    price: 25,
+    levelRequired: 1,
+  },
+  elixir_ap: {
+    id: 'elixir_ap',
+    name: 'Élixir de volonté',
+    type: 'consumable',
+    rarity: 'rare',
+    effect: { type: 'restore_ap', value: 3 },
+    usableOutOfCombat: true,
+    infiniteUse: false,
+    price: 120,
+    levelRequired: 1,
+  },
+  bomb: {
+    id: 'bomb',
+    name: 'Bombe',
+    type: 'consumable',
+    rarity: 'common',
+    effect: { type: 'damage', value: 25, aoe: true },
+    usableOutOfCombat: false,
+    infiniteUse: false,
+    price: 40,
+    levelRequired: 1,
+  },
+  scroll_ice: {
+    id: 'scroll_ice',
+    name: 'Parchemin de glace',
+    type: 'consumable',
+    rarity: 'rare',
+    effect: { type: 'stun', turns: 2 },
+    usableOutOfCombat: false,
+    infiniteUse: false,
+    price: 80,
+    levelRequired: 3,
+  },
+  potion_speed: {
+    id: 'potion_speed',
+    name: 'Potion de vitesse',
+    type: 'consumable',
+    rarity: 'rare',
+    effect: { type: 'buff', stat: 'spd', value: 5, turns: 3 },
+    usableOutOfCombat: false,
+    infiniteUse: false,
+    price: 60,
+    levelRequired: 2,
+  },
+  poison_vial: {
+    id: 'poison_vial',
+    name: 'Fiole de poison',
+    type: 'consumable',
+    rarity: 'rare',
+    effect: { type: 'dot', value: 10, turns: 3 },
+    usableOutOfCombat: false,
+    infiniteUse: false,
+    price: 70,
+    levelRequired: 3,
+  },
+
+  // ── Arc 1-2 ──────────────────────────────────────────────────────────────
+  potion_mana: {
+    id: 'potion_mana',
+    name: 'Potion de boost',
+    type: 'consumable',
+    rarity: 'common',
+    effect: { type: 'buff', stat: 'atk', value: 5, turns: 2 },
+    usableOutOfCombat: false,
+    infiniteUse: false,
+    price: 35,
+    levelRequired: 1,
+  },
+
+  // ── Arc 3-4 ──────────────────────────────────────────────────────────────
+  antidote: {
+    id: 'antidote',
+    name: 'Antidote',
+    type: 'consumable',
+    rarity: 'common',
+    effect: { type: 'cure_dot' },
+    usableOutOfCombat: true,
+    infiniteUse: false,
+    price: 30,
+    levelRequired: 1,
+  },
+
+  smoke_bomb: {
+    id: 'smoke_bomb',
+    name: 'Bombe fumigène',
+    type: 'consumable',
+    rarity: 'rare',
+    effect: { type: 'stun', turns: 1, aoe: true },
+    usableOutOfCombat: false,
+    infiniteUse: false,
+    price: 90,
+    levelRequired: 7,
+  },
+
+  // ── Arc 5-6 ──────────────────────────────────────────────────────────────
+  elixir_berserk: {
+    id: 'elixir_berserk',
+    name: 'Élixir berserker',
+    type: 'consumable',
+    rarity: 'rare',
+    effect: { type: 'buff', stat: 'atk', value: 15, turns: 2 },
+    usableOutOfCombat: false,
+    infiniteUse: false,
+    price: 100,
+    levelRequired: 8,
+  },
+
+  elixir_iron: {
+    id: 'elixir_iron',
+    name: 'Élixir de fer',
+    type: 'consumable',
+    rarity: 'rare',
+    effect: { type: 'buff', stat: 'def', value: 15, turns: 3 },
+    usableOutOfCombat: false,
+    infiniteUse: false,
+    price: 90,
+    levelRequired: 6,
+  },
+
+  // ── Arc 6 ─────────────────────────────────────────────────────────────────
+  scroll_fire: {
+    id: 'scroll_fire',
+    name: 'Parchemin de feu',
+    type: 'consumable',
+    rarity: 'rare',
+    effect: { type: 'damage', value: 40 },
+    usableOutOfCombat: false,
+    infiniteUse: false,
+    price: 75,
+    levelRequired: 5,
+  },
+};
