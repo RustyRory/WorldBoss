@@ -160,4 +160,165 @@ module.exports = {
       if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
     },
   },
+
+  // ── Arc 1 — Catacombes ────────────────────────────────────────────────────
+
+  quick_cut: {
+    name: 'Entaille rapide',
+    oncePerCombat: false,
+    cooldown: 1,
+    resolve(player, target, logs, { playerAttack }) {
+      const result = playerAttack(player, target, 1.2);
+      target.hp = Math.max(0, target.hp - result.damage);
+      logs.push(`🗡️ **Entaille rapide** : ${result.log}.`);
+      if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
+    },
+  },
+
+  bone_smash: {
+    name: 'Coup d\'os',
+    oncePerCombat: false,
+    cooldown: 1,
+    resolve(player, target, logs, { playerAttack }) {
+      const result = playerAttack(player, target, 1.4);
+      target.hp = Math.max(0, target.hp - result.damage);
+      target.def = Math.max(0, target.def - 2);
+      logs.push(`🦴 **Coup d'os** : ${result.log} + DEF réduite de 2 *(DEF : ${target.def})*.`);
+      if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
+    },
+  },
+
+  crypt_bolt: {
+    name: 'Trait de crypte',
+    oncePerCombat: false,
+    cooldown: 1,
+    resolve(player, target, logs, { playerAttack }) {
+      const result = playerAttack(player, target, 1.3);
+      target.hp = Math.max(0, target.hp - result.damage);
+      const dot = { id: 'bone_chill', label: 'Froid Osseux', value: 2, turns: 2 };
+      const existing = (target.dots ?? []).findIndex((d) => d.id === 'bone_chill');
+      if (existing !== -1) target.dots[existing] = dot;
+      else target.dots = [...(target.dots ?? []), dot];
+      logs.push(`💀 **Trait de crypte** : ${result.log} + Froid Osseux (2 dégâts/tour, 2 tours).`);
+      if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
+    },
+  },
+
+  tomb_slash: {
+    name: 'Taille de la tombe',
+    oncePerCombat: false,
+    cooldown: 2,
+    resolve(player, target, logs, { playerAttack }) {
+      const result = playerAttack(player, target, 1.5);
+      target.hp = Math.max(0, target.hp - result.damage);
+      const dot = { id: 'bleed', label: 'Saignement', value: 3, turns: 2 };
+      const existing = (target.dots ?? []).findIndex((d) => d.id === 'bleed');
+      if (existing !== -1) target.dots[existing] = dot;
+      else target.dots = [...(target.dots ?? []), dot];
+      logs.push(`⚰️ **Taille de la tombe** : ${result.log} + Saignement (3 dégâts/tour, 2 tours).`);
+      if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
+    },
+  },
+
+  bone_arrow: {
+    name: 'Flèche d\'os',
+    oncePerCombat: false,
+    cooldown: 1,
+    resolve(player, target, logs, { playerAttack }) {
+      const savedDef = target.def;
+      target.def = Math.floor(target.def * 0.7);
+      const result = playerAttack(player, target, 1.4);
+      target.def = savedDef;
+      target.hp = Math.max(0, target.hp - result.damage);
+      logs.push(`🏹 **Flèche d'os** : ${result.log} *(ignore 30% DEF)*.`);
+      if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
+    },
+  },
+
+  impale: {
+    name: 'Empalage',
+    oncePerCombat: false,
+    cooldown: 2,
+    resolve(player, target, logs, { playerAttack }) {
+      const result = playerAttack(player, target, 1.6);
+      target.hp = Math.max(0, target.hp - result.damage);
+      const dot = { id: 'bleed', label: 'Saignement', value: 4, turns: 3 };
+      const existing = (target.dots ?? []).findIndex((d) => d.id === 'bleed');
+      if (existing !== -1) target.dots[existing] = dot;
+      else target.dots = [...(target.dots ?? []), dot];
+      logs.push(`🗡️ **Empalage** : ${result.log} + Saignement (4 dégâts/tour, 3 tours).`);
+      if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
+    },
+  },
+
+  dark_bolt: {
+    name: 'Éclair des ténèbres',
+    oncePerCombat: false,
+    cooldown: 2,
+    resolve(player, target, logs, { playerAttack }) {
+      const result = playerAttack(player, target, 1.5);
+      target.hp = Math.max(0, target.hp - result.damage);
+      target.def = Math.max(0, target.def - 3);
+      logs.push(`🌑 **Éclair des ténèbres** : ${result.log} + DEF réduite de 3 *(DEF : ${target.def})*.`);
+      if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
+    },
+  },
+
+  // ── Armes diverses ────────────────────────────────────────────────────────
+
+  cleave: {
+    name: 'Taillade',
+    oncePerCombat: false,
+    cooldown: 2,
+    resolve(player, target, logs, { playerAttack }) {
+      const result = playerAttack(player, target, 1.5);
+      target.hp = Math.max(0, target.hp - result.damage);
+      target.def = Math.max(0, target.def - 3);
+      logs.push(`🪓 **Taillade** : ${result.log} + DEF réduite de 3 *(DEF : ${target.def})*.`);
+      if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
+    },
+  },
+
+  hunters_mark: {
+    name: 'Marque du chasseur',
+    oncePerCombat: false,
+    cooldown: 2,
+    resolve(player, target, logs, { playerAttack }) {
+      const result = playerAttack(player, target, 1.3);
+      target.hp = Math.max(0, target.hp - result.damage);
+      const buffVal = 15;
+      player.crit += buffVal;
+      player.buffs = [...(player.buffs ?? []), { stat: 'crit', value: buffVal, turns: 2 }];
+      logs.push(`🎯 **Marque du chasseur** : ${result.log} + CRIT +${buffVal}% pour 2 tours.`);
+      if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
+    },
+  },
+
+  precise_bolt: {
+    name: 'Tir de précision',
+    oncePerCombat: false,
+    cooldown: 2,
+    resolve(player, target, logs, { playerAttack }) {
+      const savedDef = target.def;
+      target.def = Math.floor(target.def * 0.5);
+      const result = playerAttack(player, target, 1.5);
+      target.def = savedDef;
+      target.hp = Math.max(0, target.hp - result.damage);
+      logs.push(`🎯 **Tir de précision** : ${result.log} *(ignore 50% DEF)*.`);
+      if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
+    },
+  },
+
+  steam_shot: {
+    name: 'Tir à vapeur',
+    oncePerCombat: false,
+    cooldown: 3,
+    resolve(player, target, logs, { playerAttack }) {
+      const result = playerAttack(player, target, 1.7);
+      target.hp = Math.max(0, target.hp - result.damage);
+      if (target.hp > 0) target.stunned = true;
+      logs.push(`💨 **Tir à vapeur** : ${result.log}${target.hp > 0 ? ' + **étourdi** !' : '.'}`);
+      if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
+    },
+  },
 };

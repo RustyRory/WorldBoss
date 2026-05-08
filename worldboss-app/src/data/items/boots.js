@@ -12,6 +12,32 @@ module.exports = {
     price: 20,
     levelRequired: 1,
   },
+
+  // ── Arc 1 — Catacombes ───────────────────────────────────────────────────
+  bone_wraps: {
+    id: 'bone_wraps',
+    name: 'Bandelettes d\'os',
+    type: 'boots',
+    rarity: 'common',
+    stats: { spd: 2 },
+    skill: null,
+    passive: null,
+    price: 15,
+    levelRequired: 1,
+  },
+
+  grave_boots: {
+    id: 'grave_boots',
+    name: 'Bottes de la tombe',
+    type: 'boots',
+    rarity: 'rare',
+    stats: { spd: 3, def: 2 },
+    skill: null,
+    passive: null,
+    price: 110,
+    levelRequired: 3,
+  },
+
   boots_light: {
     id: 'boots_light',
     name: 'Bottes légères',

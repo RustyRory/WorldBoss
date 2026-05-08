@@ -46,6 +46,43 @@ module.exports = {
     levelRequired: 5,
   },
 
+  // ── Arc 1 — Catacombes ───────────────────────────────────────────────────
+  bone_vest: {
+    id: 'bone_vest',
+    name: 'Gilet d\'os',
+    type: 'armor',
+    rarity: 'common',
+    stats: { hp: 10, def: 2 },
+    skill: null,
+    passive: null,
+    price: 35,
+    levelRequired: 1,
+  },
+
+  crypt_shroud: {
+    id: 'crypt_shroud',
+    name: 'Linceul de crypte',
+    type: 'armor',
+    rarity: 'common',
+    stats: { hp: 14, def: 3 },
+    skill: null,
+    passive: null,
+    price: 60,
+    levelRequired: 2,
+  },
+
+  grave_plate: {
+    id: 'grave_plate',
+    name: 'Plaque funèbre',
+    type: 'armor',
+    rarity: 'rare',
+    stats: { hp: 28, def: 9 },
+    skill: null,
+    passive: null,
+    price: 190,
+    levelRequired: 4,
+  },
+
   // ── Arc 1-2 ──────────────────────────────────────────────────────────────
   robe_cloth: {
     id: 'robe_cloth',

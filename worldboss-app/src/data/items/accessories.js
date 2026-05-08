@@ -46,6 +46,55 @@ module.exports = {
     levelRequired: 5,
   },
 
+  // ── Arc 1 — Catacombes ───────────────────────────────────────────────────
+  bone_fragment: {
+    id: 'bone_fragment',
+    name: 'Fragment d\'os',
+    type: 'accessory',
+    rarity: 'common',
+    stats: { hp: 8 },
+    skill: null,
+    passive: null,
+    price: 20,
+    levelRequired: 1,
+  },
+
+  skull_pendant: {
+    id: 'skull_pendant',
+    name: 'Pendentif de crâne',
+    type: 'accessory',
+    rarity: 'rare',
+    stats: { atk: 3, hp: 10 },
+    skill: null,
+    passive: 'cursed_strike',
+    price: 120,
+    levelRequired: 2,
+  },
+
+  ghost_talisman: {
+    id: 'ghost_talisman',
+    name: 'Talisman fantôme',
+    type: 'accessory',
+    rarity: 'rare',
+    stats: { hp: 20 },
+    skill: 'spirit_ward',
+    passive: null,
+    price: 200,
+    levelRequired: 3,
+  },
+
+  necro_seal: {
+    id: 'necro_seal',
+    name: 'Sceau nécromantique',
+    type: 'accessory',
+    rarity: 'rare',
+    stats: { atk: 4, def: 2 },
+    skill: 'dark_bolt',
+    passive: 'bleed',
+    price: 260,
+    levelRequired: 4,
+  },
+
   // ── Arc 1-2 ──────────────────────────────────────────────────────────────
   amulet_bone: {
     id: 'amulet_bone',

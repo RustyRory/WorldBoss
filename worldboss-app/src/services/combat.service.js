@@ -249,18 +249,14 @@ async function handleCombatButton(interaction) {
           }
         }
 
-        // Si level up, addXp a déjà mis les HP à fond — ne pas écraser
-        if (!xpResult.leveledUp) {
-          await prisma.character.update({
-            where: { id: characterId },
-            data: { hp: state.player.hp, hpUpdatedAt: new Date() },
-          });
-        }
-
         const { baseStats, computeStats } = require('../utils/stats');
         const finalChar  = await prisma.character.findUnique({ where: { id: characterId }, include: { loadout: true } });
         const finalMaxHp = computeStats(finalChar, finalChar.loadout ?? {}).hp;
-        const finalHp    = finalChar.hp;
+        const finalHp    = xpResult.leveledUp ? finalMaxHp : state.player.hp;
+        await prisma.character.update({
+          where: { id: characterId },
+          data: { hp: finalHp, hpUpdatedAt: new Date() },
+        });
 
         const lootLines  = droppedNames.map((n) => `> 🎁 **${n}**`).join('\n');
         const specialMsg = !state.replayMode ? (dungeon?.reward?.message ?? null) : null;
@@ -293,8 +289,12 @@ async function handleCombatButton(interaction) {
           const afterLvl = await prisma.character.findUnique({ where: { id: characterId }, include: { loadout: true } });
           const { computeStats } = require('../utils/stats');
           newMaxHp = computeStats(afterLvl, afterLvl.loadout ?? {}).hp;
-          newHp    = afterLvl.hp;
+          newHp    = newMaxHp;
           healDesc = `✨ Level up — HP restaurés à **${newHp}/${newMaxHp}** !`;
+          await prisma.character.update({
+            where: { id: characterId },
+            data: { hp: newHp, hpUpdatedAt: new Date() },
+          });
         } else if (state.replayMode) {
           // Rejeu : pas de heal entre les salles
           newMaxHp = state.player.maxHp;

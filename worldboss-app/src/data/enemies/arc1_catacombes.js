@@ -17,7 +17,7 @@ module.exports = {
     xp: 12,
     ability: null,
     gold: { min: 1, max: 3 },
-    loot: ['sword_rusty', 'helmet_broken', 'ring_wood', 'potion_heal'],
+    loot: ['bone_club', 'bone_vest', 'skull_cap', 'bone_fragment', 'bone_wraps', 'potion_heal', 'ring_wood'],
   },
 
   skeleton_archer: {
@@ -33,7 +33,7 @@ module.exports = {
     xp: 18,
     ability: 'precise_shot',
     gold: { min: 1, max: 3 },
-    loot: ['bow_wooden', 'cloth_simple', 'potion_heal'],
+    loot: ['bow_wooden', 'bone_wraps', 'skull_cap', 'cloth_simple', 'potion_heal', 'bone_fragment'],
   },
 
   skeleton_mage: {
@@ -49,7 +49,7 @@ module.exports = {
     xp: 22,
     ability: 'fireball',
     gold: { min: 2, max: 4 },
-    loot: ['staff_bone', 'robe_cloth', 'ring_power', 'potion_mana'],
+    loot: ['grave_staff', 'crypt_shroud', 'skull_pendant', 'robe_cloth', 'ring_power', 'potion_mana'],
   },
 
   skeleton_knight: {
@@ -65,7 +65,7 @@ module.exports = {
     xp: 28,
     ability: 'shield_bash',
     gold: { min: 3, max: 6 },
-    loot: ['sword_steel', 'iron_armor', 'potion_heal'],
+    loot: ['tomb_sword', 'grave_plate', 'catacomb_hood', 'grave_boots', 'sword_steel', 'potion_heal'],
   },
 
   skeleton_warlord: {
@@ -81,7 +81,7 @@ module.exports = {
     xp: 45,
     ability: 'war_cry',
     gold: { min: 5, max: 8 },
-    loot: ['axe_heavy', 'iron_armor', 'potion_heal', 'potion_mana', 'amulet_bone'],
+    loot: ['catacomb_spear', 'grave_plate', 'ghost_talisman', 'axe_heavy', 'amulet_bone', 'potion_heal', 'elixir_iron'],
   },
 
   skeleton_king: {
@@ -97,9 +97,9 @@ module.exports = {
     xp: 55,
     ability: 'bone_shield',
     gold: { min: 6, max: 10 },
-    loot: ['sword_steel', 'iron_armor', 'potion_heal', 'potion_mana', 'circlet_bone', 'talisman_old'],
+    loot: ['tomb_sword', 'grave_plate', 'catacomb_hood', 'ghost_talisman', 'circlet_bone', 'talisman_old', 'potion_heal'],
     elite: true,
-    eliteDrops: ['circlet_bone', 'talisman_old'],
+    eliteDrops: ['ghost_talisman', 'catacomb_hood'],
   },
 
   necromancer: {
@@ -115,8 +115,8 @@ module.exports = {
     xp: 48,
     ability: 'necromancer_power',
     gold: { min: 4, max: 7 },
-    loot: ['book_fire', 'magic_robe', 'potion_mana', 'bomb', 'staff_bone', 'ring_power'],
+    loot: ['dark_grimoire', 'necro_seal', 'skull_pendant', 'book_fire', 'magic_robe', 'potion_mana', 'bomb'],
     elite: true,
-    eliteDrops: ['book_fire', 'magic_robe'],
+    eliteDrops: ['dark_grimoire', 'necro_seal'],
   },
 };

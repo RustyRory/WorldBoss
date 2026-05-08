@@ -33,43 +33,85 @@ Référence complète de toutes les données statiques du jeu.
 
 > Raretés : `common` · `rare` · `epic` · `legendary`
 
+Types d'armes disponibles dans le jeu (référence lore) :
+Arbalètes · Arcs · Armes d'hast (lances, faux, hallebardes) · Baguettes · Bâtons magiques · Boomerangs
+Boucliers · Cartes magiques · Couteaux de lancer · Dagues · Épées (1H/2H) · Explosifs
+Fléaux d'armes · Fusils · Grimoires · Haches (1H/2H) · Gants armés · Kunais
+Lance-pierres · Masses (1H/2H) · Orbes magiques · Pistolets · Sarbacanes · Shurikens
+
+---
+
 ### Armes
+
+> Toutes les armes ont un skill actif. `Passive` = déclenchée automatiquement après chaque attaque.
+
+#### Arc 1 — Catacombes (niveaux 1–4)
 
 | ID | Nom | Rareté | ATK | Bonus | Skill | Passive | Prix | Niv. |
 |---|---|---|---|---|---|---|---|---|
-| `fists` | Poings | common | 3 | — | — | — | 0 | 1 |
-| `sword_rusty` | Épée rouillée | common | 5 | — | — | — | 100 | 2 |
-| `bow_wooden` | Arc en bois | common | 4 | crit +10 | — | — | 60 | 1 |
-| `staff_bone` | Bâton d'os | common | 6 | — | bone_bolt | — | 80 | 2 |
-| `sword_steel` | Lame d'acier | rare | 8 | crit +5 | — | — | 150 | 3 |
-| `spear_iron` | Lance de fer | rare | 10 | def +2 | — | — | 160 | 3 |
-| `book_fire` | Livre de feu | rare | 5 | — | firebolt | fire_dot | 200 | 4 |
-| `dagger_shadow` | Dague de l'ombre | rare | 7 | crit +15 | — | poison_dot | 190 | 4 |
-| `axe_heavy` | Hache lourde | rare | 12 | spd -2 | — | — | 180 | 5 |
-| `crossbow_steel` | Arbalète d'acier | rare | 9 | crit +12 | — | — | 220 | 5 |
-| `bow_hunter` | Arc du chasseur | epic | 6 | crit +15 | — | — | 350 | 6 |
-| `sword_ancient` | Épée ancienne | epic | 12 | crit +8 | — | bleed | 300 | 6 |
-| `throwing_knife` | Couteau de lancer | rare | 8 | crit +20 | — | — | 200 | 8 |
-| `scimitar_gold` | Cimeterre doré | epic | 11 | spd +3, crit +10 | — | — | 380 | 8 |
-| `whip_venom` | Fouet venimeux | epic | 9 | crit +12 | — | poison_dot | 360 | 10 |
-| `staff_desert` | Bâton du désert | epic | 10 | — | sand_storm | — | 400 | 10 |
-| `staff_royal` | Bâton royal | epic | 14 | — | thunder_bolt | fire_dot | 800 | 16 |
-| `rifle_steam` | Fusil à vapeur | epic | 16 | crit +15 | — | — | 600 | 14 |
-| `sword_pharaoh` | Épée du Pharaon | legendary | 18 | crit +12 | royal_smite | cursed_strike | 1200 | 17 |
-| `staff_infernal` | Bâton infernal | legendary | 20 | — | inferno_blast | fire_dot | 1800 | 20 |
-| `sword_hell` | Épée de l'enfer | legendary | 25 | crit +15 | hellstrike | fire_dot | 2000 | 21 |
-| `axe_infernal` | Hache infernale | legendary | 28 | spd -3 | — | bleed | 1600 | 22 |
+| `bone_club` | Gourdin d'os | common | 4 | — | `bone_smash` | — | 50 | 1 |
+| `fists` | Poings | common | 3 | — | `quick_cut` | — | 0 | 1 |
+| `bow_wooden` | Arc en bois | common | 4 | crit +10 | `bone_arrow` | — | 60 | 1 |
+| `grave_staff` | Bâton funèbre | common | 5 | — | `crypt_bolt` | — | 70 | 2 |
+| `sword_rusty` | Épée rouillée | common | 5 | — | `tomb_slash` | — | 100 | 2 |
+| `staff_bone` | Bâton d'os | common | 6 | — | `bone_bolt` | — | 80 | 2 |
+| `tomb_sword` | Épée de la tombe | rare | 7 | crit +5 | `tomb_slash` | — | 140 | 3 |
+| `catacomb_spear` | Lance des catacombes | rare | 8 | def +2 | `impale` | — | 170 | 4 |
+| `dark_grimoire` | Grimoire des ténèbres | rare | 7 | — | `dark_bolt` | `cursed_strike` | 180 | 4 |
+
+#### Arc 2–3 (niveaux 3–6)
+
+| ID | Nom | Rareté | ATK | Bonus | Skill | Passive | Prix | Niv. |
+|---|---|---|---|---|---|---|---|---|
+| `sword_steel` | Lame d'acier | rare | 8 | crit +5 | `power_slash` | — | 150 | 3 |
+| `spear_iron` | Lance de fer | rare | 10 | def +2 | `impale` | — | 160 | 3 |
+| `book_fire` | Livre de feu | rare | 5 | — | `firebolt` | `fire_dot` | 200 | 4 |
+| `dagger_shadow` | Dague de l'ombre | rare | 7 | crit +15 | `quick_cut` | `poison_dot` | 190 | 4 |
+| `axe_heavy` | Hache lourde | rare | 12 | spd -2 | `cleave` | — | 180 | 5 |
+| `crossbow_steel` | Arbalète d'acier | rare | 9 | crit +12 | `precise_bolt` | — | 220 | 5 |
+| `bow_hunter` | Arc du chasseur | epic | 6 | crit +15 | `hunters_mark` | — | 350 | 6 |
+| `sword_ancient` | Épée ancienne | epic | 12 | crit +8 | `soul_rend` | `bleed` | 300 | 6 |
+
+#### Arc 4–5 (niveaux 8–10)
+
+| ID | Nom | Rareté | ATK | Bonus | Skill | Passive | Prix | Niv. |
+|---|---|---|---|---|---|---|---|---|
+| `throwing_knife` | Couteau de lancer | rare | 8 | crit +20 | `quick_cut` | — | 200 | 8 |
+| `scimitar_gold` | Cimeterre doré | epic | 11 | spd +3, crit +10 | `sand_storm` | — | 380 | 8 |
+| `whip_venom` | Fouet venimeux | epic | 9 | crit +12 | `soul_rend` | `poison_dot` | 360 | 10 |
+| `staff_desert` | Bâton du désert | epic | 10 | — | `sand_storm` | — | 400 | 10 |
+
+#### Arc 6–8 (niveaux 14–22)
+
+| ID | Nom | Rareté | ATK | Bonus | Skill | Passive | Prix | Niv. |
+|---|---|---|---|---|---|---|---|---|
+| `rifle_steam` | Fusil à vapeur | epic | 16 | crit +15 | `steam_shot` | — | 600 | 14 |
+| `staff_royal` | Bâton royal | epic | 14 | — | `thunder_bolt` | `fire_dot` | 800 | 16 |
+| `sword_pharaoh` | Épée du Pharaon | legendary | 18 | crit +12 | `royal_smite` | `cursed_strike` | 1200 | 17 |
+| `staff_infernal` | Bâton infernal | legendary | 20 | — | `inferno_blast` | `fire_dot` | 1800 | 20 |
+| `sword_hell` | Épée de l'enfer | legendary | 25 | crit +15 | `hellstrike` | `fire_dot` | 2000 | 21 |
+| `axe_infernal` | Hache infernale | legendary | 28 | spd -3 | `cleave` | `bleed` | 1600 | 22 |
 
 ---
 
 ### Armures
 
+#### Arc 1 — Catacombes
+
 | ID | Nom | Rareté | HP | DEF | Bonus | Prix | Niv. |
 |---|---|---|---|---|---|---|---|
 | `cloth_simple` | Vêtements simples | common | 5 | 1 | — | 0 | 1 |
+| `bone_vest` | Gilet d'os | common | 10 | 2 | — | 35 | 1 |
 | `robe_cloth` | Robe de tissu | common | 8 | 2 | — | 50 | 1 |
+| `crypt_shroud` | Linceul de crypte | common | 14 | 3 | — | 60 | 2 |
 | `leather_armor` | Armure de cuir | common | 15 | 3 | — | 80 | 2 |
+| `grave_plate` | Plaque funèbre | rare | 28 | 9 | — | 190 | 4 |
 | `iron_armor` | Armure de fer | rare | 25 | 8 | spd -1 | 200 | 4 |
+
+#### Arc 2+
+
+| ID | Nom | Rareté | HP | DEF | Bonus | Prix | Niv. |
+|---|---|---|---|---|---|---|---|
 | `magic_robe` | Robe magique | rare | 10 | — | atk +3 | 220 | 5 |
 | `scale_armor` | Armure d'écailles | rare | 35 | 12 | spd -2 | 280 | 5 |
 | `studded_leather` | Cuir clouté | rare | 22 | 8 | crit +5 | 240 | 6 |
@@ -83,11 +125,20 @@ Référence complète de toutes les données statiques du jeu.
 
 ### Casques
 
+#### Arc 1 — Catacombes
+
 | ID | Nom | Rareté | DEF | Bonus | Prix | Niv. |
 |---|---|---|---|---|---|---|
+| `skull_cap` | Calotte de crâne | common | 2 | atk +1 | 25 | 1 |
 | `helmet_broken` | Casque cassé | common | 2 | — | 30 | 1 |
 | `circlet_bone` | Diadème d'os | common | 3 | atk +2 | 45 | 2 |
+| `catacomb_hood` | Capuche des catacombes | rare | 4 | spd +1 | 130 | 3 |
 | `helmet_soldier` | Casque de soldat | rare | 5 | — | 120 | 3 |
+
+#### Arc 2+
+
+| ID | Nom | Rareté | DEF | Bonus | Prix | Niv. |
+|---|---|---|---|---|---|---|
 | `hood_shadow` | Capuche de l'ombre | rare | 2 | crit +15 | 200 | 5 |
 | `turban_desert` | Turban du désert | rare | 6 | spd +2 | 220 | 8 |
 | `goggles_steam` | Lunettes à vapeur | epic | 8 | crit +20 | 650 | 14 |
@@ -98,10 +149,19 @@ Référence complète de toutes les données statiques du jeu.
 
 ### Bottes
 
+#### Arc 1 — Catacombes
+
 | ID | Nom | Rareté | SPD | Bonus | Prix | Niv. |
 |---|---|---|---|---|---|---|
 | `boots_simple` | Bottes simples | common | 1 | — | 20 | 1 |
+| `bone_wraps` | Bandelettes d'os | common | 2 | — | 15 | 1 |
+| `grave_boots` | Bottes de la tombe | rare | 3 | def +2 | 110 | 3 |
 | `boots_light` | Bottes légères | rare | 3 | — | 100 | 3 |
+
+#### Arc 2+
+
+| ID | Nom | Rareté | SPD | Bonus | Prix | Niv. |
+|---|---|---|---|---|---|---|
 | `boots_shadow` | Bottes de l'ombre | rare | 5 | crit +8 | 180 | 5 |
 | `sandals_desert` | Sandales du désert | rare | 6 | — | 200 | 8 |
 | `boots_steam` | Bottes à vapeur | epic | 8 | def +5 | 600 | 14 |
@@ -113,17 +173,28 @@ Référence complète de toutes les données statiques du jeu.
 
 > 2 slots d'accessoire disponibles dans le loadout.
 
+#### Arc 1 — Catacombes
+
 | ID | Nom | Rareté | Bonus | Skill | Passive | Prix | Niv. |
 |---|---|---|---|---|---|---|---|
 | `ring_wood` | Anneau de bois | common | hp +5 | — | — | 15 | 1 |
-| `ring_power` | Anneau de puissance | rare | atk +2 | — | — | 90 | 2 |
+| `bone_fragment` | Fragment d'os | common | hp +8 | — | — | 20 | 1 |
+| `skull_pendant` | Pendentif de crâne | rare | atk +3, hp +10 | — | `cursed_strike` | 120 | 2 |
 | `amulet_bone` | Amulette d'os | rare | hp +15, def +3 | — | — | 100 | 2 |
+| `ring_power` | Anneau de puissance | rare | atk +2 | — | — | 90 | 2 |
+| `ghost_talisman` | Talisman fantôme | rare | hp +20 | `spirit_ward` | — | 200 | 3 |
 | `ring_crit` | Anneau de critique | rare | crit +10 | — | — | 130 | 3 |
-| `talisman_old` | Talisman ancien | epic | — | soin | — | 400 | 5 |
-| `ring_shadow` | Anneau de l'ombre | epic | crit +15, atk +3 | shadow_burst | — | 450 | 5 |
+| `necro_seal` | Sceau nécromantique | rare | atk +4, def +2 | `dark_bolt` | `bleed` | 260 | 4 |
+
+#### Arc 2+
+
+| ID | Nom | Rareté | Bonus | Skill | Passive | Prix | Niv. |
+|---|---|---|---|---|---|---|---|
+| `talisman_old` | Talisman ancien | epic | — | `soin` | — | 400 | 5 |
+| `ring_shadow` | Anneau de l'ombre | epic | crit +15, atk +3 | `shadow_burst` | — | 450 | 5 |
 | `scarab_beetle` | Scarabée sacré | rare | hp +20, spd +3 | — | — | 280 | 8 |
-| `ankh_pharaoh` | Ânkh du Pharaon | epic | hp +40 | divine_heal | — | 1100 | 17 |
-| `pendant_soul` | Pendentif de l'âme | legendary | atk +10, crit +20 | soul_drain | life_steal | 2200 | 21 |
+| `ankh_pharaoh` | Ânkh du Pharaon | epic | hp +40 | `divine_heal` | — | 1100 | 17 |
+| `pendant_soul` | Pendentif de l'âme | legendary | atk +10, crit +20 | `soul_drain` | `life_steal` | 2200 | 21 |
 
 ---
 
@@ -155,12 +226,24 @@ Référence complète de toutes les données statiques du jeu.
 | ID | Nom | HP | ATK | DEF | SPD | CRIT | Heal | XP | Or | Capacité | Élite |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | `skeleton` | Squelette | 50 | 8 | 3 | 6 | 0 | 5 | 12 | 1-3 | — | |
-| `skeleton_archer` | Archer Squelette | 45 | 10 | 2 | 12 | 5 | 5 | 18 | 1-3 | precise_shot | |
-| `skeleton_mage` | Mage Squelette | 40 | 13 | 1 | 8 | 5 | 5 | 22 | 2-4 | fireball | |
-| `skeleton_knight` | Chevalier Squelette | 90 | 13 | 8 | 4 | 0 | 8 | 28 | 3-6 | shield_bash | |
-| `skeleton_warlord` | Chef de guerre | 120 | 15 | 9 | 5 | 5 | 10 | 45 | 5-8 | war_cry | |
-| `skeleton_king` | Roi Squelette | 150 | 22 | 1 | 9 | 8 | 10 | 55 | 6-10 | bone_shield | ⭐ |
-| `necromancer` | Nécromancien | 100 | 16 | 3 | 7 | 5 | 8 | 48 | 4-7 | necromancer_power | ⭐ |
+| `skeleton_archer` | Archer Squelette | 45 | 10 | 2 | 12 | 5 | 5 | 18 | 1-3 | `precise_shot` | |
+| `skeleton_mage` | Mage Squelette | 40 | 13 | 1 | 8 | 5 | 5 | 22 | 2-4 | `fireball` | |
+| `skeleton_knight` | Chevalier Squelette | 90 | 13 | 8 | 4 | 0 | 8 | 28 | 3-6 | `shield_bash` | |
+| `skeleton_warlord` | Chef de guerre | 120 | 15 | 9 | 5 | 5 | 10 | 45 | 5-8 | `war_cry` | |
+| `skeleton_king` | Roi Squelette | 150 | 22 | 1 | 9 | 8 | 10 | 55 | 6-10 | `bone_shield` | ⭐ |
+| `necromancer` | Nécromancien | 100 | 16 | 3 | 7 | 5 | 8 | 48 | 4-7 | `necromancer_power` | ⭐ |
+
+**Drops Arc 1 — référence rapide**
+
+| Ennemi | Loot pool |
+|---|---|
+| Squelette | `bone_club` `bone_vest` `skull_cap` `bone_fragment` `bone_wraps` `potion_heal` `ring_wood` |
+| Archer Squelette | `bow_wooden` `bone_wraps` `skull_cap` `cloth_simple` `potion_heal` `bone_fragment` |
+| Mage Squelette | `grave_staff` `crypt_shroud` `skull_pendant` `robe_cloth` `ring_power` `potion_mana` |
+| Chevalier Squelette | `tomb_sword` `grave_plate` `catacomb_hood` `grave_boots` `sword_steel` `potion_heal` |
+| Chef de guerre | `catacomb_spear` `grave_plate` `ghost_talisman` `axe_heavy` `amulet_bone` `elixir_iron` |
+| Roi Squelette ⭐ | `ghost_talisman` `catacomb_hood` *(garantis)* + `tomb_sword` `circlet_bone` `talisman_old` |
+| Nécromancien ⭐ | `dark_grimoire` `necro_seal` *(garantis)* + `skull_pendant` `book_fire` `magic_robe` |
 
 **Alliés PNJ**
 
@@ -174,42 +257,61 @@ Référence complète de toutes les données statiques du jeu.
 
 | ID | Nom | HP | ATK | DEF | SPD | CRIT | Heal | XP | Or | Capacité | Élite |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| `castle_warrior` | Guerrier du château | 100 | 16 | 9 | 5 | 0 | 8 | 30 | 3-6 | power_strike | |
-| `castle_priest` | Prêtre du château | 80 | 14 | 5 | 6 | 0 | 8 | 35 | 3-6 | heal | |
-| `bandit_scout` | Éclaireur bandit | 120 | 18 | 6 | 16 | 10 | 12 | 38 | 4-7 | quick_strike | |
-| `bandit_thief` | Voleur bandit | 130 | 20 | 7 | 14 | 8 | 12 | 45 | 5-9 | steal | |
-| `bandit_brute` | Brute bandit | 175 | 24 | 12 | 7 | 0 | 15 | 58 | 6-10 | smash | |
-| `bandit_leader` | Chef bandit | 190 | 26 | 10 | 12 | 8 | 15 | 65 | 8-12 | intimidate | |
-| `desert_assassin` | Assassin du désert | 175 | 34 | 9 | 17 | 20 | 15 | 80 | 9-15 | shadow_strike | ⭐ |
+| `castle_warrior` | Guerrier du château | 100 | 16 | 9 | 5 | 0 | 8 | 30 | 3-6 | `power_strike` | |
+| `castle_priest` | Prêtre du château | 80 | 14 | 5 | 6 | 0 | 8 | 35 | 3-6 | `heal` | |
+| `bandit_scout` | Éclaireur bandit | 120 | 18 | 6 | 16 | 10 | 12 | 38 | 4-7 | `quick_strike` | |
+| `bandit_thief` | Voleur bandit | 130 | 20 | 7 | 14 | 8 | 12 | 45 | 5-9 | `steal` | |
+| `bandit_brute` | Brute bandit | 175 | 24 | 12 | 7 | 0 | 15 | 58 | 6-10 | `smash` | |
+| `bandit_leader` | Chef bandit | 190 | 26 | 10 | 12 | 8 | 15 | 65 | 8-12 | `intimidate` | |
+| `desert_assassin` | Assassin du désert | 175 | 34 | 9 | 17 | 20 | 15 | 80 | 9-15 | `shadow_strike` | ⭐ |
 
 ---
 
 ## Skills joueur
 
 > Les skills sont liés aux armes (champ `skill`) ou aux accessoires.  
-> `oncePerCombat` : utilisable une seule fois par combat. Sinon, le champ `cooldown` indique le nombre de tours avant réutilisation.
+> `oncePerCombat` : utilisable une seule fois par combat. Sinon, `cooldown` = tours avant réutilisation.
 
 ### Offensifs
 
+#### Arc 1 — Catacombes (cooldown faible, effet lore osseux)
+
 | ID | Nom | Cooldown | Effet |
 |---|---|---|---|
-| `firebolt` | Firebolt | 2 | Dégâts ×1,8 ATK |
+| `quick_cut` | Entaille rapide | 1 | Dégâts ×1,2 ATK |
+| `bone_smash` | Coup d'os | 1 | Dégâts ×1,4 + DEF cible -2 |
+| `crypt_bolt` | Trait de crypte | 1 | Dégâts ×1,3 + DOT Froid Osseux (2 dégâts/tour, 2 tours) |
+| `bone_arrow` | Flèche d'os | 1 | Dégâts ×1,4, ignore 30% DEF |
+| `tomb_slash` | Taille de la tombe | 2 | Dégâts ×1,5 + DOT Saignement (3 dégâts/tour, 2 tours) |
 | `bone_bolt` | Trait osseux | 2 | Dégâts ×1,5 + DOT Froid Osseux (3 dégâts/tour, 2 tours) |
-| `shadow_burst` | Explosion d'ombre | 3 | Dégâts ×2,2 ATK |
-| `ice_lance` | Lance de glace | 3 | Dégâts ×1,6 + stun (si cible encore vivante) |
-| `thunder_bolt` | Éclair | 3 | Dégâts ×1,7 ATK |
-| `soul_rend` | Déchirement d'âme | 2 | Dégâts ×1,5 + DOT Saignement (5 dégâts/tour, 3 tours) |
+| `impale` | Empalage | 2 | Dégâts ×1,6 + DOT Saignement (4 dégâts/tour, 3 tours) |
+| `dark_bolt` | Éclair des ténèbres | 2 | Dégâts ×1,5 + DEF cible -3 |
+
+#### Génériques / Arc 2+
+
+| ID | Nom | Cooldown | Effet |
+|---|---|---|---|
 | `power_slash` | Taille puissante | 3 | Dégâts ×2,0 ATK |
+| `cleave` | Taillade | 2 | Dégâts ×1,5 + DEF cible -3 |
+| `soul_rend` | Déchirement d'âme | 2 | Dégâts ×1,5 + DOT Saignement (5 dégâts/tour, 3 tours) |
+| `firebolt` | Firebolt | 2 | Dégâts ×1,8 ATK |
+| `shadow_burst` | Explosion d'ombre | 3 | Dégâts ×2,2 ATK |
+| `ice_lance` | Lance de glace | 3 | Dégâts ×1,6 + stun (si cible vivante) |
+| `thunder_bolt` | Éclair | 3 | Dégâts ×1,7 ATK |
+| `sand_storm` | Tempête de sable | 3 | Dégâts ×1,4 + DEF cible -5 |
+| `hunters_mark` | Marque du chasseur | 2 | Dégâts ×1,3 + CRIT +15% pendant 2 tours |
+| `precise_bolt` | Tir de précision | 2 | Dégâts ×1,5, ignore 50% DEF |
+| `steam_shot` | Tir à vapeur | 3 | Dégâts ×1,7 + stun (si cible vivante) |
+| `soul_drain` | Drain d'âme | 3 | Dégâts ×1,8 + soin joueur = 30% des dégâts |
 | `royal_smite` | Frappe royale | 4 | Dégâts ×2,2 ATK |
 | `hellstrike` | Frappe infernale | 4 | Dégâts ×2,5 + DOT Brûlure (5 dégâts/tour, 3 tours) |
 | `inferno_blast` | Souffle infernal | 5 | Dégâts ×2,0 ATK |
-| `soul_drain` | Drain d'âme | 3 | Dégâts ×1,8 + soin joueur = 30% des dégâts |
-| `sand_storm` | Tempête de sable | 3 | Dégâts ×1,4 + réduit DEF cible de 5 |
 
 ### Défensifs
 
 | ID | Nom | Cooldown | Effet |
 |---|---|---|---|
+| `spirit_ward` | Garde de l'esprit | 3 | DEF +10 pendant 2 tours |
 | `soin` | Soin | 1×/combat | Récupère 20 HP |
 | `divine_heal` | Soin divin | 1×/combat | Récupère 50 HP |
 | `second_wind` | Second souffle | 5 | Récupère 25% des HP max |
@@ -253,7 +355,7 @@ Référence complète de toutes les données statiques du jeu.
 | `bone_shield` | Bouclier d'os | Roi Squelette | Buff DEF ennemi +8 |
 | `raise_skeletons` | Invoquer squelettes | Nécromancien | Invoque des squelettes (remplit jusqu'à 4 slots) |
 | `dark_ritual` | Rituel des ténèbres | Nécromancien | Soin selon alliés vivants : 0/5/10/20 HP |
-| `necromancer_power` | Pouvoir nécromantique | Nécromancien | 50/50 entre raise_skeletons et dark_ritual |
+| `necromancer_power` | Pouvoir nécromantique | Nécromancien | 50/50 entre `raise_skeletons` et `dark_ritual` |
 
 ### Arc 2
 

@@ -24,6 +24,31 @@ module.exports = {
     levelRequired: 3,
   },
 
+  // ── Arc 1 — Catacombes ───────────────────────────────────────────────────
+  skull_cap: {
+    id: 'skull_cap',
+    name: 'Calotte de crâne',
+    type: 'helmet',
+    rarity: 'common',
+    stats: { def: 2, atk: 1 },
+    skill: null,
+    passive: null,
+    price: 25,
+    levelRequired: 1,
+  },
+
+  catacomb_hood: {
+    id: 'catacomb_hood',
+    name: 'Capuche des catacombes',
+    type: 'helmet',
+    rarity: 'rare',
+    stats: { def: 4, spd: 1 },
+    skill: null,
+    passive: null,
+    price: 130,
+    levelRequired: 3,
+  },
+
   // ── Arc 1-2 ──────────────────────────────────────────────────────────────
   circlet_bone: {
     id: 'circlet_bone',

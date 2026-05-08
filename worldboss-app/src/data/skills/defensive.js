@@ -57,4 +57,16 @@ module.exports = {
       logs.push(`🔰 **Barrière** : votre DEF augmente de **${buffVal}** pour 2 tours (DEF : ${player.def}).`);
     },
   },
+
+  spirit_ward: {
+    name: 'Garde de l\'esprit',
+    oncePerCombat: false,
+    cooldown: 3,
+    resolve(player, _target, logs) {
+      const buffVal = 10;
+      player.def += buffVal;
+      player.buffs = [...(player.buffs ?? []), { stat: 'def', value: buffVal, turns: 2 }];
+      logs.push(`👻 **Garde de l'esprit** : votre DEF augmente de **${buffVal}** pour 2 tours (DEF : ${player.def}).`);
+    },
+  },
 };
