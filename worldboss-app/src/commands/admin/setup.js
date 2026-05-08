@@ -6,6 +6,8 @@ const {
   initGuildChannels,
   updateGuildChannels,
 } = require('../../services/guild.service');
+const { getOrCreateShop } = require('../../services/merchant.service');
+const { refreshInfoPanel } = require('../../services/infoPanel.service');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -24,6 +26,13 @@ module.exports = {
       await ensureGuildInDb(interaction.guild);
       const channelIds = await initGuildChannels(interaction.guild);
       await updateGuildChannels(interaction.guildId, channelIds);
+
+      if (channelIds.infoChannelId) {
+        await refreshInfoPanel(interaction.client, interaction.guild, channelIds.infoChannelId);
+      }
+      if (channelIds.marketChannelId) {
+        await getOrCreateShop(interaction.guildId, interaction.client);
+      }
 
       const embed = new EmbedBuilder()
         .setTitle('✅ Serveur configuré !')
