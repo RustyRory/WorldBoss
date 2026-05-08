@@ -77,7 +77,8 @@ async function startDungeon(interaction, chapter, characterId) {
   const alreadyCompleted = await prisma.dungeonRun.findFirst({
     where: { characterId, chapter, status: 'completed' },
   });
-  const dungeonState = createDungeonState(characterId, interaction.guildId, chapter, !!alreadyCompleted);
+  const replayMode = !!alreadyCompleted || character.level > dungeon.levelRequired;
+  const dungeonState = createDungeonState(characterId, interaction.guildId, chapter, replayMode);
   await setDungeonState(characterId, dungeonState);
   await prisma.dungeonRun.create({ data: { characterId, chapter, status: 'active' } });
 
