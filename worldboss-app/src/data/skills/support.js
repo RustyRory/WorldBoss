@@ -9,7 +9,7 @@ module.exports = {
       const buffVal = 10;
       player.atk += buffVal;
       player.buffs = [...(player.buffs ?? []), { stat: 'atk', value: buffVal, turns: 3 }];
-      logs.push(`⚔️ **Cri de bataille** : votre ATK augmente de **${buffVal}** pour 3 tours (ATK : ${player.atk}).`);
+      logs.push(`⚔️ **Cri de bataille** : ATK +**${buffVal}** pour 3 tours.`);
     },
   },
 
@@ -21,7 +21,7 @@ module.exports = {
       const buffVal = 8;
       player.spd += buffVal;
       player.buffs = [...(player.buffs ?? []), { stat: 'spd', value: buffVal, turns: 3 }];
-      logs.push(`⚡ **Accélération** : votre SPD augmente de **${buffVal}** pour 3 tours (SPD : ${player.spd}).`);
+      logs.push(`⚡ **Accélération** : SPD +**${buffVal}** pour 3 tours.`);
     },
   },
 
@@ -30,14 +30,13 @@ module.exports = {
     oncePerCombat: true,
     cooldown: 0,
     resolve(player, _target, logs) {
+      const healAmt = Math.floor(player.maxHp * 0.3);
       if (player.hp <= 0) {
-        const healAmt = Math.floor(player.maxHp * 0.3);
         player.hp = healAmt;
         logs.push(`✝️ **Résurrection** : vous revenez à la vie avec **${healAmt}** HP !`);
       } else {
-        const healAmt = Math.floor(player.maxHp * 0.3);
         player.hp = Math.min(player.maxHp, player.hp + healAmt);
-        logs.push(`✝️ **Résurrection** : vous récupérez **${healAmt}** HP (HP : ${player.hp}/${player.maxHp}).`);
+        logs.push(`✝️ **Résurrection** : vous récupérez **${healAmt}** HP.`);
       }
     },
   },

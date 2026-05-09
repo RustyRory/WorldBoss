@@ -2,6 +2,7 @@
 
 const { ITEMS } = require('../data/items');
 const { SKILLS } = require('../data/skills');
+const { getRaceBonuses } = require('../data/races');
 
 /**
  * Calculate base stats for a player at the given level.
@@ -58,15 +59,17 @@ function loadoutStats(loadout) {
  * Also returns the equipped skill (from weapon) if any.
  */
 function computeStats(user, loadout) {
-  const base = baseStats(user.level, user.rank ?? 0);
-  const bonus = loadoutStats(loadout);
+  const base  = baseStats(user.level, user.rank ?? 0);
+  const equip = loadoutStats(loadout);
+  const race  = getRaceBonuses(user.race ?? 'humain', user.gender ?? 'male');
 
+  // Apply race/gender % multipliers on top of (base + equipment)
   const total = {
-    hp: base.hp + bonus.hp,
-    atk: base.atk + (bonus.atk || 0),
-    def: base.def + (bonus.def || 0),
-    spd: base.spd + (bonus.spd || 0),
-    crit: base.crit + (bonus.crit || 0),
+    hp:       Math.round((base.hp   + equip.hp)            * (1 + race.hpPct)),
+    atk:      Math.round((base.atk  + (equip.atk  || 0))   * (1 + race.atkPct)),
+    def:      Math.round((base.def  + (equip.def  || 0))   * (1 + race.defPct)),
+    spd:      Math.round((base.spd  + (equip.spd  || 0))   * (1 + race.spdPct)),
+    crit:     base.crit + (equip.crit || 0) + race.critFlat,
     critMult: base.critMult,
   };
 

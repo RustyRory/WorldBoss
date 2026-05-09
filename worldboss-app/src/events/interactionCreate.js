@@ -27,6 +27,8 @@ const {
 const { getAP } = require('../services/actionPoints.service');
 const { errorEmbed } = require('../utils/embed');
 const { prisma } = require('../db/prisma');
+const { RACES, getCharacterEmoji, formatRaceBonuses } = require('../data/races');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
 
 const ALL_BOT_COMMANDS = ['start', 'profile', 'inventory', 'setup', 'dungeon', 'prime'];
 
@@ -113,7 +115,13 @@ module.exports = {
 
     // ── Select menu interactions ───────────────────────────────────────────
     if (interaction.isStringSelectMenu()) {
-      if (interaction.customId === 'info_scope') {
+      if (interaction.customId === 'start_race_select') {
+        const startCmd = interaction.client.commands.get('start');
+        if (startCmd?.handleRaceSelect) return startCmd.handleRaceSelect(interaction);
+        return;
+      } else if (interaction.customId.startsWith('reroll_race_select:')) {
+        return handleRerollRaceSelect(interaction);
+      } else if (interaction.customId === 'info_scope') {
         await interaction.deferUpdate();
         try {
           const scope = interaction.values[0];
@@ -164,6 +172,9 @@ module.exports = {
           const result = await useConsumable(characterId, itemId);
           if (!result.success) {
             return interaction.reply({ embeds: [errorEmbed(result.message)], flags: MessageFlags.Ephemeral });
+          }
+          if (result.action === 'reroll_race') {
+            return showRerollRaceSelect(interaction, characterId, itemId);
           }
           // Refresh inventory to show updated quantities
           await refreshInventoryReply(interaction, characterId);
@@ -237,9 +248,10 @@ module.exports = {
     if (interaction.isModalSubmit()) {
       const { customId } = interaction;
 
-      if (customId === 'start_modal') {
+      if (customId.startsWith('start_name:')) {
+        const [, race, gender] = customId.split(':');
         const startCmd = interaction.client.commands.get('start');
-        if (startCmd?.handleModal) return startCmd.handleModal(interaction);
+        if (startCmd?.handleModal) return startCmd.handleModal(interaction, race, gender);
         return;
       }
 
@@ -292,6 +304,19 @@ module.exports = {
       const { customId } = interaction;
 
       try {
+        // ── Reroll confirm buttons ────────────────────────────────────────
+        if (customId.startsWith('reroll_confirm:')) {
+          return handleRerollConfirm(interaction);
+        }
+
+        // ── Start gender buttons ───────────────────────────────────────────
+        if (customId.startsWith('start_gender:')) {
+          const [, race, gender] = customId.split(':');
+          const startCmd = interaction.client.commands.get('start');
+          if (startCmd?.handleGenderButton) return startCmd.handleGenderButton(interaction, race, gender);
+          return;
+        }
+
         // ── Prime buttons ──────────────────────────────────────────────────
         if (customId.startsWith('prime_join:')) {
           const primeRunId = parseInt(customId.split(':')[1], 10);
@@ -506,3 +531,120 @@ module.exports = {
     }
   },
 };
+
+// ── Élixir de Métamorphose — helpers ─────────────────────────────────────────
+
+function showRerollRaceSelect(interaction, characterId, itemId) {
+  const raceSelect = new StringSelectMenuBuilder()
+    .setCustomId(`reroll_race_select:${characterId}:${itemId}`)
+    .setPlaceholder('Choisis ta nouvelle race...')
+    .addOptions(
+      Object.entries(RACES).map(([key, r]) => ({
+        label: r.label,
+        description: formatRaceBonuses(key, 'male'),
+        value: key,
+        emoji: r.emojiMale,
+      })),
+    );
+
+  const embed = new EmbedBuilder()
+    .setTitle('🧪 Élixir de Métamorphose')
+    .setDescription(
+      '**Étape 1 / 2 — Nouvelle race**\n\n' +
+      Object.entries(RACES).map(([key, r]) =>
+        `${r.emojiMale} **${r.label}** · \`${formatRaceBonuses(key, 'male')}\``,
+      ).join('\n'),
+    )
+    .setColor(0x9b59b6);
+
+  return interaction.reply({
+    embeds: [embed],
+    components: [new ActionRowBuilder().addComponents(raceSelect)],
+    flags: MessageFlags.Ephemeral,
+  });
+}
+
+async function handleRerollRaceSelect(interaction) {
+  const [, characterId, itemId] = interaction.customId.split(':');
+  const race    = interaction.values[0];
+  const raceDef = RACES[race];
+  if (!raceDef) return interaction.update({ content: '❌ Race invalide.', components: [], embeds: [] });
+
+  const embed = new EmbedBuilder()
+    .setTitle('🧪 Élixir de Métamorphose')
+    .setDescription(
+      `Race choisie : ${raceDef.emojiMale} **${raceDef.label}**\n\n` +
+      '**Étape 2 / 2 — Genre**',
+    )
+    .setColor(0x9b59b6);
+
+  return interaction.update({
+    embeds: [embed],
+    components: [
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`reroll_confirm:${characterId}:${itemId}:${race}:male`)
+          .setLabel('Masculin')
+          .setEmoji(raceDef.emojiMale)
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId(`reroll_confirm:${characterId}:${itemId}:${race}:female`)
+          .setLabel('Féminin')
+          .setEmoji(raceDef.emojiFemale)
+          .setStyle(ButtonStyle.Secondary),
+      ),
+    ],
+  });
+}
+
+async function handleRerollConfirm(interaction) {
+  const [, characterId, itemId, race, gender] = interaction.customId.split(':');
+  const charId  = parseInt(characterId, 10);
+  const raceDef = RACES[race];
+  if (!raceDef) return interaction.update({ content: '❌ Race invalide.', components: [], embeds: [] });
+
+  // Check the player still owns the potion
+  const charItem = await prisma.characterItem.findUnique({
+    where: { characterId_itemId: { characterId: charId, itemId } },
+  });
+  if (!charItem || charItem.quantity < 1) {
+    return interaction.update({
+      embeds: [new EmbedBuilder().setDescription('❌ Potion introuvable.').setColor(0xe74c3c)],
+      components: [],
+    });
+  }
+
+  // Apply transformation + consume potion
+  await prisma.$transaction([
+    prisma.character.update({
+      where: { id: charId },
+      data: { race, gender },
+    }),
+    charItem.quantity <= 1
+      ? prisma.characterItem.delete({ where: { characterId_itemId: { characterId: charId, itemId } } })
+      : prisma.characterItem.update({
+          where: { characterId_itemId: { characterId: charId, itemId } },
+          data: { quantity: { decrement: 1 } },
+        }),
+  ]);
+
+  const emoji      = getCharacterEmoji(race, gender);
+  const bonusDesc  = formatRaceBonuses(race, gender);
+  const genderLabel = gender === 'female' ? 'Féminin' : 'Masculin';
+
+  return interaction.update({
+    embeds: [new EmbedBuilder()
+      .setTitle('✨ Métamorphose accomplie !')
+      .setDescription(
+        `Tu es maintenant un·e **${raceDef.label} ${genderLabel}** ${emoji}\n` +
+        `> \`${bonusDesc}\`\n\n` +
+        '*Tes nouvelles statistiques sont actives immédiatement.*',
+      )
+      .setColor(0x9b59b6)],
+    components: [],
+  });
+}
+
+module.exports.showRerollRaceSelect  = showRerollRaceSelect;
+module.exports.handleRerollRaceSelect = handleRerollRaceSelect;
+module.exports.handleRerollConfirm    = handleRerollConfirm;

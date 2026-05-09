@@ -472,7 +472,7 @@ async function startPrime(interaction, primeRunId) {
     const consumables = charItems
       .filter((ci) => {
         const def = ITEMS[ci.itemId];
-        return def?.type === 'consumable' && (ci.quantity > 0 || def.infiniteUse);
+        return def?.type === 'consumable' && (ci.quantity > 0 || def.infiniteUse) && !def.combatExcluded;
       })
       .map((ci) => {
         const def = ITEMS[ci.itemId];

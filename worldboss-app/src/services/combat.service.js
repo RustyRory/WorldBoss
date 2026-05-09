@@ -5,6 +5,7 @@ const { getCombatState, setCombatState, deleteCombatState, deleteDungeonState, g
 const { resolveTurn } = require('../engines/combatEngine');
 const { applyLoot } = require('../engines/lootEngine');
 const { addXp, addGold, computeRegenedHp, rankXpRequired, MAX_LEVEL } = require('./player.service');
+const { getCharacterEmoji } = require('../data/races');
 const { computeStats, xpRequired } = require('../utils/stats');
 const { buildCombatEmbed, buildCombatRow, buildDungeonNextRow, errorEmbed } = require('../utils/embed');
 const { animateCombatLogs, sleep, animateXpGain } = require('../utils/animate');
@@ -35,6 +36,7 @@ function buildCombatState({ characterId, guildId, messageId, channelId, characte
     currentRoom: currentRoom ?? null,
     totalRooms: totalRooms ?? null,
     player: {
+      emoji: getCharacterEmoji(character.race ?? 'humain', character.gender ?? 'male'),
       hp: currentHp,
       maxHp,
       atk: stats.atk,
@@ -54,6 +56,7 @@ function buildCombatState({ characterId, guildId, messageId, channelId, characte
     enemies: enemies.map((e) => ({
       id: e.id,
       name: e.name,
+      emoji: e.emoji ?? '👾',
       hp: e.hp,
       maxHp: e.maxHp ?? e.hp,
       atk: e.atk,

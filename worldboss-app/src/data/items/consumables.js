@@ -133,6 +133,19 @@ module.exports = {
     levelRequired: 6,
   },
 
+  potion_reroll: {
+    id: 'potion_reroll',
+    name: 'Élixir de Métamorphose',
+    type: 'consumable',
+    rarity: 'epic',
+    effect: { type: 'reroll_race' },
+    usableOutOfCombat: true,
+    combatExcluded: true,
+    infiniteUse: false,
+    price: 0,
+    levelRequired: 1,
+  },
+
   // ── Arc 6 ─────────────────────────────────────────────────────────────────
   scroll_fire: {
     id: 'scroll_fire',

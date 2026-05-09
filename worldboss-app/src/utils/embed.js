@@ -2,6 +2,7 @@
 
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
 const { ITEMS } = require('../data/items');
+const { getCharacterEmoji, RACES, formatRaceBonuses } = require('../data/races');
 
 const RARITY_COLOR = {
   common: 0x9e9e9e,
@@ -58,7 +59,7 @@ function buildCombatEmbed(state) {
   const ansi = [];
 
   // ── Player ────────────────────────────────────────────────────────────────
-  ansi.push(`\x1b[1m🧑 Vous\x1b[0m — Tour ${turn}`);
+  ansi.push(`\x1b[1m${player.emoji ?? '🧑'} Vous\x1b[0m — Tour ${turn}`);
   ansi.push(hpBarAnsi(player.hp, player.maxHp, deltas.player ?? 0));
 
   const playerStatus = [];
@@ -92,7 +93,7 @@ function buildCombatEmbed(state) {
     if (enemy.hp <= 0) {
       ansi.push(`\x1b[2m☠️ ${enemy.name} — Vaincu\x1b[0m`);
     } else {
-      ansi.push(`\x1b[1m💀 ${enemy.name}\x1b[0m`);
+      ansi.push(`\x1b[1m${enemy.emoji ?? '👾'} ${enemy.name}\x1b[0m`);
       ansi.push(hpBarAnsi(enemy.hp, enemy.maxHp, deltas.enemies?.[ei] ?? 0));
       const enemyStatus = [];
       if (enemy.stunned) enemyStatus.push('💫 Étourdi');
@@ -107,14 +108,16 @@ function buildCombatEmbed(state) {
   if (allLogs.length > 0) {
     ansi.push('');
     ansi.push('\x1b[1m📜 Journal\x1b[0m');
+    const mdBold = (s) => s.replace(/\*\*(.+?)\*\*/g, '\x1b[1m$1\x1b[0m\x1b[2m');
     const lastLogs = allLogs.slice(-6);
     const offset   = allLogs.length - lastLogs.length;
     for (let li = 0; li < lastLogs.length; li++) {
       const globalIdx = offset + li;
       if (globalIdx === activeIdx) {
-        ansi.push(`\x1b[1;33m▶ ${lastLogs[li]}\x1b[0m`);
+        const line = lastLogs[li].replace(/\*\*(.+?)\*\*/g, '\x1b[1;33m$1\x1b[0m\x1b[33m');
+        ansi.push(`\x1b[33m▶ ${line}\x1b[0m`);
       } else {
-        ansi.push(`\x1b[2m${lastLogs[li]}\x1b[0m`);
+        ansi.push(`\x1b[2m${mdBold(lastLogs[li])}\x1b[0m`);
       }
     }
   }
@@ -341,11 +344,16 @@ function buildProfileEmbed(user, stats, loadout, xpReq, interaction = null, ap =
 
   const displayName = user.name || user.user?.username || 'Aventurier';
 
-  const isMaxLevel = user.level >= 50;
-  const rank       = user.rank ?? 0;
+  const isMaxLevel   = user.level >= 50;
+  const rank         = user.rank ?? 0;
+  const race         = user.race ?? 'humain';
+  const gender       = user.gender ?? 'male';
+  const charEmoji    = getCharacterEmoji(race, gender);
+  const raceLabel    = RACES[race]?.label ?? 'Humain';
+  const genderLabel  = gender === 'female' ? 'Féminin' : 'Masculin';
 
   const embed = new EmbedBuilder()
-    .setTitle(`📋  Profil — ${displayName}`)
+    .setTitle(`📋  Profil — ${charEmoji} ${displayName}`)
     .setDescription(
       isMaxLevel
         ? `> Aventurier au niveau maximum — ⚜️ Rang **${rank}** !\n\`${SEP}\``
@@ -366,6 +374,8 @@ function buildProfileEmbed(user, stats, loadout, xpReq, interaction = null, ap =
           ap != null
             ? `> PA      **${ap.current}** / ${ap.max} ⚡`
             : '',
+          `> Race    ${charEmoji} **${raceLabel}** · \`${formatRaceBonuses(race, gender)}\``,
+          `> Genre   **${genderLabel}**`,
         ].filter(Boolean).join('\n'),
         inline: true,
       },

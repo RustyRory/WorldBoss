@@ -143,7 +143,7 @@ module.exports = {
       target.hp = Math.max(0, target.hp - result.damage);
       const healAmt = Math.floor(result.damage * 0.3);
       player.hp = Math.min(player.maxHp, player.hp + healAmt);
-      logs.push(`🩸 **Drain d'âme** : ${result.log} + vous récupérez **${healAmt}** HP *(${player.hp}/${player.maxHp} HP)*.`);
+      logs.push(`🩸 **Drain d'âme** : ${result.log} + vous récupérez **${healAmt}** HP.`);
       if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
     },
   },
@@ -156,7 +156,7 @@ module.exports = {
       const result = playerAttack(player, target, 1.4);
       target.hp = Math.max(0, target.hp - result.damage);
       target.def = Math.max(0, target.def - 5);
-      logs.push(`🌪️ **Tempête de sable** : ${result.log} + DEF réduite de 5 *(DEF : ${target.def})*.`);
+      logs.push(`🌪️ **Tempête de sable** : ${result.log} + DEF réduite de **5**. `);
       if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
     },
   },
@@ -183,7 +183,7 @@ module.exports = {
       const result = playerAttack(player, target, 1.4);
       target.hp = Math.max(0, target.hp - result.damage);
       target.def = Math.max(0, target.def - 2);
-      logs.push(`🦴 **Coup d'os** : ${result.log} + DEF réduite de 2 *(DEF : ${target.def})*.`);
+      logs.push(`🦴 **Coup d'os** : ${result.log} + DEF réduite de **2**.`);
       if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
     },
   },
@@ -230,7 +230,7 @@ module.exports = {
       const result = playerAttack(player, target, 1.4);
       target.def = savedDef;
       target.hp = Math.max(0, target.hp - result.damage);
-      logs.push(`🏹 **Flèche d'os** : ${result.log} *(ignore 30% DEF)*.`);
+      logs.push(`🏹 **Flèche d'os** : ${result.log} *(ignore 30% DEF)*. `);
       if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
     },
   },
@@ -259,7 +259,7 @@ module.exports = {
       const result = playerAttack(player, target, 1.5);
       target.hp = Math.max(0, target.hp - result.damage);
       target.def = Math.max(0, target.def - 3);
-      logs.push(`🌑 **Éclair des ténèbres** : ${result.log} + DEF réduite de 3 *(DEF : ${target.def})*.`);
+      logs.push(`🌑 **Éclair des ténèbres** : ${result.log} + DEF réduite de **3**.`);
       if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
     },
   },
@@ -274,7 +274,7 @@ module.exports = {
       const result = playerAttack(player, target, 1.5);
       target.hp = Math.max(0, target.hp - result.damage);
       target.def = Math.max(0, target.def - 3);
-      logs.push(`🪓 **Taillade** : ${result.log} + DEF réduite de 3 *(DEF : ${target.def})*.`);
+      logs.push(`🪓 **Taillade** : ${result.log} + DEF réduite de **3**.`);
       if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
     },
   },
@@ -304,7 +304,7 @@ module.exports = {
       const result = playerAttack(player, target, 1.5);
       target.def = savedDef;
       target.hp = Math.max(0, target.hp - result.damage);
-      logs.push(`🎯 **Tir de précision** : ${result.log} *(ignore 50% DEF)*.`);
+      logs.push(`🎯 **Tir de précision** : ${result.log} *(ignore 50% DEF)*. `);
       if (target.hp <= 0) logs.push(`☠️ **${target.name}** est vaincu !`);
     },
   },

@@ -7,6 +7,7 @@ module.exports = {
   bandit_scout: {
     id: 'bandit_scout',
     name: 'Éclaireur bandit',
+    emoji: '🗡️',
     hp: 120,
     maxHp: 120,
     atk: 18,
@@ -23,6 +24,7 @@ module.exports = {
   bandit_thief: {
     id: 'bandit_thief',
     name: 'Voleur bandit',
+    emoji: '🥷',
     hp: 130,
     maxHp: 130,
     atk: 20,
@@ -39,6 +41,7 @@ module.exports = {
   bandit_brute: {
     id: 'bandit_brute',
     name: 'Brute bandit',
+    emoji: '💪',
     hp: 175,
     maxHp: 175,
     atk: 24,
@@ -55,6 +58,7 @@ module.exports = {
   bandit_leader: {
     id: 'bandit_leader',
     name: 'Chef bandit',
+    emoji: '👑',
     hp: 190,
     maxHp: 190,
     atk: 26,
@@ -71,6 +75,7 @@ module.exports = {
   castle_warrior: {
     id: 'castle_warrior',
     name: 'Guerrier du château',
+    emoji: '🛡️',
     hp: 100,
     maxHp: 100,
     atk: 16,
@@ -87,6 +92,7 @@ module.exports = {
   castle_priest: {
     id: 'castle_priest',
     name: 'Prêtre du château',
+    emoji: '✝️',
     hp: 80,
     maxHp: 80,
     atk: 14,
@@ -103,6 +109,7 @@ module.exports = {
   desert_assassin: {
     id: 'desert_assassin',
     name: 'Assassin du désert',
+    emoji: '🌑',
     hp: 175,
     maxHp: 175,
     atk: 34,

@@ -8,7 +8,7 @@ module.exports = {
     resolve(player, _target, logs) {
       const healAmt = 20;
       player.hp = Math.min(player.maxHp, player.hp + healAmt);
-      logs.push(`✨ **Soin** : vous récupérez **${healAmt}** HP (HP : ${player.hp}/${player.maxHp}).`);
+      logs.push(`✨ **Soin** : vous récupérez **${healAmt}** HP.`);
     },
   },
 
@@ -19,7 +19,7 @@ module.exports = {
     resolve(player, _target, logs) {
       const healAmt = 50;
       player.hp = Math.min(player.maxHp, player.hp + healAmt);
-      logs.push(`💚 **Soin divin** : vous récupérez **${healAmt}** HP (HP : ${player.hp}/${player.maxHp}).`);
+      logs.push(`💚 **Soin divin** : vous récupérez **${healAmt}** HP.`);
     },
   },
 
@@ -30,7 +30,7 @@ module.exports = {
     resolve(player, _target, logs) {
       const healAmt = Math.floor(player.maxHp * 0.25);
       player.hp = Math.min(player.maxHp, player.hp + healAmt);
-      logs.push(`💨 **Second souffle** : vous récupérez **${healAmt}** HP (HP : ${player.hp}/${player.maxHp}).`);
+      logs.push(`💨 **Second souffle** : vous récupérez **${healAmt}** HP.`);
     },
   },
 
@@ -42,7 +42,7 @@ module.exports = {
       const buffVal = 15;
       player.def += buffVal;
       player.buffs = [...(player.buffs ?? []), { stat: 'def', value: buffVal, turns: 3 }];
-      logs.push(`🛡️ **Peau de fer** : votre DEF augmente de **${buffVal}** pour 3 tours (DEF : ${player.def}).`);
+      logs.push(`🛡️ **Peau de fer** : DEF +**${buffVal}** pour 3 tours.`);
     },
   },
 
@@ -54,7 +54,7 @@ module.exports = {
       const buffVal = 30;
       player.def += buffVal;
       player.buffs = [...(player.buffs ?? []), { stat: 'def', value: buffVal, turns: 2 }];
-      logs.push(`🔰 **Barrière** : votre DEF augmente de **${buffVal}** pour 2 tours (DEF : ${player.def}).`);
+      logs.push(`🔰 **Barrière** : DEF +**${buffVal}** pour 2 tours.`);
     },
   },
 
@@ -66,7 +66,7 @@ module.exports = {
       const buffVal = 10;
       player.def += buffVal;
       player.buffs = [...(player.buffs ?? []), { stat: 'def', value: buffVal, turns: 2 }];
-      logs.push(`👻 **Garde de l'esprit** : votre DEF augmente de **${buffVal}** pour 2 tours (DEF : ${player.def}).`);
+      logs.push(`👻 **Garde de l'esprit** : DEF +**${buffVal}** pour 2 tours.`);
     },
   },
 };

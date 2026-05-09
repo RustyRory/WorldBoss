@@ -23,6 +23,8 @@ model Character {
   userId                String
   guildId               String
   name                  String   @default("")
+  race                  String   @default("humain")
+  gender                String   @default("male")
   level                 Int      @default(1)
   rank                  Int      @default(0)
   xp                    Int      @default(0)

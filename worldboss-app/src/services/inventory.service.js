@@ -203,6 +203,10 @@ async function useConsumable(characterId, itemId) {
     // Hors combat les DoTs n'existent pas — l'antidote n'a pas d'effet mais se consomme quand même
     message = `💊 **${itemDef.name}** utilisé — aucun effet hors combat.`;
 
+  } else if (type === 'reroll_race') {
+    // Consumed only after race/gender selection — signal the caller
+    return { success: true, action: 'reroll_race' };
+
   } else {
     return { success: false, message: `Effet **${type}** non utilisable hors combat.` };
   }

@@ -23,7 +23,7 @@ async function characterExists(userId, guildId) {
  * Create a brand-new character for a player on a guild.
  * Gives starting items and equips weapon + armor by default.
  */
-async function createCharacter(userId, username, guildId, characterName) {
+async function createCharacter(userId, username, guildId, characterName, race = 'humain', gender = 'male') {
   const base = baseStats(1);
 
   await ensureItemsSeeded();
@@ -41,6 +41,8 @@ async function createCharacter(userId, username, guildId, characterName) {
         userId,
         guildId,
         name: characterName || username,
+        race,
+        gender,
         level: 1,
         xp: 0,
         gold: 0,
@@ -48,8 +50,22 @@ async function createCharacter(userId, username, guildId, characterName) {
       },
     });
 
+    // Give starting items
+    await tx.characterItem.createMany({
+      data: [
+        { characterId: character.id, itemId: 'sword_rusty',    quantity: 1 },
+        { characterId: character.id, itemId: 'cloth_simple',   quantity: 1 },
+        { characterId: character.id, itemId: 'potion_heal',    quantity: 3 },
+        { characterId: character.id, itemId: 'potion_reroll',  quantity: 1 },
+      ],
+    });
+
     const loadout = await tx.loadout.create({
-      data: { characterId: character.id },
+      data: {
+        characterId: character.id,
+        weaponId: 'sword_rusty',
+        armorId:  'cloth_simple',
+      },
     });
 
     return { character, loadout };
