@@ -117,10 +117,10 @@ async function animateCombatLogs(editFn, state, newLogs, frames, embedBuilder, f
  * @param {Array}    [finalComponents] - Discord ActionRows shown on the last frame
  */
 async function animateXpGain(editFn, buildEmbed, startXp, startLevel, xpResult, xpRequiredFn, finalComponents = []) {
-  const { newXp, newLevel, leveledUp } = xpResult;
+  const { newXp, newLevel, leveledUp, rankedUp } = xpResult;
   const displayLevel = leveledUp ? newLevel : startLevel;
   const xpReq    = xpRequiredFn(displayLevel);
-  const fromXp   = leveledUp ? 0 : startXp;
+  const fromXp   = (leveledUp || rankedUp) ? 0 : startXp;
 
   const makeBar = (xp) => {
     const filled = Math.round((Math.min(xp, xpReq) / xpReq) * 12);

@@ -341,20 +341,26 @@ function buildProfileEmbed(user, stats, loadout, xpReq, interaction = null, ap =
 
   const displayName = user.name || user.user?.username || 'Aventurier';
 
+  const isMaxLevel = user.level >= 50;
+  const rank       = user.rank ?? 0;
+
   const embed = new EmbedBuilder()
     .setTitle(`📋  Profil — ${displayName}`)
     .setDescription(
-      `> Aventurier de niveau **${user.level}**, continuez à explorer les donjons !\n` +
-      `\`${SEP}\``,
+      isMaxLevel
+        ? `> Aventurier au niveau maximum — ⚜️ Rang **${rank}** !\n\`${SEP}\``
+        : `> Aventurier de niveau **${user.level}**, continuez à explorer les donjons !\n\`${SEP}\``,
     )
-    .setColor(0x3498db)
+    .setColor(isMaxLevel ? 0xf39c12 : 0x3498db)
     .setThumbnail(interaction?.user?.displayAvatarURL({ size: 128 }) ?? null)
     .addFields(
       // ── Progression ───────────────────────────────────────────────
       {
         name: '🏅 Progression',
         value: [
-          `> Niveau  **${user.level}**`,
+          isMaxLevel
+            ? `> Niveau  **${user.level}** *(max)* · ⚜️ Rang **${rank}**`
+            : `> Niveau  **${user.level}**`,
           `> XP      \`${xpBar(user.xp, xpReq)}\``,
           `> Or      **${user.gold}** 🪙`,
           ap != null

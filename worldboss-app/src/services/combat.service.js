@@ -4,7 +4,7 @@ const { prisma } = require('../db/prisma');
 const { getCombatState, setCombatState, deleteCombatState, deleteDungeonState, getDungeonState, setDungeonState } = require('../cache/redis');
 const { resolveTurn } = require('../engines/combatEngine');
 const { applyLoot } = require('../engines/lootEngine');
-const { addXp, addGold, computeRegenedHp } = require('./player.service');
+const { addXp, addGold, computeRegenedHp, rankXpRequired, MAX_LEVEL } = require('./player.service');
 const { computeStats, xpRequired } = require('../utils/stats');
 const { buildCombatEmbed, buildCombatRow, buildDungeonNextRow, errorEmbed } = require('../utils/embed');
 const { animateCombatLogs, sleep, animateXpGain } = require('../utils/animate');
@@ -15,10 +15,16 @@ const { DUNGEONS } = require('../data/dungeons');
  * Build combat state from character + list of enemies.
  * Uses the character's current HP (with regen applied).
  */
+const HEAL_SKILL_KEYS = new Set(['soin', 'divine_heal', 'second_wind']);
+
 function buildCombatState({ characterId, guildId, messageId, channelId, character, loadout, enemies, allies = [], dungeonChapter, currentRoom, totalRooms, replayMode = false }) {
   const stats = computeStats(character, loadout);
   const maxHp = stats.hp;
   const currentHp = computeRegenedHp(character.hp, character.hpUpdatedAt, maxHp);
+
+  const activeSkills = replayMode
+    ? (stats.activeSkills ?? []).filter((s) => !HEAL_SKILL_KEYS.has(s.key))
+    : (stats.activeSkills ?? []);
 
   return {
     characterId,
@@ -37,7 +43,7 @@ function buildCombatState({ characterId, guildId, messageId, channelId, characte
       crit: stats.crit,
       critMult: stats.critMult,
       consumables: [],
-      activeSkills:  stats.activeSkills  ?? [],
+      activeSkills,
       activePassives: stats.activePassives ?? [],
       skillCooldowns: {}, // { skillKey: turnsRemaining }
       usedOnceSkills: [],
@@ -196,14 +202,20 @@ async function handleCombatButton(interaction) {
       if (!e.gold) return sum;
       return sum + Math.floor(Math.random() * (e.gold.max - e.gold.min + 1)) + e.gold.min;
     }, 0);
-    const { xp: startXp, level: startLevel } = await prisma.character.findUnique({
+    const { xp: startXp, level: startLevel, rank: startRank } = await prisma.character.findUnique({
       where:  { id: characterId },
-      select: { xp: true, level: true },
+      select: { xp: true, level: true, rank: true },
     });
     const xpResult = await addXp(characterId, totalXp);
 
+    const xpBarFn = xpResult.newLevel >= MAX_LEVEL
+      ? () => rankXpRequired(xpResult.newRank)
+      : xpRequired;
+
     const levelUpText = xpResult.leveledUp
       ? `\n🎉 **Level Up !** Niveau **${xpResult.newLevel}** !`
+      : xpResult.rankedUp
+      ? `\n⚜️ **Rang ${xpResult.newRank}** atteint !`
       : '';
 
     // ── Dungeon context ──────────────────────────────────────────────────────
@@ -277,8 +289,8 @@ async function handleCombatButton(interaction) {
 
         await animateCombatLogs((p) => interaction.editReply(p), preAnimState, newLogs, frames, buildCombatEmbed, []);
         await sleep(600);
-        await interaction.editReply({ embeds: [buildVictoryEmbed(`${'▱'.repeat(12)} 0/${xpRequired(xpResult.leveledUp ? xpResult.newLevel : startLevel)} XP`)], components: [] });
-        return animateXpGain((p) => interaction.editReply(p), buildVictoryEmbed, startXp, startLevel, xpResult, xpRequired);
+        await interaction.editReply({ embeds: [buildVictoryEmbed(`${'▱'.repeat(12)} 0/${xpBarFn(xpResult.leveledUp ? xpResult.newLevel : startLevel)} XP`)], components: [] });
+        return animateXpGain((p) => interaction.editReply(p), buildVictoryEmbed, startXp, startLevel, xpResult, xpBarFn);
 
       } else {
         // ── NEXT ROOM ───────────────────────────────────────────────────────
@@ -316,10 +328,13 @@ async function handleCombatButton(interaction) {
           });
         }
 
-        // Advance dungeon room, track enemies fought
+        // Advance dungeon room, track enemies fought, carry cooldowns forward
         if (dungeonState) {
           dungeonState.currentRoom   = state.currentRoom + 1;
           dungeonState.enemiesFought = [...(dungeonState.enemiesFought ?? []), ...state.enemies.map((e) => e.id)];
+          dungeonState.skillCooldowns = Object.fromEntries(
+            Object.entries(state.player.skillCooldowns ?? {}).map(([k, v]) => [k, Math.max(0, v - 1)]),
+          );
           await setDungeonState(characterId, dungeonState);
         }
 
@@ -336,8 +351,8 @@ async function handleCombatButton(interaction) {
 
         await animateCombatLogs((p) => interaction.editReply(p), preAnimState, newLogs, frames, buildCombatEmbed, []);
         await sleep(600);
-        await interaction.editReply({ embeds: [buildNextRoomEmbed(`${'▱'.repeat(12)} 0/${xpRequired(xpResult.leveledUp ? xpResult.newLevel : startLevel)} XP`)], components: [] });
-        return animateXpGain((p) => interaction.editReply(p), buildNextRoomEmbed, startXp, startLevel, xpResult, xpRequired, [buildDungeonNextRow('Salle suivante ➡️')]);
+        await interaction.editReply({ embeds: [buildNextRoomEmbed(`${'▱'.repeat(12)} 0/${xpBarFn(xpResult.leveledUp ? xpResult.newLevel : startLevel)} XP`)], components: [] });
+        return animateXpGain((p) => interaction.editReply(p), buildNextRoomEmbed, startXp, startLevel, xpResult, xpBarFn, [buildDungeonNextRow('Salle suivante ➡️')]);
       }
     }
 
@@ -355,8 +370,8 @@ async function handleCombatButton(interaction) {
 
     await animateCombatLogs((p) => interaction.editReply(p), preAnimState, newLogs, frames, buildCombatEmbed, []);
     await sleep(600);
-    await interaction.editReply({ embeds: [buildStandaloneEmbed(`${'▱'.repeat(12)} 0/${xpRequired(xpResult.leveledUp ? xpResult.newLevel : startLevel)} XP`)], components: [] });
-    return animateXpGain((p) => interaction.editReply(p), buildStandaloneEmbed, startXp, startLevel, xpResult, xpRequired);
+    await interaction.editReply({ embeds: [buildStandaloneEmbed(`${'▱'.repeat(12)} 0/${xpBarFn(xpResult.leveledUp ? xpResult.newLevel : startLevel)} XP`)], components: [] });
+    return animateXpGain((p) => interaction.editReply(p), buildStandaloneEmbed, startXp, startLevel, xpResult, xpBarFn);
   }
 
   // ── ONGOING ───────────────────────────────────────────────────────────────

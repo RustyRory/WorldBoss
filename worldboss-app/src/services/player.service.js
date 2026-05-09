@@ -72,27 +72,50 @@ function computeRegenedHp(storedHp, hpUpdatedAt, maxHp) {
   return Math.min(maxHp, storedHp + regen);
 }
 
+const MAX_LEVEL = 50;
+
+function rankXpRequired(rank) {
+  return 500 * (rank + 1);
+}
+
 async function addXp(characterId, amount) {
   const character = await prisma.character.findUnique({ where: { id: characterId }, include: { loadout: true } });
   if (!character) throw new Error('Character not found');
 
-  let xp = character.xp + amount;
-  let level = character.level;
-  let leveledUp = false;
+  let xp         = character.xp + amount;
+  let level      = character.level;
+  let rank       = character.rank ?? 0;
+  let leveledUp  = false;
+  let rankedUp   = false;
   let levelsGained = 0;
+  let ranksGained  = 0;
 
-  while (xp >= xpRequired(level)) {
-    xp -= xpRequired(level);
-    level += 1;
-    leveledUp = true;
-    levelsGained += 1;
+  if (level < MAX_LEVEL) {
+    while (xp >= xpRequired(level) && level < MAX_LEVEL) {
+      xp -= xpRequired(level);
+      level += 1;
+      leveledUp = true;
+      levelsGained += 1;
+    }
+    // Si on atteint exactement le cap, réinitialiser l'xp résiduelle en rang
+    if (level === MAX_LEVEL && xp >= xpRequired(MAX_LEVEL)) {
+      xp = 0;
+    }
+  } else {
+    // Au niveau max : l'XP alimente les rangs
+    while (xp >= rankXpRequired(rank)) {
+      xp -= rankXpRequired(rank);
+      rank += 1;
+      rankedUp = true;
+      ranksGained += 1;
+    }
   }
 
-  const updateData = { xp, level };
+  const updateData = { xp, level, rank };
   if (leveledUp) {
     const { AP_MAX } = require('./actionPoints.service');
     const { computeStats } = require('../utils/stats');
-    const maxHp = computeStats({ level }, character.loadout ?? {}).hp;
+    const maxHp = computeStats({ level, rank }, character.loadout ?? {}).hp;
     updateData.hp                    = maxHp;
     updateData.hpUpdatedAt           = new Date();
     updateData.actionPoints          = AP_MAX;
@@ -101,7 +124,7 @@ async function addXp(characterId, amount) {
 
   await prisma.character.update({ where: { id: characterId }, data: updateData });
 
-  return { newXp: xp, newLevel: level, leveledUp, levelsGained };
+  return { newXp: xp, newLevel: level, newRank: rank, leveledUp, rankedUp, levelsGained, ranksGained };
 }
 
 async function addGold(characterId, amount) {
@@ -132,4 +155,4 @@ async function ensureItemsSeeded() {
   await prisma.$transaction(ops);
 }
 
-module.exports = { getCharacter, characterExists, createCharacter, addXp, addGold, ensureItemsSeeded, computeRegenedHp };
+module.exports = { getCharacter, characterExists, createCharacter, addXp, addGold, ensureItemsSeeded, computeRegenedHp, rankXpRequired, MAX_LEVEL };

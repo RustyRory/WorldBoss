@@ -6,11 +6,11 @@ const { SKILLS } = require('../data/skills');
 /**
  * Calculate base stats for a player at the given level.
  */
-function baseStats(level) {
+function baseStats(level, rank = 0) {
   return {
-    hp: 100 + 20 * level,
-    atk: 10 + 2 * level,
-    def: 5 + 1 * level,
+    hp: 100 + 20 * level + 20 * rank,
+    atk: 10 + 2 * level + 2 * rank,
+    def: 5 + level + rank,
     spd: 10 + Math.floor(level / 5),
     crit: 0,
     critMult: 1.5,
@@ -58,7 +58,7 @@ function loadoutStats(loadout) {
  * Also returns the equipped skill (from weapon) if any.
  */
 function computeStats(user, loadout) {
-  const base = baseStats(user.level);
+  const base = baseStats(user.level, user.rank ?? 0);
   const bonus = loadoutStats(loadout);
 
   const total = {

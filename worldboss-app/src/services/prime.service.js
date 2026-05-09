@@ -23,22 +23,35 @@ const {
 const { errorEmbed, hpBarAnsi } = require('../utils/embed');
 const { animateCombatLogs, sleep } = require('../utils/animate');
 
-const PRIME_MIN_PLAYERS   = 4;
-const PRIME_MIN_LVL       = 5;
-const PRIME_UNLOCK_DUNGEON = 5;
+const PRIME_MIN_PLAYERS = 4;
 
-async function checkPrimeAccess(characterId) {
-  const [character, completedDungeon] = await Promise.all([
-    prisma.character.findUnique({ where: { id: characterId }, select: { level: true } }),
-    prisma.dungeonRun.findFirst({ where: { characterId, chapter: PRIME_UNLOCK_DUNGEON, status: 'completed' } }),
-  ]);
+async function checkPrimeAccess(characterId, primeId) {
+  const primeDef = PRIMES[primeId];
+  if (!primeDef) return { ok: false, message: 'Prime introuvable.' };
+
+  const character = await prisma.character.findUnique({ where: { id: characterId }, select: { level: true } });
   const level = character?.level ?? 0;
-  if (level < PRIME_MIN_LVL) {
-    return { ok: false, message: `Les primes sont accessibles à partir du **niveau ${PRIME_MIN_LVL}**.` };
+
+  if (level < primeDef.levelRequired) {
+    return { ok: false, message: `Cette prime requiert le **niveau ${primeDef.levelRequired}**.` };
   }
-  if (!completedDungeon) {
-    return { ok: false, message: `Les primes sont verrouillées. Complétez **Les Catacombes — Part 5** (donjon solo 5) pour y accéder.` };
+
+  const { unlockedBy } = primeDef;
+  if (unlockedBy?.type === 'dungeon') {
+    const done = await prisma.dungeonRun.findFirst({ where: { characterId, chapter: unlockedBy.id, status: 'completed' } });
+    if (!done) {
+      return { ok: false, message: `Prime verrouillée. Complétez le **donjon ${unlockedBy.id}** pour y accéder.` };
+    }
+  } else if (unlockedBy?.type === 'prime') {
+    const done = await prisma.primeRun.findFirst({
+      where: { status: 'completed', participants: { some: { characterId } }, primeId: unlockedBy.id },
+    });
+    if (!done) {
+      const prevPrime = PRIMES[unlockedBy.id];
+      return { ok: false, message: `Prime verrouillée. Complétez **${prevPrime?.name ?? `Prime ${unlockedBy.id}`}** pour y accéder.` };
+    }
   }
+
   return { ok: true };
 }
 
@@ -276,16 +289,9 @@ async function createPrime(interaction, primeId) {
   if (!character) {
     return interaction.reply({ embeds: [errorEmbed('Personnage introuvable.')], flags: MessageFlags.Ephemeral });
   }
-  const access = await checkPrimeAccess(character.id);
+  const access = await checkPrimeAccess(character.id, primeId);
   if (!access.ok) {
     return interaction.reply({ embeds: [errorEmbed(access.message)], flags: MessageFlags.Ephemeral });
-  }
-
-  if (character.level < primeDef.levelRequired) {
-    return interaction.reply({
-      embeds: [errorEmbed(`Niveau **${primeDef.levelRequired}** requis pour cette prime.`)],
-      flags: MessageFlags.Ephemeral,
-    });
   }
 
   const existing = await prisma.primeParticipant.findFirst({
@@ -342,16 +348,9 @@ async function joinPrime(interaction, primeRunId) {
   if (participants.some((p) => p.characterId === character.id)) {
     return interaction.reply({ embeds: [errorEmbed('Tu es déjà dans cette prime.')], flags: MessageFlags.Ephemeral });
   }
-  const access = await checkPrimeAccess(character.id);
+  const access = await checkPrimeAccess(character.id, primeRun.primeId);
   if (!access.ok) {
     return interaction.reply({ embeds: [errorEmbed(access.message)], flags: MessageFlags.Ephemeral });
-  }
-
-  if (character.level < primeDef.levelRequired) {
-    return interaction.reply({
-      embeds: [errorEmbed(`Niveau **${primeDef.levelRequired}** requis.`)],
-      flags: MessageFlags.Ephemeral,
-    });
   }
 
   const existing = await prisma.primeParticipant.findFirst({
@@ -454,9 +453,14 @@ async function startPrime(interaction, primeRunId) {
   }
 
   // Build initial prime combat state
-  const primeDef   = PRIMES[primeRun.primeId];
-  const firstRoom  = primeDef.rooms[0];
+  const primeDef    = PRIMES[primeRun.primeId];
+  const firstRoom   = primeDef.rooms[0];
   const roomEnemies = buildRoomEnemies(firstRoom);
+
+  // replayMode si le niveau moyen du groupe dépasse le seuil
+  const HEAL_SKILL_KEYS = new Set(['soin', 'divine_heal', 'second_wind']);
+  const avgLevel = participants.reduce((s, p) => s + p.character.level, 0) / participants.length;
+  const replayMode = avgLevel > primeDef.levelRequired + (primeDef.replayThreshold ?? 5);
 
   const players = await Promise.all(participants.map(async (p) => {
     const char    = p.character;
@@ -464,8 +468,8 @@ async function startPrime(interaction, primeRunId) {
     const stats   = computeStats(char, loadout);
     const currentHp = computeRegenedHp(char.hp, char.hpUpdatedAt, stats.hp);
 
-    const charItems    = await prisma.characterItem.findMany({ where: { characterId: char.id } });
-    const consumables  = charItems
+    const charItems   = await prisma.characterItem.findMany({ where: { characterId: char.id } });
+    const consumables = charItems
       .filter((ci) => {
         const def = ITEMS[ci.itemId];
         return def?.type === 'consumable' && (ci.quantity > 0 || def.infiniteUse);
@@ -474,6 +478,10 @@ async function startPrime(interaction, primeRunId) {
         const def = ITEMS[ci.itemId];
         return { itemId: ci.itemId, quantity: def.infiniteUse ? -1 : ci.quantity };
       });
+
+    const activeSkills = replayMode
+      ? (stats.activeSkills ?? []).filter((s) => !HEAL_SKILL_KEYS.has(s.key))
+      : (stats.activeSkills ?? []);
 
     return {
       characterId:    char.id,
@@ -487,7 +495,7 @@ async function startPrime(interaction, primeRunId) {
       crit:           stats.crit,
       critMult:       stats.critMult ?? 1.5,
       consumables,
-      activeSkills:   stats.activeSkills  ?? [],
+      activeSkills,
       activePassives: stats.activePassives ?? [],
       skillCooldowns: {},
       usedOnceSkills: [],
@@ -511,8 +519,9 @@ async function startPrime(interaction, primeRunId) {
     elitesKilled:     [],
     lootClaimed:      [],
     roundNumber:      1,
+    replayMode,
     log:              [
-      `🏆 La prime **${primeDef.name}** commence !`,
+      `🏆 La prime **${primeDef.name}** commence !${replayMode ? ' *(Mode rejeu — loot et soins désactivés)*' : ''}`,
       `📍 **Salle 1** — *${firstRoom.description}*`,
     ],
     status: 'active',
@@ -745,6 +754,19 @@ async function handleClaimLoot(interaction, primeRunId) {
     return interaction.reply({ embeds: [errorEmbed('Tu ne faisais pas partie de cette prime.')], flags: MessageFlags.Ephemeral });
   }
 
+  // replayMode : pas de loot, XP/gold déjà distribués dans _distributeRewards
+  if (state.replayMode) {
+    state.lootClaimed = [...(state.lootClaimed ?? []), character.id];
+    await setPrimeCombatState(state.primeRunId, state);
+    return interaction.reply({
+      embeds: [new EmbedBuilder()
+        .setTitle('⚔️ Mode rejeu')
+        .setDescription('*Niveau trop élevé pour cette prime — aucun loot disponible.*\nL\'XP et l\'or ont déjà été distribués.')
+        .setColor(0x95a5a6)],
+      flags: MessageFlags.Ephemeral,
+    });
+  }
+
   // Build loot pool from last room's bosses
   const primeDef   = PRIMES[state.primeId];
   const lastRoom   = primeDef.rooms[state.totalRooms - 1];
@@ -866,6 +888,8 @@ async function _resolveRound(state, interaction) {
     const isLastRoom = state.currentRoomIndex + 1 >= state.totalRooms;
     state.status = isLastRoom ? 'completed' : 'room_clear';
 
+    state.roomDropResults = await _rollRoomLoot(state);
+
     if (isLastRoom) {
       await prisma.primeRun.update({ where: { id: state.primeRunId }, data: { status: 'completed' } });
       await _distributeRewards(state);
@@ -940,6 +964,8 @@ async function _resolveRoundFromMessage(state, message) {
     const isLastRoom = state.currentRoomIndex + 1 >= state.totalRooms;
     state.status = isLastRoom ? 'completed' : 'room_clear';
 
+    state.roomDropResults = await _rollRoomLoot(state);
+
     if (isLastRoom) {
       await prisma.primeRun.update({ where: { id: state.primeRunId }, data: { status: 'completed' } });
       await _distributeRewards(state);
@@ -989,6 +1015,15 @@ function buildVictoryEmbed(state) {
     const icon = p.hp > 0 ? '✅' : '💀';
     lines.push(`${icon} **${p.name}** \`${hpBar(p.hp, p.maxHp)}\``);
   }
+
+  const drops = state.roomDropResults ?? [];
+  const dropLines = drops.filter((d) => d.itemId).map((d) => `> 🎁 **${d.playerName}** reçoit **${d.itemName}**`);
+  if (dropLines.length > 0) {
+    lines.push('');
+    lines.push('**💰 Butin de la salle**');
+    lines.push(dropLines.join('\n'));
+  }
+
   lines.push('');
   const lastLogs = (state.log ?? []).slice(-5);
   if (lastLogs.length > 0) {
@@ -1002,6 +1037,31 @@ function buildVictoryEmbed(state) {
     .setDescription(lines.join('\n'))
     .setColor(isFullVictory ? 0xf1c40f : 0x2ecc71)
     .setFooter({ text: isFullVictory ? 'Cliquez sur "Réclamer le butin" pour recevoir vos récompenses.' : 'Préparez-vous pour la prochaine salle !' });
+}
+
+const ROOM_DROP_CHANCE = 0.6;
+
+async function _rollRoomLoot(state) {
+  if (state.replayMode) return [];
+
+  const primeDef = PRIMES[state.primeId];
+  const room     = primeDef.rooms[state.currentRoomIndex];
+  const pool     = [...new Set(room.enemies.flatMap((eId) => ENEMIES[eId]?.loot ?? []))];
+  if (pool.length === 0) return [];
+
+  const results = [];
+  for (const player of state.players) {
+    if (player.hp <= 0) continue;
+    if (Math.random() > ROOM_DROP_CHANCE) {
+      results.push({ playerName: player.name, itemId: null });
+      continue;
+    }
+    const itemId   = pool[Math.floor(Math.random() * pool.length)];
+    const itemName = ITEMS[itemId]?.name ?? itemId;
+    await applyLoot(prisma, player.characterId, itemId);
+    results.push({ playerName: player.name, itemId, itemName });
+  }
+  return results;
 }
 
 async function _distributeRewards(state) {

@@ -1,7 +1,7 @@
 'use strict';
 
 const { SlashCommandBuilder, MessageFlags } = require('discord.js');
-const { getCharacter, characterExists, computeRegenedHp } = require('../../services/player.service');
+const { getCharacter, characterExists, computeRegenedHp, rankXpRequired, MAX_LEVEL } = require('../../services/player.service');
 const { computeStats, xpRequired } = require('../../utils/stats');
 const { buildProfileEmbed, errorEmbed } = require('../../utils/embed');
 const { getAP } = require('../../services/actionPoints.service');
@@ -27,7 +27,9 @@ module.exports = {
       const character = await getCharacter(userId, guildId);
       const [ap] = await Promise.all([getAP(character.id)]);
       const stats  = computeStats(character, character.loadout);
-      const xpReq  = xpRequired(character.level);
+      const xpReq  = character.level >= MAX_LEVEL
+        ? rankXpRequired(character.rank ?? 0)
+        : xpRequired(character.level);
       const maxHp  = stats.hp;
 
       // Apply passive HP regen and persist if changed

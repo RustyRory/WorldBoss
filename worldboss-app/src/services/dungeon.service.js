@@ -156,6 +156,11 @@ async function handleDungeonNext(interaction, characterId) {
 
   combatState.player.consumables = combatConsumables;
 
+  // Restore skill cooldowns carried from the previous room
+  if (dungeonState.skillCooldowns) {
+    combatState.player.skillCooldowns = { ...dungeonState.skillCooldowns };
+  }
+
   await setCombatState(characterId, combatState);
 
   const embed = buildCombatEmbed(combatState);

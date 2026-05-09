@@ -122,6 +122,7 @@ const DUNGEONS = {
     ],
     reward: {
       unlockPrimes: true,
+      
       message: '**Necromancien :** "Ma mort engendra un chaos indescriptible !"*\n\n**Les primes sont maintenant débloquées !**',
     },
   },
@@ -143,8 +144,8 @@ const ALLIES = {
   castle_king: {
     id: 'castle_king',
     name: 'Roi du château',
-    hp: 200,
-    maxHp: 200,
+    hp: 100,
+    maxHp: 100,
     atk: 25,
     def: 15,
     spd: 8,

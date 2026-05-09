@@ -75,8 +75,10 @@ module.exports = {
           const channel = interaction.guild?.channels.cache.get(interaction.channelId);
 
           if (channel?.parentId !== channels.categoryId) {
-            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-            return interaction.deleteReply();
+            return interaction.reply({
+              embeds: [errorEmbed('Les commandes WorldBoss ne sont disponibles que dans les channels de la catégorie **WorldBoss**.')],
+              flags: MessageFlags.Ephemeral,
+            });
           }
 
           if (interaction.commandName === 'dungeon' && channels.dungeonChannelId && interaction.channelId !== channels.dungeonChannelId) {
