@@ -53,19 +53,13 @@ async function createCharacter(userId, username, guildId, characterName, race = 
     // Give starting items
     await tx.characterItem.createMany({
       data: [
-        { characterId: character.id, itemId: 'sword_rusty',    quantity: 1 },
-        { characterId: character.id, itemId: 'cloth_simple',   quantity: 1 },
-        { characterId: character.id, itemId: 'potion_heal',    quantity: 3 },
-        { characterId: character.id, itemId: 'potion_reroll',  quantity: 1 },
+        { characterId: character.id, itemId: 'potion_heal',   quantity: 3 },
+        { characterId: character.id, itemId: 'potion_reroll', quantity: 1 },
       ],
     });
 
     const loadout = await tx.loadout.create({
-      data: {
-        characterId: character.id,
-        weaponId: 'sword_rusty',
-        armorId:  'cloth_simple',
-      },
+      data: { characterId: character.id },
     });
 
     return { character, loadout };

@@ -191,12 +191,10 @@ module.exports = {
           },
           { name: '​', value: `\`${SEP}\``, inline: false },
           {
-            name: '🎒 Équipement de départ',
+            name: '🎒 Objets de départ',
             value: [
-              '> ⚪ **Épée rouillée** — Arme · `+3 ATK` · ✅ équipée',
-              '> ⚪ **Vêtements simples** — Armure · `+5 HP  +1 DEF` · ✅ équipés',
-              '> 🧪 **Potion de soin ×3** — Consommable · `restaure 30 HP`',
-              '> 🟣 **Élixir de Métamorphose ×1** — Consommable · `change race & genre`',
+              '> 🧪 **Potion de soin ×3** — `restaure 30 HP`',
+              '> 🟣 **Élixir de Métamorphose ×1** — `change race & genre`',
             ].join('\n'),
             inline: false,
           },

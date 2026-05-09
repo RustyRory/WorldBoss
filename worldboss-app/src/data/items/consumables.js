@@ -142,7 +142,7 @@ module.exports = {
     usableOutOfCombat: true,
     combatExcluded: true,
     infiniteUse: false,
-    price: 0,
+    price: 10000,
     levelRequired: 1,
   },
 
