@@ -109,11 +109,11 @@ async function initGuildChannels(guild) {
           id: everyoneId,
           allow: [
             PermissionFlagsBits.ViewChannel,
+            PermissionFlagsBits.SendMessages,
             PermissionFlagsBits.ReadMessageHistory,
             PermissionFlagsBits.UseApplicationCommands,
           ],
           deny: [
-            PermissionFlagsBits.SendMessages,
             PermissionFlagsBits.CreatePublicThreads,
             PermissionFlagsBits.CreatePrivateThreads,
             PermissionFlagsBits.SendMessagesInThreads,
@@ -130,11 +130,11 @@ async function initGuildChannels(guild) {
           id: everyoneId,
           allow: [
             PermissionFlagsBits.ViewChannel,
+            PermissionFlagsBits.SendMessages,
             PermissionFlagsBits.ReadMessageHistory,
             PermissionFlagsBits.UseApplicationCommands,
           ],
           deny: [
-            PermissionFlagsBits.SendMessages,
             PermissionFlagsBits.CreatePublicThreads,
             PermissionFlagsBits.CreatePrivateThreads,
             PermissionFlagsBits.SendMessagesInThreads,
