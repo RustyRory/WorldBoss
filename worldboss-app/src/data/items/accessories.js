@@ -108,6 +108,43 @@ module.exports = {
     levelRequired: 2,
   },
 
+  // ── Arc 2 — Château / Bandits ────────────────────────────────────────────
+  bandit_pouch: {
+    id: 'bandit_pouch',
+    name: 'Bourse de bandit',
+    type: 'accessory',
+    rarity: 'common',
+    stats: { hp: 15 },
+    skill: null,
+    passive: null,
+    price: 80,
+    levelRequired: 6,
+  },
+
+  assassin_ring: {
+    id: 'assassin_ring',
+    name: 'Anneau de l\'assassin',
+    type: 'accessory',
+    rarity: 'rare',
+    stats: { crit: 15, atk: 4 },
+    skill: 'shadow_burst',
+    passive: 'bleed',
+    price: 320,
+    levelRequired: 7,
+  },
+
+  boss_signet: {
+    id: 'boss_signet',
+    name: 'Sceau du chef',
+    type: 'accessory',
+    rarity: 'epic',
+    stats: { atk: 7, hp: 25 },
+    skill: 'battle_cry',
+    passive: 'regeneration',
+    price: 480,
+    levelRequired: 9,
+  },
+
   // ── Arc 3-5 ──────────────────────────────────────────────────────────────
   ring_shadow: {
     id: 'ring_shadow',

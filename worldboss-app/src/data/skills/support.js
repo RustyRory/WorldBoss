@@ -3,6 +3,7 @@
 module.exports = {
   battle_cry: {
     name: 'Cri de bataille',
+    wiki: { emoji: '📣', stat: 'ATK', val: 10, turns: 3 },
     oncePerCombat: false,
     cooldown: 4,
     resolve(player, _target, logs) {
@@ -15,6 +16,7 @@ module.exports = {
 
   quicken: {
     name: 'Accélération',
+    wiki: { emoji: '💨', stat: 'SPD', val: 8, turns: 3 },
     oncePerCombat: false,
     cooldown: 3,
     resolve(player, _target, logs) {
@@ -27,6 +29,7 @@ module.exports = {
 
   resurrection: {
     name: 'Résurrection',
+    wiki: { emoji: '☀️', healPct: 0.3 },
     oncePerCombat: true,
     cooldown: 0,
     resolve(player, _target, logs) {

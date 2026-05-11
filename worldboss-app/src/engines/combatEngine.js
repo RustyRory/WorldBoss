@@ -3,16 +3,18 @@
 const { ABILITIES } = require('../data/abilities');
 const { PASSIVES }  = require('../data/passives');
 const { SKILLS }    = require('../data/skills');
+const { COMBAT_CONFIG } = require('../data/combat');
 
 function rollInitiative(spd) {
-  return spd + Math.random() * spd * 0.1;
+  return spd + Math.random() * spd * COMBAT_CONFIG.INITIATIVE_RNG_VARIANCE;
 }
 
 function rawDamage(atk, def, skillMult = 1.0) {
-  return atk * skillMult * (100 / (100 + def));
+  const base = COMBAT_CONFIG.DEF_MITIGATION_BASE;
+  return atk * skillMult * (base / (base + def));
 }
 
-function applyCrit(raw, critChance, critMult = 1.5) {
+function applyCrit(raw, critChance, critMult = COMBAT_CONFIG.DEFAULT_CRIT_MULT) {
   const roll = Math.random() * 100;
   const isCrit = roll < critChance;
   return { damage: isCrit ? raw * critMult : raw, isCrit };
@@ -20,7 +22,7 @@ function applyCrit(raw, critChance, critMult = 1.5) {
 
 function playerAttack(player, enemy, skillMult = 1.0) {
   const raw = rawDamage(player.atk, enemy.def, skillMult);
-  const { damage: afterCrit, isCrit } = applyCrit(raw, player.crit ?? 0, player.critMult ?? 1.5);
+  const { damage: afterCrit, isCrit } = applyCrit(raw, player.crit ?? 0, player.critMult ?? COMBAT_CONFIG.DEFAULT_CRIT_MULT);
   const finalDmg = Math.max(1, Math.round(afterCrit));
   const critText = isCrit ? ' 💥 **CRITIQUE!**' : '';
   const hpAfter = Math.max(0, enemy.hp - finalDmg);
@@ -53,10 +55,10 @@ function resolveEnemyTurn(enemy, player, logs, allies = [], enemies = []) {
   const isAlly      = target !== player;
 
   // Random AI: 0 = attack, 1 = ability (or attack if none), 2 = rest
-  const choice = Math.floor(Math.random() * 3);
+  const choice = Math.floor(Math.random() * COMBAT_CONFIG.ENEMY_AI_CHOICES);
 
   if (choice === 2) {
-    const heal = enemy.restHeal ?? Math.max(1, Math.floor(enemy.maxHp * 0.15));
+    const heal = enemy.restHeal ?? Math.max(1, Math.floor(enemy.maxHp * COMBAT_CONFIG.ENEMY_REST_HEAL_PCT));
     enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
     logs.push(`💤 **${enemy.name}** se repose et récupère **${heal}** HP.`);
   } else if (choice === 1 && enemy.ability && !isAlly) {
@@ -94,9 +96,9 @@ function resolveAllyTurn(ally, enemies, logs) {
   const aliveEnemies = enemies.filter((e) => e.hp > 0);
   if (aliveEnemies.length === 0) return;
 
-  // Simple AI: 1/3 rest, 2/3 attack
-  if (Math.random() < 0.33) {
-    const heal = Math.max(1, Math.floor(ally.maxHp * 0.15));
+  // Simple AI: ALLY_REST_CHANCE rest, rest attack
+  if (Math.random() < COMBAT_CONFIG.ALLY_REST_CHANCE) {
+    const heal = Math.max(1, Math.floor(ally.maxHp * COMBAT_CONFIG.ALLY_REST_HEAL_PCT));
     ally.hp = Math.min(ally.maxHp, ally.hp + heal);
     logs.push(`💤 **${ally.name}** reprend son souffle (+**${heal}** HP).`);
   } else {
@@ -145,7 +147,7 @@ function resolveTurn(state, playerAction, targetIndex = 0) {
   // ── Flee ──────────────────────────────────────────────────────────────────
   if (playerAction === 'flee') {
     const aliveEnemy = enemies.find((e) => e.hp > 0);
-    const fleeChance = aliveEnemy ? 0.4 + (player.spd / (player.spd + aliveEnemy.spd)) * 0.3 : 1;
+    const fleeChance = aliveEnemy ? COMBAT_CONFIG.FLEE_BASE_CHANCE + (player.spd / (player.spd + aliveEnemy.spd)) * COMBAT_CONFIG.FLEE_SPD_MODIFIER : 1;
     if (Math.random() < fleeChance) {
       logs.push('Vous avez **fui** le combat !');
       return { playerState: player, enemiesState: enemies, logs: Array.from(logs), frames: logs.frames, initialSnapshot: logs.initialSnapshot, fled: true, playerDied: false, allEnemiesDead: false };

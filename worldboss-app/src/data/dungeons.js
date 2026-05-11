@@ -122,32 +122,127 @@ const DUNGEONS = {
     ],
     reward: {
       unlockPrimes: true,
-
-      message: '**Necromancien :** "Ma mort engendra un chaos indescriptible !"*\n\n**Les primes sont maintenant débloquées !**',
+      message: '**Nécromancien :** *"Ma mort engendra un chaos indescriptible !"*\n\n**Les primes sont maintenant débloquées !**',
     },
   },
   6: {
     id: 6,
-    name: '',
-    lore: '',
+    name: 'La Route des Bandits',
+    lore: 'Votre réputation a traversé les murs des catacombes. Le **Roi du Château** vous fait mander à sa cour — c\'est la première fois qu\'il vous reçoit en audience.\n\n*"On m\'a rapporté vos exploits contre le nécromancien. Ce genre de courage est rare. J\'ai besoin de vous : des bandits ont pris le contrôle des grandes routes du royaume pendant que tout le monde avait les yeux tournés vers les catacombes. Ils pillent les convois, rançonnent les voyageurs... et se sont retranchés dans mon propre château. Ce nécromancien mérite qu\'on y regarde de plus près — mais d\'abord, libérez mes routes."*\n\nVous voilà au service du Roi.',
     levelRequired: 6,
     rooms: [
-            {
+      {
         room: 1,
-        enemies: [],
-        description: '',
+        enemies: ['bandit_scout'],
+        description: 'Un carrefour isolé au milieu des bois. Un éclaireur bandit surgit des buissons, couteau à la main, le regard méfiant.',
       },
       {
         room: 2,
-        enemies: [],
-        description: '',
+        enemies: ['bandit_scout', 'bandit_thief'],
+        description: 'Une clairière jonchée de débris de chariots pillés. Un éclaireur vous coupe la route tandis qu\'un voleur bondit d\'un tronc d\'arbre renversé.',
       },
       {
         room: 3,
-        enemies: [''],
-        description: '',
+        enemies: ['bandit_thief', 'bandit_desperado'],
+        description: 'L\'entrée du camp. Un voleur et un bandit désespéré montent la garde. Ce dernier grogne en vous apercevant : *"On ne passe pas !"*',
       },
     ],
+  },
+  7: {
+    id: 7,
+    name: 'Le Camp des Pillards',
+    lore: 'Au cœur de la forêt, les bandits ont établi un camp fortifié d\'où ils organisent leurs raids. Démanteler leur repaire est la priorité...',
+    levelRequired: 7,
+    rooms: [
+      {
+        room: 1,
+        enemies: ['bandit_desperado', 'bandit_scout'],
+        description: 'Les abords du camp. Des tentes délabrées, des feux de camp et une odeur de viande brûlée. Un désespéré et son guetteur vous repèrent aussitôt.',
+      },
+      {
+        room: 2,
+        enemies: ['bandit_brute', 'bandit_thief'],
+        description: 'Le cœur du camp. Une brute massive affûte sa hache près du feu de camp. Un voleur tourne discrètement autour de vous, guettant l\'occasion de frapper.',
+      },
+      {
+        room: 3,
+        enemies: ['bandit_brute', 'bandit_desperado'],
+        description: 'L\'entrepôt de butin. Des caisses entassées, des sacs de pièces volées. Une brute et un désespéré défendent furieusement leur trésor.',
+      },
+    ],
+  },
+  8: {
+    id: 8,
+    name: 'Les Remparts',
+    lore: 'Les bandits se sont retranchés dans un vieux château abandonné. Ses remparts croulants abritent désormais leurs troupes les plus coriaces...',
+    levelRequired: 8,
+    rooms: [
+      {
+        room: 1,
+        enemies: ['bandit_brute', 'bandit_thief'],
+        description: 'Le pied des remparts. Une brute monte la garde près du pont-levis, secondée par un voleur tapi dans l\'ombre d\'une meurtrière.',
+      },
+      {
+        room: 2,
+        enemies: ['bandit_leader', 'bandit_scout'],
+        description: 'Le chemin de ronde. Un chef bandit surveille la cour d\'en haut, flanqué d\'un éclaireur posté sur une tour. *"Intrus ! Éliminez-le !"*',
+      },
+      {
+        room: 3,
+        enemies: ['bandit_brute', 'bandit_leader'],
+        description: 'La salle des gardes. Une brute barre l\'escalier vers les tours, tandis qu\'un chef commande depuis le fond de la pièce. Aucun d\'eux ne compte reculer.',
+      },
+    ],
+  },
+  9: {
+    id: 9,
+    name: 'Les Coursives du Château',
+    lore: 'Les coursives du château mènent jusqu\'au donjon. Le chef des bandits s\'y est retranché avec ses lieutenants, prêt à défendre son trône de fortune...',
+    levelRequired: 9,
+    rooms: [
+      {
+        room: 1,
+        enemies: ['bandit_leader', 'bandit_brute'],
+        description: 'Une antichambre aux murs noircis par la fumée. Un chef bandit et sa brute personnelle bloquent le couloir principal, croisant les bras en vous regardant arriver.',
+      },
+      {
+        room: 2,
+        enemies: ['bandit_leader', 'bandit_desperado', 'bandit_thief'],
+        description: 'La grande galerie. Trois silhouettes vous encerclent — un chef, un enragé et un voleur. Le chef siffle entre ses dents : *"Personne ne monte au trône vivant."*',
+      },
+      {
+        room: 3,
+        enemies: ['bandit_champion', 'bandit_leader'],
+        description: 'L\'antichambre du trône. Le champion des bandits trône sur un fauteuil de fortune, son chef à ses côtés. Il se lève lentement : *"Tu es courageux. Dommage que ça ne suffise pas."*',
+      },
+    ],
+  },
+  10: {
+    id: 10,
+    name: 'La Salle du Trône',
+    lore: 'Le cœur du château est aux mains du champion bandit depuis des mois. Quelque part dans les geôles, le vrai roi du château attend d\'être libéré...',
+    levelRequired: 10,
+    rooms: [
+      {
+        room: 1,
+        enemies: ['bandit_champion', 'bandit_brute'],
+        description: 'L\'entrée de la salle du trône. Le champion barricade la porte avec la brute à ses côtés. *"Le roi est à nous maintenant. Faites demi-tour !"*',
+      },
+      {
+        room: 2,
+        enemies: ['bandit_champion', 'bandit_leader', 'bandit_thief'],
+        description: 'La salle d\'apparat. Le champion et ses deux lieutenants forment un dernier rempart. Derrière eux, une porte mène aux cachots où gémit une silhouette enchaînée.',
+      },
+      {
+        room: 3,
+        enemies: ['bandit_champion'],
+        description: 'Le trône usurpé. Le champion affronte seul, furieux d\'avoir été trahi par ses propres hommes. Le roi du château, libéré de ses chaînes, se joint à vous dans l\'ultime affrontement.',
+        ally: 'castle_king',
+      },
+    ],
+    reward: {
+      message: '**Le Roi du Château** pose une main sur votre épaule.\n*"Vous avez rendu justice à mon peuple. Ce château vous sera à jamais reconnaissant."*\n\n**Donjon 10 terminé — l\'arc 2 est vaincu !**',
+    },
   },
 };
 

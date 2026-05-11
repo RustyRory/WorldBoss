@@ -3,6 +3,7 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
 const { ITEMS } = require('../data/items');
 const { getCharacterEmoji, RACES, formatRaceBonuses } = require('../data/races');
+const { PROGRESSION_CONFIG } = require('../data/progression');
 
 const RARITY_COLOR = {
   common: 0x9e9e9e,
@@ -109,7 +110,7 @@ function buildCombatEmbed(state) {
     ansi.push('');
     ansi.push('\x1b[1m📜 Journal\x1b[0m');
     const mdBold = (s) => s.replace(/\*\*(.+?)\*\*/g, '\x1b[1m$1\x1b[0m\x1b[2m');
-    const lastLogs = allLogs.slice(-6);
+    const lastLogs = allLogs.slice(-PROGRESSION_CONFIG.LOG_DISPLAY_COUNT);
     const offset   = allLogs.length - lastLogs.length;
     for (let li = 0; li < lastLogs.length; li++) {
       const globalIdx = offset + li;
@@ -128,7 +129,7 @@ function buildCombatEmbed(state) {
   if (state.currentRoom && state.totalRooms) footerParts.push(`Salle ${state.currentRoom}/${state.totalRooms}`);
 
   const embed = new EmbedBuilder()
-    .setColor(player.hp / player.maxHp < 0.3 ? 0xe74c3c : 0x8e44ad)
+    .setColor(player.hp / player.maxHp < PROGRESSION_CONFIG.HP_WARNING_THRESHOLD ? 0xe74c3c : 0x8e44ad)
     .setDescription(lines.join('\n'));
 
   if (footerParts.length > 0) embed.setFooter({ text: footerParts.join(' · ') });
@@ -267,7 +268,7 @@ function buildLootEmbed(lootOptions) {
 /**
  * XP progress bar.
  */
-function xpBar(current, required, size = 12) {
+function xpBar(current, required, size = PROGRESSION_CONFIG.XP_BAR_SIZE) {
   const filled = Math.round((current / required) * size);
   const empty = size - filled;
   return `${'▰'.repeat(filled)}${'▱'.repeat(empty)} ${current}/${required}`;

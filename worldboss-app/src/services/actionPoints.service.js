@@ -90,4 +90,4 @@ async function restoreAP(characterId, amount) {
   return { newAP, restored: newAP - currentAP };
 }
 
-module.exports = { consumeAP, restoreAP, getAP, AP_MAX, AP_COST };
+module.exports = { consumeAP, restoreAP, getAP, AP_MAX, AP_RECHARGE_MS, AP_COST };

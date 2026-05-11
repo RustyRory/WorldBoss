@@ -78,6 +78,19 @@ module.exports = {
     },
   },
 
+  berserk: {
+    name: 'Berserk',
+    emoji: '😡',
+    resolve(enemy, player, logs) {
+      enemy.atk += 6;
+      enemy.def = Math.max(0, enemy.def - 3);
+      const base = Math.round(enemy.atk * 1.2);
+      const dmg = Math.max(1, base - player.def);
+      player.hp -= dmg;
+      logs.push(`😡 **${enemy.name}** entre en **Berserk** ! ATK +6 (${enemy.atk}), DEF -3 (${enemy.def}). Inflige **${dmg}** dégâts !`);
+    },
+  },
+
   shadow_strike: {
     name: 'Frappe de l\'ombre',
     emoji: '🗡️',

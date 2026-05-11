@@ -3,6 +3,7 @@
 module.exports = {
   soin: {
     name: 'Soin',
+    wiki: { emoji: '💚', healFlat: 20 },
     oncePerCombat: true,
     cooldown: 0,
     resolve(player, _target, logs) {
@@ -14,6 +15,7 @@ module.exports = {
 
   divine_heal: {
     name: 'Soin divin',
+    wiki: { emoji: '✨', healFlat: 50 },
     oncePerCombat: true,
     cooldown: 0,
     resolve(player, _target, logs) {
@@ -25,6 +27,7 @@ module.exports = {
 
   second_wind: {
     name: 'Second souffle',
+    wiki: { emoji: '🌬️', healPct: 0.25 },
     oncePerCombat: false,
     cooldown: 5,
     resolve(player, _target, logs) {
@@ -36,6 +39,7 @@ module.exports = {
 
   iron_skin: {
     name: 'Peau de fer',
+    wiki: { emoji: '🛡️', stat: 'DEF', val: 15, turns: 3 },
     oncePerCombat: false,
     cooldown: 4,
     resolve(player, _target, logs) {
@@ -48,6 +52,7 @@ module.exports = {
 
   barrier: {
     name: 'Barrière',
+    wiki: { emoji: '🔰', stat: 'DEF', val: 30, turns: 2 },
     oncePerCombat: false,
     cooldown: 5,
     resolve(player, _target, logs) {
@@ -60,6 +65,7 @@ module.exports = {
 
   spirit_ward: {
     name: 'Garde de l\'esprit',
+    wiki: { emoji: '👻', stat: 'DEF', val: 10, turns: 2 },
     oncePerCombat: false,
     cooldown: 3,
     resolve(player, _target, logs) {

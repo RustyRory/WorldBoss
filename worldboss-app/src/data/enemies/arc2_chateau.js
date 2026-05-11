@@ -1,7 +1,7 @@
 'use strict';
 
-// Arc 2 - Château maudit (niveaux 3-5)
-// Stats: HP 80-180, ATK 14-22, DEF 5-12, SPD 4-12, XP 25-55, Gold 3-10
+// Arc 2 - Château des bandits (niveaux 6-10)
+// Stats: HP 120-200, ATK 18-28, DEF 6-12, SPD 7-16, XP 38-75, Gold 4-15
 
 module.exports = {
   bandit_scout: {
@@ -18,7 +18,7 @@ module.exports = {
     xp: 38,
     ability: 'quick_strike',
     gold: { min: 4, max: 7 },
-    loot: ['dagger_shadow', 'boots_shadow', 'potion_heal'],
+    loot: ['bandit_knife', 'bandana_red', 'bandit_boots', 'bandit_pouch', 'potion_heal'],
   },
 
   bandit_thief: {
@@ -35,7 +35,7 @@ module.exports = {
     xp: 45,
     ability: 'steal',
     gold: { min: 5, max: 9 },
-    loot: ['dagger_shadow', 'studded_leather', 'potion_heal', 'smoke_bomb'],
+    loot: ['stiletto_shadow', 'thief_hood', 'bandit_cloak', 'assassin_ring', 'potion_heal'],
   },
 
   bandit_desperado: {
@@ -52,7 +52,7 @@ module.exports = {
     xp: 50,
     ability: 'berserk',
     gold: { min: 6, max: 10 },
-    loot: ['axe_heavy', 'studded_leather', 'potion_heal'],
+    loot: ['bandit_sword', 'raider_vest', 'iron_mask', 'potion_heal'],
   },
 
   bandit_brute: {
@@ -69,7 +69,7 @@ module.exports = {
     xp: 58,
     ability: 'smash',
     gold: { min: 6, max: 10 },
-    loot: ['axe_heavy', 'studded_leather', 'potion_heal'],
+    loot: ['bandit_sword', 'raider_vest', 'iron_mask', 'swift_leathers', 'potion_heal'],
   },
 
   bandit_leader: {
@@ -86,23 +86,23 @@ module.exports = {
     xp: 65,
     ability: 'intimidate',
     gold: { min: 8, max: 12 },
-    loot: ['sword_ancient', 'studded_leather', 'potion_heal', 'ring_shadow'],
+    loot: ['rope_dart', 'highwayman_coat', 'thief_hood', 'assassin_ring', 'potion_heal'],
   },
 
-  desert_assassin: {
-    id: 'desert_assassin',
-    name: 'Assassin du désert',
-    emoji: '🌑🥷',
-    hp: 175,
-    maxHp: 175,
-    atk: 34,
-    def: 9,
-    spd: 17,
-    crit: 20,
-    restHeal: 15,
-    xp: 80,
-    ability: 'shadow_strike',
-    gold: { min: 9, max: 15 },
-    loot: ['dagger_shadow', 'boots_shadow', 'smoke_bomb', 'ring_shadow'],
+  bandit_champion: {
+    id: 'bandit_champion',
+    name: 'Champion bandit',
+    emoji: '👑',
+    hp: 200,
+    maxHp: 200,
+    atk: 28,
+    def: 12,
+    spd: 14,
+    crit: 10,
+    restHeal: 20,
+    xp: 75,
+    ability: 'rally',
+    gold: { min: 10, max: 15 },
+    loot: ['crossbow_ambush', 'highwayman_coat', 'boss_signet', 'potion_heal'],
   },
 };

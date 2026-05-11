@@ -165,6 +165,67 @@ module.exports = {
     levelRequired: 3,
   },
 
+  // ── Arc 2 — Château / Bandits ────────────────────────────────────────────
+  bandit_knife: {
+    id: 'bandit_knife',
+    name: 'Couteau de bandit',
+    type: 'weapon',
+    rarity: 'common',
+    stats: { atk: 7, crit: 5 },
+    skill: 'quick_cut',
+    passive: null,
+    price: 110,
+    levelRequired: 6,
+  },
+
+  rope_dart: {
+    id: 'rope_dart',
+    name: 'Dard de corde',
+    type: 'weapon',
+    rarity: 'rare',
+    stats: { atk: 9, spd: 4, crit: 10 },
+    skill: 'hunters_mark',
+    passive: null,
+    price: 210,
+    levelRequired: 7,
+  },
+
+  stiletto_shadow: {
+    id: 'stiletto_shadow',
+    name: 'Stylet de l\'ombre',
+    type: 'weapon',
+    rarity: 'rare',
+    stats: { atk: 10, crit: 18 },
+    skill: 'soul_rend',
+    passive: 'bleed',
+    price: 250,
+    levelRequired: 7,
+  },
+
+  bandit_sword: {
+    id: 'bandit_sword',
+    name: 'Épée de pillard',
+    type: 'weapon',
+    rarity: 'rare',
+    stats: { atk: 11 },
+    skill: 'cleave',
+    passive: null,
+    price: 230,
+    levelRequired: 8,
+  },
+
+  crossbow_ambush: {
+    id: 'crossbow_ambush',
+    name: 'Arbalète d\'embuscade',
+    type: 'weapon',
+    rarity: 'epic',
+    stats: { atk: 13, crit: 20 },
+    skill: 'precise_bolt',
+    passive: 'bleed',
+    price: 420,
+    levelRequired: 9,
+  },
+
   // ── Arc 3-4 ──────────────────────────────────────────────────────────────
   dagger_shadow: {
     id: 'dagger_shadow',

@@ -9,7 +9,9 @@ const {
 const { characterExists, createCharacter } = require('../../services/player.service');
 const { computeStats, xpRequired } = require('../../utils/stats');
 const { errorEmbed } = require('../../utils/embed');
-const { RACES, RACE_BONUSES, GENDER_BONUSES, getCharacterEmoji, formatRaceBonuses } = require('../../data/races');
+const { RACES, getCharacterEmoji, formatRaceOnlyBonuses, formatGenderBonuses, formatRaceBonuses } = require('../../data/races');
+const CONSUMABLES   = require('../../data/items/consumables');
+const { STARTING_ITEMS } = require('../../services/player.service');
 
 const SEP = '┄'.repeat(32);
 
@@ -42,24 +44,16 @@ module.exports = {
           })),
         );
 
-      const raceLines = Object.entries(RACES).map(([key, r]) => {
-        const b = RACE_BONUSES[key];
-        const bonusParts = [
-          b.hpPct    ? `HP+${Math.round(b.hpPct    * 100)}%` : null,
-          b.atkPct   ? `ATK+${Math.round(b.atkPct  * 100)}%` : null,
-          b.defPct   ? `DEF+${Math.round(b.defPct  * 100)}%` : null,
-          b.spdPct   ? `SPD+${Math.round(b.spdPct  * 100)}%` : null,
-          b.critFlat ? `CRIT+${b.critFlat}`                   : null,
-        ].filter(Boolean).join(' · ');
-        return `${r.emojiMale} **${r.label}** — ${r.description}\n> \`${bonusParts}\``;
-      });
+      const raceLines = Object.entries(RACES).map(([key, r]) =>
+        `${r.emojiMale} **${r.label}** — ${r.description}\n> \`${formatRaceOnlyBonuses(key)}\``,
+      );
 
       const embed = new EmbedBuilder()
         .setTitle('⚔️ Création de personnage')
         .setDescription(
           '**Étape 1 / 3 — Race**\n\n' +
           raceLines.join('\n') +
-          '\n\n*Le genre donnera ensuite +ATK/CRIT (Masculin) ou +DEF/HP (Féminin).*',
+          `\n\n*Le genre apportera : ♂️ \`${formatGenderBonuses('male')}\` · ♀️ \`${formatGenderBonuses('female')}\`*`,
         )
         .setColor(0x3498db);
 
@@ -86,9 +80,10 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle('⚔️ Création de personnage')
       .setDescription(
-        `Race choisie : ${raceDef.emojiMale} **${raceDef.label}**\n\n` +
+        `Race choisie : ${raceDef.emojiMale} **${raceDef.label}** · \`${formatRaceOnlyBonuses(race)}\`\n\n` +
         '**Étape 2 / 3 — Genre**\n\n' +
-        `${raceDef.emojiMale} **Masculin**\n${raceDef.emojiFemale} **Féminin**`,
+        `${raceDef.emojiMale} **Masculin** — \`${formatGenderBonuses('male')}\`\n` +
+        `${raceDef.emojiFemale} **Féminin** — \`${formatGenderBonuses('female')}\``,
       )
       .setColor(0x3498db);
 
@@ -192,10 +187,18 @@ module.exports = {
           { name: '​', value: `\`${SEP}\``, inline: false },
           {
             name: '🎒 Objets de départ',
-            value: [
-              '> 🧪 **Potion de soin ×3** — `restaure 30 HP`',
-              '> 🟣 **Élixir de Métamorphose ×1** — `change race & genre`',
-            ].join('\n'),
+            value: STARTING_ITEMS.map((si) => {
+              const item = CONSUMABLES[si.itemId];
+              if (!item) return null;
+              const STAT_LABELS = { atk: 'ATK', def: 'DEF', spd: 'SPD', hp: 'HP', crit: 'CRIT' };
+              const e = item.effect;
+              let effectStr = '';
+              if (e.type === 'heal')        effectStr = `restaure ${e.value} HP`;
+              else if (e.type === 'buff')   effectStr = `${STAT_LABELS[e.stat] ?? e.stat} +${e.value} (${e.turns} tours)`;
+              else if (e.type === 'reroll_race') effectStr = 'change race & genre';
+              else effectStr = e.type;
+              return `> ${item.emoji} **${item.name} ×${si.quantity}** — \`${effectStr}\``;
+            }).filter(Boolean).join('\n'),
             inline: false,
           },
           { name: '​', value: `\`${SEP}\``, inline: false },

@@ -27,7 +27,7 @@ const {
 const { getAP } = require('../services/actionPoints.service');
 const { errorEmbed } = require('../utils/embed');
 const { prisma } = require('../db/prisma');
-const { RACES, getCharacterEmoji, formatRaceBonuses } = require('../data/races');
+const { RACES, getCharacterEmoji, formatRaceOnlyBonuses, formatGenderBonuses, formatRaceBonuses } = require('../data/races');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
 
 const ALL_BOT_COMMANDS = ['start', 'profile', 'inventory', 'setup', 'dungeon', 'prime'];
@@ -547,7 +547,7 @@ function showRerollRaceSelect(interaction, characterId, itemId) {
     .addOptions(
       Object.entries(RACES).map(([key, r]) => ({
         label: r.label,
-        description: formatRaceBonuses(key, 'male'),
+        description: formatRaceOnlyBonuses(key),
         value: key,
         emoji: r.emojiMale,
       })),
@@ -558,8 +558,9 @@ function showRerollRaceSelect(interaction, characterId, itemId) {
     .setDescription(
       '**Étape 1 / 2 — Nouvelle race**\n\n' +
       Object.entries(RACES).map(([key, r]) =>
-        `${r.emojiMale} **${r.label}** · \`${formatRaceBonuses(key, 'male')}\``,
-      ).join('\n'),
+        `${r.emojiMale} **${r.label}** — ${r.description}\n> \`${formatRaceOnlyBonuses(key)}\``,
+      ).join('\n') +
+      `\n\n*Le genre apportera : ♂️ \`${formatGenderBonuses('male')}\` · ♀️ \`${formatGenderBonuses('female')}\`*`,
     )
     .setColor(0x9b59b6);
 
@@ -579,8 +580,10 @@ async function handleRerollRaceSelect(interaction) {
   const embed = new EmbedBuilder()
     .setTitle('🧪 Élixir de Métamorphose')
     .setDescription(
-      `Race choisie : ${raceDef.emojiMale} **${raceDef.label}**\n\n` +
-      '**Étape 2 / 2 — Genre**',
+      `Race choisie : ${raceDef.emojiMale} **${raceDef.label}** · \`${formatRaceOnlyBonuses(race)}\`\n\n` +
+      '**Étape 2 / 2 — Genre**\n\n' +
+      `${raceDef.emojiMale} **Masculin** — \`${formatGenderBonuses('male')}\`\n` +
+      `${raceDef.emojiFemale} **Féminin** — \`${formatGenderBonuses('female')}\``,
     )
     .setColor(0x9b59b6);
 

@@ -3,6 +3,7 @@
 module.exports = {
   regeneration: {
     name: 'Régénération',
+    wiki: { emoji: '💧', healFlat: 3 },
     resolve(player, _target, logs) {
       const healAmt = 3;
       player.hp = Math.min(player.maxHp, player.hp + healAmt);
@@ -12,6 +13,7 @@ module.exports = {
 
   life_steal: {
     name: 'Vol de vie',
+    wiki: { emoji: '🧛', healFlat: 5 },
     resolve(player, _target, logs) {
       const healAmt = 5;
       player.hp = Math.min(player.maxHp, player.hp + healAmt);
@@ -21,6 +23,7 @@ module.exports = {
 
   frost_shield: {
     name: 'Bouclier de givre',
+    wiki: { emoji: '❄️', stat: 'DEF', val: 3, turns: 2 },
     resolve(player, _target, logs) {
       if (!(player.buffs ?? []).some((b) => b.id === 'frost_shield')) {
         player.def += 3;

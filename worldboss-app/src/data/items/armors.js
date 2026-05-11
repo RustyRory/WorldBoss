@@ -96,6 +96,43 @@ module.exports = {
     levelRequired: 1,
   },
 
+  // ── Arc 2 — Château / Bandits ────────────────────────────────────────────
+  raider_vest: {
+    id: 'raider_vest',
+    name: 'Gilet de pillard',
+    type: 'armor',
+    rarity: 'common',
+    stats: { hp: 20, def: 5 },
+    skill: null,
+    passive: null,
+    price: 130,
+    levelRequired: 6,
+  },
+
+  bandit_cloak: {
+    id: 'bandit_cloak',
+    name: 'Cape de bandit',
+    type: 'armor',
+    rarity: 'rare',
+    stats: { hp: 30, def: 9, spd: 3 },
+    skill: null,
+    passive: null,
+    price: 270,
+    levelRequired: 7,
+  },
+
+  highwayman_coat: {
+    id: 'highwayman_coat',
+    name: 'Manteau du grand chemin',
+    type: 'armor',
+    rarity: 'epic',
+    stats: { hp: 45, def: 14, crit: 8 },
+    skill: null,
+    passive: null,
+    price: 500,
+    levelRequired: 9,
+  },
+
   // ── Arc 3-5 ──────────────────────────────────────────────────────────────
   scale_armor: {
     id: 'scale_armor',

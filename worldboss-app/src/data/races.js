@@ -41,9 +41,7 @@ function getRaceBonuses(race, gender) {
   };
 }
 
-// Returns a display string like "HP+13% · ATK+8% · CRIT+5"
-function formatRaceBonuses(race, gender) {
-  const b = getRaceBonuses(race, gender);
+function formatBonusObj(b) {
   return [
     b.hpPct    ? `HP+${Math.round(b.hpPct    * 100)}%` : null,
     b.atkPct   ? `ATK+${Math.round(b.atkPct  * 100)}%` : null,
@@ -53,4 +51,19 @@ function formatRaceBonuses(race, gender) {
   ].filter(Boolean).join(' · ');
 }
 
-module.exports = { RACES, RACE_BONUSES, GENDER_BONUSES, getCharacterEmoji, getRaceBonuses, formatRaceBonuses };
+// Returns a display string for race bonuses only (gender not included)
+function formatRaceOnlyBonuses(race) {
+  return formatBonusObj(RACE_BONUSES[race] ?? RACE_BONUSES.humain);
+}
+
+// Returns a display string for gender bonuses only
+function formatGenderBonuses(gender) {
+  return formatBonusObj(GENDER_BONUSES[gender] ?? GENDER_BONUSES.male);
+}
+
+// Returns a display string like "HP+13% · ATK+8% · CRIT+5" (race + gender combined)
+function formatRaceBonuses(race, gender) {
+  return formatBonusObj(getRaceBonuses(race, gender));
+}
+
+module.exports = { RACES, RACE_BONUSES, GENDER_BONUSES, getCharacterEmoji, getRaceBonuses, formatRaceOnlyBonuses, formatGenderBonuses, formatRaceBonuses };

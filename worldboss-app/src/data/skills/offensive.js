@@ -3,6 +3,7 @@
 module.exports = {
   firebolt: {
     name: 'Firebolt',
+    wiki: { emoji: '🔥', mult: 1.8 },
     oncePerCombat: false,
     cooldown: 2,
     resolve(player, target, logs, { playerAttack }) {
@@ -15,6 +16,7 @@ module.exports = {
 
   bone_bolt: {
     name: 'Trait osseux',
+    wiki: { emoji: '🦴', mult: 1.5, extra: 'Froid Osseux' },
     oncePerCombat: false,
     cooldown: 2,
     resolve(player, target, logs, { playerAttack }) {
@@ -31,6 +33,7 @@ module.exports = {
 
   shadow_burst: {
     name: 'Explosion d\'ombre',
+    wiki: { emoji: '🌑', mult: 2.2 },
     oncePerCombat: false,
     cooldown: 3,
     resolve(player, target, logs, { playerAttack }) {
@@ -43,6 +46,7 @@ module.exports = {
 
   ice_lance: {
     name: 'Lance de glace',
+    wiki: { emoji: '🧊', mult: 1.6, extra: 'Stun' },
     oncePerCombat: false,
     cooldown: 3,
     resolve(player, target, logs, { playerAttack }) {
@@ -56,6 +60,7 @@ module.exports = {
 
   thunder_bolt: {
     name: 'Éclair',
+    wiki: { emoji: '⚡', mult: 1.7 },
     oncePerCombat: false,
     cooldown: 3,
     resolve(player, target, logs, { playerAttack }) {
@@ -68,6 +73,7 @@ module.exports = {
 
   soul_rend: {
     name: 'Déchirement d\'âme',
+    wiki: { emoji: '🩸', mult: 1.5, extra: 'Saignement' },
     oncePerCombat: false,
     cooldown: 2,
     resolve(player, target, logs, { playerAttack }) {
@@ -84,6 +90,7 @@ module.exports = {
 
   power_slash: {
     name: 'Taille puissante',
+    wiki: { emoji: '💥', mult: 2.0 },
     oncePerCombat: false,
     cooldown: 3,
     resolve(player, target, logs, { playerAttack }) {
@@ -96,6 +103,7 @@ module.exports = {
 
   royal_smite: {
     name: 'Frappe royale',
+    wiki: { emoji: '👑', mult: 2.2 },
     oncePerCombat: false,
     cooldown: 4,
     resolve(player, target, logs, { playerAttack }) {
@@ -108,6 +116,7 @@ module.exports = {
 
   hellstrike: {
     name: 'Frappe infernale',
+    wiki: { emoji: '😈', mult: 2.5, extra: 'Brûlure' },
     oncePerCombat: false,
     cooldown: 4,
     resolve(player, target, logs, { playerAttack }) {
@@ -124,6 +133,7 @@ module.exports = {
 
   inferno_blast: {
     name: 'Souffle infernal',
+    wiki: { emoji: '🌋', mult: 2.0 },
     oncePerCombat: false,
     cooldown: 5,
     resolve(player, target, logs, { playerAttack }) {
@@ -136,6 +146,7 @@ module.exports = {
 
   soul_drain: {
     name: 'Drain d\'âme',
+    wiki: { emoji: '💀', mult: 1.8, extra: 'Soin 30% dégâts' },
     oncePerCombat: false,
     cooldown: 3,
     resolve(player, target, logs, { playerAttack }) {
@@ -150,6 +161,7 @@ module.exports = {
 
   sand_storm: {
     name: 'Tempête de sable',
+    wiki: { emoji: '🌪️', mult: 1.4, extra: 'DEF ennemi −5' },
     oncePerCombat: false,
     cooldown: 3,
     resolve(player, target, logs, { playerAttack }) {

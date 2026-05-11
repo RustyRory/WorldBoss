@@ -1,18 +1,19 @@
 'use strict';
 
 const { ITEMS } = require('../data/items');
+const { LOOT_CONFIG } = require('../data/loot');
 
 function rollLootOptions(enemy) {
   const pool = [...(enemy.loot || [])];
-  if (pool.length === 0) return ['potion_heal', 'potion_heal'];
+  if (pool.length === 0) return Array(LOOT_CONFIG.OPTIONS_COUNT).fill(LOOT_CONFIG.FALLBACK_ITEM);
 
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
 
-  const options = pool.slice(0, 2);
-  while (options.length < 2) options.push('potion_heal');
+  const options = pool.slice(0, LOOT_CONFIG.OPTIONS_COUNT);
+  while (options.length < LOOT_CONFIG.OPTIONS_COUNT) options.push(LOOT_CONFIG.FALLBACK_ITEM);
 
   return options;
 }

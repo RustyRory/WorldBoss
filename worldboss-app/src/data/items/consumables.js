@@ -6,6 +6,8 @@ module.exports = {
   potion_heal_minor: {
     id: 'potion_heal_minor',
     name: 'Potion de soin mineure',
+    emoji: '🧪',
+    showInWiki: true,
     type: 'consumable',
     rarity: 'common',
     effect: { type: 'heal', value: 30 },
@@ -17,6 +19,8 @@ module.exports = {
   potion_heal: {
     id: 'potion_heal',
     name: 'Potion de soin',
+    emoji: '🧪',
+    showInWiki: true,
     type: 'consumable',
     rarity: 'common',
     effect: { type: 'heal', value: 50 },
@@ -28,6 +32,8 @@ module.exports = {
   potion_heal_heavy: {
     id: 'potion_heal_heavy',
     name: 'Potion de soin lourde',
+    emoji: '🧪',
+    showInWiki: true,
     type: 'consumable',
     rarity: 'common',
     effect: { type: 'heal', value: 100 },
@@ -39,6 +45,8 @@ module.exports = {
   potion_heal_major: {
     id: 'potion_heal_major',
     name: 'Potion de soin majeure',
+    emoji: '🧪',
+    showInWiki: true,
     type: 'consumable',
     rarity: 'common',
     effect: { type: 'heal', value: 150 },
@@ -50,6 +58,8 @@ module.exports = {
   elixir_ap: {
     id: 'elixir_ap',
     name: 'Élixir de volonté',
+    emoji: '🔮',
+    showInWiki: true,
     type: 'consumable',
     rarity: 'rare',
     effect: { type: 'restore_ap', value: 3 },
@@ -61,6 +71,8 @@ module.exports = {
   bomb: {
     id: 'bomb',
     name: 'Bombe',
+    emoji: '💣',
+    showInWiki: true,
     type: 'consumable',
     rarity: 'common',
     effect: { type: 'damage', value: 25, aoe: true },
@@ -72,6 +84,8 @@ module.exports = {
   scroll_ice: {
     id: 'scroll_ice',
     name: 'Parchemin de glace',
+    emoji: '📜',
+    showInWiki: true,
     type: 'consumable',
     rarity: 'rare',
     effect: { type: 'stun', turns: 2 },
@@ -83,6 +97,8 @@ module.exports = {
   potion_speed: {
     id: 'potion_speed',
     name: 'Potion de vitesse',
+    emoji: '💨',
+    showInWiki: true,
     type: 'consumable',
     rarity: 'rare',
     effect: { type: 'buff', stat: 'spd', value: 5, turns: 3 },
@@ -94,6 +110,8 @@ module.exports = {
   poison_vial: {
     id: 'poison_vial',
     name: 'Fiole de poison',
+    emoji: '🐍',
+    showInWiki: true,
     type: 'consumable',
     rarity: 'rare',
     effect: { type: 'dot', value: 10, turns: 3 },
@@ -104,9 +122,11 @@ module.exports = {
   },
 
   // ── Arc 1-2 ──────────────────────────────────────────────────────────────
-  potion_mana: {
-    id: 'potion_mana',
+  potion_boost: {
+    id: 'potion_boost',
     name: 'Potion de boost',
+    emoji: '💊',
+    showInWiki: true,
     type: 'consumable',
     rarity: 'common',
     effect: { type: 'buff', stat: 'atk', value: 5, turns: 2 },
@@ -120,6 +140,8 @@ module.exports = {
   antidote: {
     id: 'antidote',
     name: 'Antidote',
+    emoji: '☠️',
+    showInWiki: true,
     type: 'consumable',
     rarity: 'common',
     effect: { type: 'cure_dot' },
@@ -132,6 +154,8 @@ module.exports = {
   smoke_bomb: {
     id: 'smoke_bomb',
     name: 'Bombe fumigène',
+    emoji: '💨',
+    showInWiki: true,
     type: 'consumable',
     rarity: 'rare',
     effect: { type: 'stun', turns: 1, aoe: true },
@@ -145,6 +169,8 @@ module.exports = {
   elixir_berserk: {
     id: 'elixir_berserk',
     name: 'Élixir berserker',
+    emoji: '⚡',
+    showInWiki: true,
     type: 'consumable',
     rarity: 'rare',
     effect: { type: 'buff', stat: 'atk', value: 15, turns: 2 },
@@ -157,6 +183,8 @@ module.exports = {
   elixir_iron: {
     id: 'elixir_iron',
     name: 'Élixir de fer',
+    emoji: '🛡️',
+    showInWiki: true,
     type: 'consumable',
     rarity: 'rare',
     effect: { type: 'buff', stat: 'def', value: 15, turns: 3 },
@@ -169,6 +197,7 @@ module.exports = {
   potion_reroll: {
     id: 'potion_reroll',
     name: 'Élixir de Métamorphose',
+    emoji: '🟣',
     type: 'consumable',
     rarity: 'epic',
     effect: { type: 'reroll_race' },
@@ -183,6 +212,8 @@ module.exports = {
   scroll_fire: {
     id: 'scroll_fire',
     name: 'Parchemin de feu',
+    emoji: '📜',
+    showInWiki: true,
     type: 'consumable',
     rarity: 'rare',
     effect: { type: 'damage', value: 40 },

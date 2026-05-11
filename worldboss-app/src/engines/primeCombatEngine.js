@@ -4,6 +4,7 @@ const { playerAttack, rawDamage } = require('./combatEngine');
 const { ABILITIES } = require('../data/abilities');
 const { PASSIVES }  = require('../data/passives');
 const { ITEMS }     = require('../data/items');
+const { COMBAT_CONFIG } = require('../data/combat');
 
 /**
  * Resolve one full round of prime combat.
@@ -182,11 +183,11 @@ function resolvePrimeRound(primeState) {
     }
 
     // Random AI: 0 = attack, 1 = ability, 2 = rest
-    const choice = Math.floor(Math.random() * 3);
+    const choice = Math.floor(Math.random() * COMBAT_CONFIG.ENEMY_AI_CHOICES);
     const randomTarget = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
 
     if (choice === 2) {
-      const heal = enemy.restHeal ?? Math.max(1, Math.floor(enemy.maxHp * 0.15));
+      const heal = enemy.restHeal ?? Math.max(1, Math.floor(enemy.maxHp * COMBAT_CONFIG.ENEMY_REST_HEAL_PCT));
       enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
       logs.push(`💤 **${enemy.name}** se repose et récupère **${heal}** HP *(${enemy.hp}/${enemy.maxHp} HP)*.`);
     } else if (choice === 1 && enemy.ability) {

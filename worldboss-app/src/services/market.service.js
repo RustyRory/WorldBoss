@@ -405,4 +405,4 @@ async function refreshAuctionEmbed(listing, discordClient) {
   }
 }
 
-module.exports = { startAuctionWorker, checkMarketAccess, sellToMerchant, createAuction, placeBid, finaliseBuyout, buildAuctionEmbed, DURATIONS_MS };
+module.exports = { startAuctionWorker, checkMarketAccess, sellToMerchant, createAuction, placeBid, finaliseBuyout, buildAuctionEmbed, DURATIONS_MS, MERCHANT_RATE, MARKET_MIN_LVL, MARKET_UNLOCK_DUNGEON };

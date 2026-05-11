@@ -3,6 +3,12 @@
 const { prisma } = require('../db/prisma');
 const { xpRequired, baseStats, computeStats } = require('../utils/stats');
 const { ITEMS } = require('../data/items');
+const { PROGRESSION_CONFIG } = require('../data/progression');
+
+const STARTING_ITEMS = [
+  { itemId: 'potion_heal',   quantity: 3 },
+  { itemId: 'potion_reroll', quantity: 1 },
+];
 
 async function getCharacter(userId, guildId) {
   return prisma.character.findUnique({
@@ -52,10 +58,7 @@ async function createCharacter(userId, username, guildId, characterName, race = 
 
     // Give starting items
     await tx.characterItem.createMany({
-      data: [
-        { characterId: character.id, itemId: 'potion_heal',   quantity: 3 },
-        { characterId: character.id, itemId: 'potion_reroll', quantity: 1 },
-      ],
+      data: STARTING_ITEMS.map((si) => ({ characterId: character.id, ...si })),
     });
 
     const loadout = await tx.loadout.create({
@@ -85,7 +88,7 @@ function computeRegenedHp(storedHp, hpUpdatedAt, maxHp) {
 const MAX_LEVEL = 50;
 
 function rankXpRequired(rank) {
-  return 500 * (rank + 1);
+  return PROGRESSION_CONFIG.RANK_XP_BASE * (rank + 1);
 }
 
 async function addXp(characterId, amount) {
@@ -172,4 +175,4 @@ async function ensureItemsSeeded() {
   await prisma.$transaction(ops);
 }
 
-module.exports = { getCharacter, characterExists, createCharacter, addXp, addGold, ensureItemsSeeded, computeRegenedHp, rankXpRequired, MAX_LEVEL };
+module.exports = { getCharacter, characterExists, createCharacter, addXp, addGold, ensureItemsSeeded, computeRegenedHp, rankXpRequired, MAX_LEVEL, HP_REGEN_PER_MINUTE, STARTING_ITEMS };

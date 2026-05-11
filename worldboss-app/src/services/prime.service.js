@@ -11,6 +11,8 @@ const { applyLoot }             = require('../engines/lootEngine');
 const { resolvePrimeRound }     = require('../engines/primeCombatEngine');
 const { PRIMES }                = require('../data/primes');
 const { ENEMIES }               = require('../data/enemies');
+const { COMBAT_CONFIG }         = require('../data/combat');
+const { PROGRESSION_CONFIG }    = require('../data/progression');
 const { ITEMS }                 = require('../data/items');
 const {
   EmbedBuilder,
@@ -155,7 +157,7 @@ function buildCombatEmbed(state) {
   if (allLogs.length > 0) {
     ansi.push('');
     ansi.push('\x1b[1m📜 Journal\x1b[0m');
-    const lastLogs = allLogs.slice(-6);
+    const lastLogs = allLogs.slice(-PROGRESSION_CONFIG.LOG_DISPLAY_COUNT);
     const offset   = allLogs.length - lastLogs.length;
     for (let li = 0; li < lastLogs.length; li++) {
       const globalIdx = offset + li;
@@ -460,7 +462,7 @@ async function startPrime(interaction, primeRunId) {
   // replayMode si le niveau moyen du groupe dépasse le seuil
   const HEAL_SKILL_KEYS = new Set(['soin', 'divine_heal', 'second_wind']);
   const avgLevel = participants.reduce((s, p) => s + p.character.level, 0) / participants.length;
-  const replayMode = avgLevel > primeDef.levelRequired + (primeDef.replayThreshold ?? 5);
+  const replayMode = avgLevel > primeDef.levelRequired + (primeDef.replayThreshold ?? PROGRESSION_CONFIG.PRIME_REPLAY_THRESHOLD);
 
   const players = await Promise.all(participants.map(async (p) => {
     const char    = p.character;
@@ -493,7 +495,7 @@ async function startPrime(interaction, primeRunId) {
       def:            stats.def,
       spd:            stats.spd,
       crit:           stats.crit,
-      critMult:       stats.critMult ?? 1.5,
+      critMult:       stats.critMult ?? COMBAT_CONFIG.DEFAULT_CRIT_MULT,
       consumables,
       activeSkills,
       activePassives: stats.activePassives ?? [],
@@ -787,7 +789,7 @@ async function handleClaimLoot(interaction, primeRunId) {
     const enemyDef = ENEMIES[eliteId];
     if (!enemyDef?.eliteDrops?.length) continue;
     for (const dropItemId of enemyDef.eliteDrops) {
-      if (Math.random() < 0.1) {
+      if (Math.random() < PROGRESSION_CONFIG.PRIME_ELITE_DROP_CHANCE) {
         await applyLoot(prisma, character.id, dropItemId);
         const itemName = ITEMS[dropItemId]?.name ?? dropItemId;
         eliteDropsGranted.push(`⭐ **${ENEMIES[eliteId].name}** — **${itemName}**`);
@@ -880,7 +882,7 @@ async function _resolveRound(state, interaction) {
 
   state.players        = result.players;
   state.enemies        = result.enemies;
-  state.log            = [...prevLog, ...newLogs].slice(-20);
+  state.log            = [...prevLog, ...newLogs].slice(-PROGRESSION_CONFIG.PRIME_STATE_LOG_BUFFER);
   state.pendingActions = {};
   state.roundNumber   += 1;
 
@@ -956,7 +958,7 @@ async function _resolveRoundFromMessage(state, message) {
 
   state.players        = result.players;
   state.enemies        = result.enemies;
-  state.log            = [...prevLog, ...newLogs].slice(-20);
+  state.log            = [...prevLog, ...newLogs].slice(-PROGRESSION_CONFIG.PRIME_STATE_LOG_BUFFER);
   state.pendingActions = {};
   state.roundNumber   += 1;
 
@@ -1082,9 +1084,9 @@ async function _distributeRewards(state) {
     }
   }
 
-  // Apply 1.5x multiplier for prime difficulty
-  totalXp   = Math.floor(totalXp  * 1.5);
-  totalGold = Math.floor(totalGold * 1.5);
+  // Apply difficulty multiplier for prime rewards
+  totalXp   = Math.floor(totalXp   * PROGRESSION_CONFIG.PRIME_DIFFICULTY_MULTIPLIER);
+  totalGold = Math.floor(totalGold  * PROGRESSION_CONFIG.PRIME_DIFFICULTY_MULTIPLIER);
 
   for (const player of state.players) {
     if (player.hp <= 0) continue; // dead players get no rewards

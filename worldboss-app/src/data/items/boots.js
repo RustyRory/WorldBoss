@@ -50,6 +50,31 @@ module.exports = {
     levelRequired: 3,
   },
 
+  // ── Arc 2 — Château / Bandits ────────────────────────────────────────────
+  bandit_boots: {
+    id: 'bandit_boots',
+    name: 'Bottes de bandit',
+    type: 'boots',
+    rarity: 'common',
+    stats: { spd: 4, def: 1 },
+    skill: null,
+    passive: null,
+    price: 100,
+    levelRequired: 6,
+  },
+
+  swift_leathers: {
+    id: 'swift_leathers',
+    name: 'Cuirs véloces',
+    type: 'boots',
+    rarity: 'rare',
+    stats: { spd: 7, crit: 8 },
+    skill: null,
+    passive: null,
+    price: 220,
+    levelRequired: 8,
+  },
+
   // ── Arc 3-5 ──────────────────────────────────────────────────────────────
   boots_shadow: {
     id: 'boots_shadow',

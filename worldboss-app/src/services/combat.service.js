@@ -11,6 +11,7 @@ const { buildCombatEmbed, buildCombatRow, buildTargetRow, buildDungeonNextRow, e
 const { animateCombatLogs, sleep, animateXpGain } = require('../utils/animate');
 const { EmbedBuilder, MessageFlags } = require('discord.js');
 const { DUNGEONS } = require('../data/dungeons');
+const { COMBAT_CONFIG } = require('../data/combat');
 
 /**
  * Build combat state from character + list of enemies.
@@ -321,8 +322,8 @@ async function handleCombatButton(interaction) {
             data: { hp: newHp, hpUpdatedAt: new Date() },
           });
         } else {
-          // Heal 15% maxHp entre les salles
-          const healAmt = Math.max(5, Math.floor(state.player.maxHp * 0.15));
+          // Heal entre les salles
+          const healAmt = Math.max(COMBAT_CONFIG.MIN_ROOM_HEAL_HP, Math.floor(state.player.maxHp * COMBAT_CONFIG.ROOM_HEAL_PCT));
           newMaxHp = state.player.maxHp;
           newHp    = Math.min(newMaxHp, state.player.hp + healAmt);
           healDesc = `💚 Vous récupérez **${healAmt}** HP.`;
