@@ -42,6 +42,16 @@ async function equipItem(characterId, itemId) {
 
   const loadout = await getOrCreateLoadout(characterId);
 
+  // Verify enough unequipped copies are available
+  const equippedList = [
+    loadout.weaponId, loadout.armorId, loadout.helmetId,
+    loadout.bootsId, loadout.accessory1Id, loadout.accessory2Id,
+  ];
+  const equippedCount = equippedList.filter((id) => id === itemId).length;
+  if (charItem.quantity - equippedCount < 1) {
+    return { success: false, message: `Toutes vos copies de **${itemDef.name}** sont déjà équipées.` };
+  }
+
   let slotField = typeToSlot(itemDef.type);
 
   if (!slotField) {

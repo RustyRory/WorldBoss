@@ -405,21 +405,25 @@ function buildInventoryMessage(user, userItems, loadout, ap = null) {
   const TYPE_ICON    = { weapon: '⚔️', armor: '🧥', helmet: '🪖', boots: '👢', accessory: '💍', consumable: '🧪' };
   const TYPE_LABEL   = { weapon: 'Armes', armor: 'Armures', helmet: 'Casques', boots: 'Bottes', accessory: 'Accessoires', consumable: 'Consommables' };
 
-  const equippedIds = new Set(
-    [loadout?.weaponId, loadout?.armorId, loadout?.helmetId, loadout?.bootsId, loadout?.accessory1Id, loadout?.accessory2Id].filter(Boolean),
-  );
+  const equippedList = [
+    loadout?.weaponId, loadout?.armorId, loadout?.helmetId,
+    loadout?.bootsId, loadout?.accessory1Id, loadout?.accessory2Id,
+  ].filter(Boolean);
 
   const groups = {};
   for (const ui of userItems) {
     const item = ITEMS[ui.itemId];
     if (!item) continue;
     if (!groups[item.type]) groups[item.type] = [];
-    const rarity    = RARITY_EMOJI[item.rarity] ?? '⚪';
-    const qty       = ui.quantity > 1 ? ` ×${ui.quantity}` : '';
-    const statsStr  = item.stats
+    const rarity        = RARITY_EMOJI[item.rarity] ?? '⚪';
+    const qty           = ui.quantity > 1 ? ` ×${ui.quantity}` : '';
+    const statsStr      = item.stats
       ? Object.entries(item.stats).map(([k, v]) => `\`${v > 0 ? '+' : ''}${v} ${k.toUpperCase()}\``).join(' ')
       : '';
-    const equipped  = equippedIds.has(ui.itemId) ? ' · ✅ **équipé**' : '';
+    const equippedCount = equippedList.filter((id) => id === ui.itemId).length;
+    const equipped      = equippedCount > 0
+      ? ` · ✅ **équipé${equippedCount > 1 ? ` ×${equippedCount}` : ''}**`
+      : '';
     groups[item.type].push(
       `> ${rarity} **${item.name}**${qty}${statsStr ? ` · ${statsStr}` : ''}${equipped}`,
     );
@@ -473,7 +477,9 @@ function buildInventoryMessage(user, userItems, loadout, ap = null) {
   // ── Select menu équiper ────────────────────────────────────────────────────
   const equipable = userItems.filter((ui) => {
     const item = ITEMS[ui.itemId];
-    return item && item.type !== 'consumable';
+    if (!item || item.type === 'consumable') return false;
+    const ec = equippedList.filter((id) => id === ui.itemId).length;
+    return ui.quantity - ec >= 1;
   });
 
   const rows = [];
@@ -482,14 +488,13 @@ function buildInventoryMessage(user, userItems, loadout, ap = null) {
     const { StringSelectMenuBuilder } = require('discord.js');
 
     const equipOptions = equipable.map((ui) => {
-      const item   = ITEMS[ui.itemId];
-      const rarity = RARITY_EMOJI[item.rarity] ?? '⚪';
+      const item     = ITEMS[ui.itemId];
+      const rarity   = RARITY_EMOJI[item.rarity] ?? '⚪';
       const statsStr = item.stats
         ? Object.entries(item.stats).map(([k, v]) => `${v > 0 ? '+' : ''}${v} ${k.toUpperCase()}`).join(', ')
         : '';
-      const tag = equippedIds.has(ui.itemId) ? ' ✅' : '';
       return {
-        label:       `${rarity} ${item.name}${tag}`.slice(0, 100),
+        label:       `${rarity} ${item.name}`.slice(0, 100),
         description: `${TYPE_LABEL[item.type] ?? item.type} · ${RARITY_LABEL[item.rarity] ?? item.rarity}${statsStr ? ` · ${statsStr}` : ''}`.slice(0, 100),
         value:       `equip:${ui.itemId}`,
       };
