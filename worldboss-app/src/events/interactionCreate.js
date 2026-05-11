@@ -1,7 +1,7 @@
 'use strict';
 
 const { Events, MessageFlags } = require('discord.js');
-const { handleCombatButton } = require('../services/combat.service');
+const { handleCombatButton, handleActionSelect, handleActionBack } = require('../services/combat.service');
 const { handleDungeonNext, startDungeon, showDungeonSelection } = require('../services/dungeon.service');
 const { getPendingLoot, deletePendingLoot, deleteDungeonState, deleteCombatState } = require('../cache/redis');
 const { applyLoot } = require('../engines/lootEngine');
@@ -192,6 +192,8 @@ module.exports = {
         } catch (err) {
           console.error('[Wiki/select]', err);
         }
+      } else if (interaction.customId === 'combat_action_select') {
+        return await handleActionSelect(interaction);
       } else if (interaction.customId === 'combat_consumable') {
         const itemId = interaction.values[0];
         interaction.customId = `combat_item_${itemId}`;
@@ -486,6 +488,10 @@ module.exports = {
             .setDescription(`Vous avez obtenu : **${itemName}**`)
             .setColor(0xf1c40f);
           return interaction.editReply({ embeds: [embed], components: [] });
+        }
+
+        if (customId === 'combat_action_back') {
+          return await handleActionBack(interaction);
         }
 
         if (customId.startsWith('combat_')) {

@@ -136,40 +136,55 @@ function buildCombatEmbed(state) {
   return embed;
 }
 
-/**
- * Build combat action rows.
- * Single enemy → one row (attack, skill, potion, flee).
- * Multiple enemies → attack row per target, then skill row per target, then utils row.
- * Returns an array of ActionRowBuilder.
- */
-function buildCombatRow(state) {
-  const { player, enemies } = state;
-  const skills       = player.activeSkills  ?? [];
-  const cooldowns    = player.skillCooldowns ?? {};
-  const usedOnce     = player.usedOnceSkills ?? [];
-  const aliveEnemies = enemies.filter((e) => e.hp > 0);
-
-  // Build consumable select menu
-  const availableConsumables = (player.consumables ?? []).filter((c) => {
+function buildConsumableRow(player) {
+  const available = (player.consumables ?? []).filter((c) => {
     const def = ITEMS[c.itemId];
     if (!def?.effect) return false;
-    if (def.effect.type === 'restore_ap') return false; // not applicable in combat
+    if (def.effect.type === 'restore_ap') return false;
     return c.quantity > 0 || c.quantity === -1;
   });
+  if (!available.length) return null;
+  return new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId('combat_consumable')
+      .setPlaceholder('🎒 Utiliser un consommable…')
+      .addOptions(available.map((c) => {
+        const def = ITEMS[c.itemId];
+        const qty = c.quantity === -1 ? '∞' : `×${c.quantity}`;
+        return { label: `${def.name} (${qty})`, value: c.itemId };
+      })),
+  );
+}
 
-  const consumableRow = availableConsumables.length > 0
-    ? new ActionRowBuilder().addComponents(
-        new StringSelectMenuBuilder()
-          .setCustomId('combat_consumable')
-          .setPlaceholder('🎒 Utiliser un consommable…')
-          .addOptions(availableConsumables.map((c) => {
-            const def = ITEMS[c.itemId];
-            const qty = c.quantity === -1 ? '∞' : `×${c.quantity}`;
-            return { label: `${def.name} (${qty})`, value: c.itemId };
-          })),
-      )
-    : null;
+/**
+ * Phase 1 — action select + consumable select + flee button (always ≤ 3 rows).
+ */
+function buildCombatRow(state) {
+  const { player } = state;
+  const skills    = player.activeSkills  ?? [];
+  const cooldowns = player.skillCooldowns ?? {};
+  const usedOnce  = player.usedOnceSkills ?? [];
 
+  const actionRow = new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId('combat_action_select')
+      .setPlaceholder('⚔️ Choisir une action…')
+      .addOptions([
+        { label: 'Attaquer', value: 'attack', emoji: '⚔️' },
+        ...skills.map((sk) => {
+          const cd      = cooldowns[sk.key] ?? 0;
+          const blocked = cd > 0 || (sk.oncePerCombat && usedOnce.includes(sk.key));
+          return {
+            label:       blocked ? `${sk.name} (${cd}t)` : sk.name,
+            value:       `skill_${sk.key}`,
+            emoji:       '🔥',
+            description: blocked ? 'Non disponible ce tour' : undefined,
+          };
+        }),
+      ]),
+  );
+
+  const consumableRow = buildConsumableRow(player);
   const fleeRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('combat_flee')
@@ -178,70 +193,39 @@ function buildCombatRow(state) {
       .setStyle(ButtonStyle.Secondary),
   );
 
-  const targetIdx  = enemies.findIndex((e) => e.hp > 0);
-  const targetIdx0 = targetIdx >= 0 ? targetIdx : 0;
+  const rows = [actionRow];
+  if (consumableRow) rows.push(consumableRow);
+  rows.push(fleeRow);
+  return rows;
+}
 
-  if (aliveEnemies.length <= 1) {
-    const attackRow = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(`combat_attack:${targetIdx0}`)
-        .setLabel('Attaquer')
-        .setEmoji('⚔️')
-        .setStyle(ButtonStyle.Danger),
-      ...skills.map((sk) => {
-        const cd      = cooldowns[sk.key] ?? 0;
-        const blocked = cd > 0 || (sk.oncePerCombat && usedOnce.includes(sk.key));
-        const label   = cd > 0 ? `${sk.name} (${cd}t)` : sk.name;
-        return new ButtonBuilder()
-          .setCustomId(`combat_skill_${sk.key}:${targetIdx0}`)
-          .setLabel(label)
-          .setEmoji('🔥')
-          .setStyle(ButtonStyle.Primary)
-          .setDisabled(blocked);
-      }),
-      new ButtonBuilder()
-        .setCustomId('combat_flee')
-        .setLabel('Fuir')
-        .setEmoji('🏃')
-        .setStyle(ButtonStyle.Secondary),
-    );
-    const rows = [attackRow];
-    if (consumableRow) rows.push(consumableRow);
-    return rows;
-  }
+/**
+ * Phase 2 (multi-ennemis) — boutons de cible + consumable + retour (toujours ≤ 3 rows).
+ * action : 'attack' | 'skill_<key>'
+ */
+function buildTargetRow(action, state) {
+  const { player, enemies } = state;
+  const aliveEnemies = enemies.filter((e) => e.hp > 0);
 
-  // Multiple enemies — attack row, one skill row per skill, consumable select, flee
-  const attackRow = new ActionRowBuilder().addComponents(
+  const targetRow = new ActionRowBuilder().addComponents(
     ...aliveEnemies.map((e) => {
       const idx = enemies.indexOf(e);
       return new ButtonBuilder()
-        .setCustomId(`combat_attack:${idx}`)
-        .setLabel(`⚔️ ${e.name}`)
-        .setStyle(ButtonStyle.Danger);
+        .setCustomId(`combat_${action}:${idx}`)
+        .setLabel(e.name)
+        .setEmoji('🎯')
+        .setStyle(ButtonStyle.Primary);
     }),
+    new ButtonBuilder()
+      .setCustomId('combat_action_back')
+      .setLabel('Retour')
+      .setEmoji('↩️')
+      .setStyle(ButtonStyle.Secondary),
   );
 
-  const rows = [attackRow];
-
-  for (const sk of skills) {
-    const cd      = cooldowns[sk.key] ?? 0;
-    const blocked = cd > 0 || (sk.oncePerCombat && usedOnce.includes(sk.key));
-    const label   = cd > 0 ? `${sk.name} (${cd}t)` : sk.name;
-    const skillRow = new ActionRowBuilder().addComponents(
-      ...aliveEnemies.map((e) => {
-        const idx = enemies.indexOf(e);
-        return new ButtonBuilder()
-          .setCustomId(`combat_skill_${sk.key}:${idx}`)
-          .setLabel(`🔥 ${label} → ${e.name}`)
-          .setStyle(ButtonStyle.Primary)
-          .setDisabled(blocked);
-      }),
-    );
-    rows.push(skillRow);
-  }
-
+  const consumableRow = buildConsumableRow(player);
+  const rows = [targetRow];
   if (consumableRow) rows.push(consumableRow);
-  rows.push(fleeRow);
   return rows;
 }
 
@@ -639,6 +623,7 @@ module.exports = {
   hpBarAnsi,
   buildCombatEmbed,
   buildCombatRow,
+  buildTargetRow,
   buildDungeonNextRow,
   buildLootEmbed,
   buildProfileEmbed,

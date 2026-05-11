@@ -89,7 +89,7 @@ function computeStats(user, loadout) {
   for (const slotId of allSlots) {
     const item = ITEMS[slotId];
     if (!item) continue;
-    if (item.skill) {
+    if (item.skill && activeSkills.length < 2) {
       const sk = SKILLS[item.skill];
       if (sk && !activeSkills.find((s) => s.key === item.skill)) {
         activeSkills.push({ key: item.skill, ...sk });

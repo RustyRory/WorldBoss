@@ -7,7 +7,7 @@ const { applyLoot } = require('../engines/lootEngine');
 const { addXp, addGold, computeRegenedHp, rankXpRequired, MAX_LEVEL } = require('./player.service');
 const { getCharacterEmoji } = require('../data/races');
 const { computeStats, xpRequired } = require('../utils/stats');
-const { buildCombatEmbed, buildCombatRow, buildDungeonNextRow, errorEmbed } = require('../utils/embed');
+const { buildCombatEmbed, buildCombatRow, buildTargetRow, buildDungeonNextRow, errorEmbed } = require('../utils/embed');
 const { animateCombatLogs, sleep, animateXpGain } = require('../utils/animate');
 const { EmbedBuilder, MessageFlags } = require('discord.js');
 const { DUNGEONS } = require('../data/dungeons');
@@ -389,4 +389,55 @@ async function handleCombatButton(interaction) {
   );
 }
 
-module.exports = { buildCombatState, handleCombatButton };
+async function handleActionSelect(interaction) {
+  const userId  = interaction.user.id;
+  const guildId = interaction.guildId;
+
+  const character = await prisma.character.findUnique({
+    where: { userId_guildId: { userId, guildId } },
+    select: { id: true },
+  });
+  if (!character) {
+    return interaction.reply({ embeds: [errorEmbed('Personnage introuvable.')], flags: MessageFlags.Ephemeral });
+  }
+
+  const state = await getCombatState(character.id);
+  if (!state || state.status !== 'active') {
+    return interaction.reply({ embeds: [errorEmbed('Aucun combat en cours.')], flags: MessageFlags.Ephemeral });
+  }
+
+  const action       = interaction.values[0]; // 'attack' | 'skill_<key>'
+  const aliveEnemies = state.enemies.filter((e) => e.hp > 0);
+
+  if (aliveEnemies.length <= 1) {
+    const targetIdx = Math.max(0, state.enemies.findIndex((e) => e.hp > 0));
+    interaction.customId = `combat_${action}:${targetIdx}`;
+    return handleCombatButton(interaction);
+  }
+
+  await interaction.deferUpdate();
+  return interaction.editReply({ embeds: [buildCombatEmbed(state)], components: buildTargetRow(action, state) });
+}
+
+async function handleActionBack(interaction) {
+  const userId  = interaction.user.id;
+  const guildId = interaction.guildId;
+
+  const character = await prisma.character.findUnique({
+    where: { userId_guildId: { userId, guildId } },
+    select: { id: true },
+  });
+  if (!character) {
+    return interaction.reply({ embeds: [errorEmbed('Personnage introuvable.')], flags: MessageFlags.Ephemeral });
+  }
+
+  const state = await getCombatState(character.id);
+  if (!state || state.status !== 'active') {
+    return interaction.reply({ embeds: [errorEmbed('Aucun combat en cours.')], flags: MessageFlags.Ephemeral });
+  }
+
+  await interaction.deferUpdate();
+  return interaction.editReply({ embeds: [buildCombatEmbed(state)], components: buildCombatRow(state) });
+}
+
+module.exports = { buildCombatState, handleCombatButton, handleActionSelect, handleActionBack };
