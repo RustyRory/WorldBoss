@@ -125,7 +125,7 @@ async function addXp(characterId, amount) {
   if (leveledUp) {
     const { AP_MAX } = require('./actionPoints.service');
     const { computeStats } = require('../utils/stats');
-    const maxHp = computeStats({ level, rank }, character.loadout ?? {}).hp;
+    const maxHp = computeStats({ level, rank, race: character.race, gender: character.gender }, character.loadout ?? {}).hp;
     updateData.hp                    = maxHp;
     updateData.hpUpdatedAt           = new Date();
     updateData.actionPoints          = AP_MAX;

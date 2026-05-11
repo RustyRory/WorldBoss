@@ -8,6 +8,7 @@ const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const { redis } = require('./cache/redis');
 const { startAuctionWorker } = require('./services/market.service');
 const { startMerchantWorker } = require('./services/merchant.service');
+const { deployCommands } = require('./deploy-commands');
 
 // ── Discord client ───────────────────────────────────────────────────────────
 const client = new Client({
@@ -80,10 +81,15 @@ process.on('unhandledRejection', (err) => {
   console.error('[UnhandledRejection]', err?.message ?? err);
 });
 
-client.login(token).then(() => {
-  console.log('[Bot] Login en cours...');
+client.once('ready', async () => {
+  console.log(`[Bot] Connecté en tant que ${client.user.tag}`);
+  await deployCommands(client).catch((err) => console.error('[Deploy] Erreur au démarrage:', err.message));
   startAuctionWorker(client);
   startMerchantWorker(client);
+});
+
+client.login(token).then(() => {
+  console.log('[Bot] Login en cours...');
 }).catch((err) => {
   console.error('[Bot] Impossible de se connecter:', err.message);
   process.exit(1);

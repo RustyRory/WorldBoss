@@ -6,6 +6,7 @@ const {
   initGuildChannels,
   updateGuildChannels,
 } = require('../services/guild.service');
+const { deployToGuild } = require('../deploy-commands');
 
 module.exports = {
   name: Events.GuildCreate,
@@ -15,6 +16,7 @@ module.exports = {
     console.log(`[Guild] Rejoint : ${guild.name} (${guild.id})`);
 
     try {
+      await deployToGuild(guild.id).catch((err) => console.error(`[Deploy] Erreur sur ${guild.name}:`, err.message));
       await ensureGuildInDb(guild);
       const channelIds = await initGuildChannels(guild);
       await updateGuildChannels(guild.id, channelIds);
