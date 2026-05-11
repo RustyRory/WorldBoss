@@ -543,8 +543,6 @@ function buildInventoryMessage(user, userItems, loadout, ap = null) {
   }
 
   // ── Select menu vendre ────────────────────────────────────────────────────
-  const equippedList = [loadout?.weaponId, loadout?.armorId, loadout?.helmetId, loadout?.bootsId, loadout?.accessory1Id, loadout?.accessory2Id].filter(Boolean);
-
   const sellable = userItems.filter((ui) => {
     const item = ITEMS[ui.itemId];
     if (!item) return false;
