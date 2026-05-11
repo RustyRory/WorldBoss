@@ -4,16 +4,16 @@
 // hpPct/atkPct/defPct/spdPct : 0.10 = +10%
 // critFlat : flat crit% points added after scaling (crit is already a % so flat makes sense)
 const RACE_BONUSES = {
-  humain:   { hpPct: 0.05, atkPct: 0.03, defPct: 0.03, spdPct: 0.03, critFlat:  0 },
-  elfe:     { hpPct: 0,    atkPct: 0.10, defPct: 0,    spdPct: 0.10, critFlat:  8 },
-  nain:     { hpPct: 0.20, atkPct: 0.05, defPct: 0.15, spdPct: 0,    critFlat:  0 },
-  orque:    { hpPct: 0.08, atkPct: 0.15, defPct: 0,    spdPct: 0,    critFlat:  5 },
-  halfelin: { hpPct: 0.10, atkPct: 0,    defPct: 0.08, spdPct: 0.15, critFlat:  0 },
+  humain:   { hpPct: 0.03, atkPct: 0.03, defPct: 0.03, spdPct: 0.03, critFlat:  0 },
+  elfe:     { hpPct: 0,    atkPct: 0.05, defPct: 0,    spdPct: 0.03, critFlat:  5 },
+  nain:     { hpPct: 0.08, atkPct: 0,    defPct: 0.05, spdPct: 0,    critFlat:  0 },
+  orque:    { hpPct: 0.03, atkPct: 0.08, defPct: 0,    spdPct: 0,    critFlat:  2 },
+  halfelin: { hpPct: 0.03, atkPct: 0,    defPct: 0.03, spdPct: 0.05, critFlat:  1 },
 };
 
 const GENDER_BONUSES = {
-  male:   { hpPct: 0,    atkPct: 0.05, defPct: 0,    spdPct: 0,    critFlat: 5 },
-  female: { hpPct: 0.08, atkPct: 0,    defPct: 0.05, spdPct: 0,    critFlat: 0 },
+  male:   { hpPct: 0,    atkPct: 0.05, defPct: 0,    spdPct: 0,       critFlat: 3 },
+  female: { hpPct: 0.05, atkPct: 0,    defPct: 0.05, spdPct: 0.03,    critFlat: 0 },
 };
 
 const RACES = {

@@ -171,31 +171,23 @@ function buildCombatRow(state) {
       .setPlaceholder('⚔️ Choisir une action…')
       .addOptions([
         { label: 'Attaquer', value: 'attack', emoji: '⚔️' },
-        ...skills.map((sk) => {
-          const cd      = cooldowns[sk.key] ?? 0;
-          const blocked = cd > 0 || (sk.oncePerCombat && usedOnce.includes(sk.key));
-          return {
-            label:       blocked ? `${sk.name} (${cd}t)` : sk.name,
-            value:       `skill_${sk.key}`,
-            emoji:       '🔥',
-            description: blocked ? 'Non disponible ce tour' : undefined,
-          };
-        }),
+        ...skills
+          .filter((sk) => {
+            const cd = cooldowns[sk.key] ?? 0;
+            return cd <= 0 && !(sk.oncePerCombat && usedOnce.includes(sk.key));
+          })
+          .map((sk) => ({
+            label: sk.name,
+            value: `skill_${sk.key}`,
+            emoji: '🔥',
+          })),
+        { label: 'Fuir', value: 'flee', emoji: '🏃', description: 'Quitter le combat' },
       ]),
   );
 
   const consumableRow = buildConsumableRow(player);
-  const fleeRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId('combat_flee')
-      .setLabel('Fuir')
-      .setEmoji('🏃')
-      .setStyle(ButtonStyle.Secondary),
-  );
-
   const rows = [actionRow];
   if (consumableRow) rows.push(consumableRow);
-  rows.push(fleeRow);
   return rows;
 }
 

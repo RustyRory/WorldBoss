@@ -122,14 +122,21 @@ async function addXp(characterId, amount) {
   }
 
   const updateData = { xp, level, rank };
-  if (leveledUp) {
+  if (leveledUp || rankedUp) {
     const { AP_MAX } = require('./actionPoints.service');
     const { computeStats } = require('../utils/stats');
-    const maxHp = computeStats({ level, rank, race: character.race, gender: character.gender }, character.loadout ?? {}).hp;
+    // Re-fetch loadout to get the most up-to-date equipment (loot may have just been applied)
+    const freshLoadout = await prisma.loadout.findUnique({ where: { characterId } });
+    const maxHp = computeStats(
+      { level, rank, race: character.race, gender: character.gender },
+      freshLoadout ?? {},
+    ).hp;
     updateData.hp                    = maxHp;
     updateData.hpUpdatedAt           = new Date();
-    updateData.actionPoints          = AP_MAX;
-    updateData.actionPointsUpdatedAt = new Date();
+    if (leveledUp) {
+      updateData.actionPoints          = AP_MAX;
+      updateData.actionPointsUpdatedAt = new Date();
+    }
   }
 
   await prisma.character.update({ where: { id: characterId }, data: updateData });

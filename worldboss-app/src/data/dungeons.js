@@ -122,9 +122,32 @@ const DUNGEONS = {
     ],
     reward: {
       unlockPrimes: true,
-      
+
       message: '**Necromancien :** "Ma mort engendra un chaos indescriptible !"*\n\n**Les primes sont maintenant débloquées !**',
     },
+  },
+  6: {
+    id: 6,
+    name: '',
+    lore: '',
+    levelRequired: 6,
+    rooms: [
+            {
+        room: 1,
+        enemies: [],
+        description: '',
+      },
+      {
+        room: 2,
+        enemies: [],
+        description: '',
+      },
+      {
+        room: 3,
+        enemies: [''],
+        description: '',
+      },
+    ],
   },
 };
 

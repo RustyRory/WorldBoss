@@ -3,15 +3,48 @@
 // usableOutOfCombat : peut être utilisé depuis l'inventaire hors combat
 // infiniteUse       : non consommé quand utilisé en combat (usage illimité)
 module.exports = {
-  potion_heal: {
-    id: 'potion_heal',
-    name: 'Potion de soin',
+  potion_heal_minor: {
+    id: 'potion_heal_minor',
+    name: 'Potion de soin mineure',
     type: 'consumable',
     rarity: 'common',
     effect: { type: 'heal', value: 30 },
     usableOutOfCombat: true,
     infiniteUse: false,
     price: 25,
+    levelRequired: 1,
+  },
+  potion_heal: {
+    id: 'potion_heal',
+    name: 'Potion de soin',
+    type: 'consumable',
+    rarity: 'common',
+    effect: { type: 'heal', value: 50 },
+    usableOutOfCombat: true,
+    infiniteUse: false,
+    price: 50,
+    levelRequired: 1,
+  },
+  potion_heal_heavy: {
+    id: 'potion_heal_heavy',
+    name: 'Potion de soin lourde',
+    type: 'consumable',
+    rarity: 'common',
+    effect: { type: 'heal', value: 100 },
+    usableOutOfCombat: true,
+    infiniteUse: false,
+    price: 110,
+    levelRequired: 1,
+  },
+  potion_heal_major: {
+    id: 'potion_heal_major',
+    name: 'Potion de soin majeure',
+    type: 'consumable',
+    rarity: 'common',
+    effect: { type: 'heal', value: 150 },
+    usableOutOfCombat: true,
+    infiniteUse: false,
+    price: 200,
     levelRequired: 1,
   },
   elixir_ap: {
@@ -22,7 +55,7 @@ module.exports = {
     effect: { type: 'restore_ap', value: 3 },
     usableOutOfCombat: true,
     infiniteUse: false,
-    price: 120,
+    price: 1200,
     levelRequired: 1,
   },
   bomb: {

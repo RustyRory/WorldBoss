@@ -264,14 +264,18 @@ async function handleCombatButton(interaction) {
           }
         }
 
-        const { baseStats, computeStats } = require('../utils/stats');
+        const { computeStats } = require('../utils/stats');
+        // addXp already set hp = newMaxHp in DB when leveling/ranking up.
+        // For non-levelup we save the combat HP.
         const finalChar  = await prisma.character.findUnique({ where: { id: characterId }, include: { loadout: true } });
         const finalMaxHp = computeStats(finalChar, finalChar.loadout ?? {}).hp;
-        const finalHp    = xpResult.leveledUp ? finalMaxHp : state.player.hp;
-        await prisma.character.update({
-          where: { id: characterId },
-          data: { hp: finalHp, hpUpdatedAt: new Date() },
-        });
+        const finalHp    = xpResult.leveledUp ? finalChar.hp : state.player.hp;
+        if (!xpResult.leveledUp) {
+          await prisma.character.update({
+            where: { id: characterId },
+            data: { hp: finalHp, hpUpdatedAt: new Date() },
+          });
+        }
 
         const lootLines  = droppedNames.map((n) => `> 🎁 **${n}**`).join('\n');
         const specialMsg = !state.replayMode ? (dungeon?.reward?.message ?? null) : null;
@@ -301,15 +305,12 @@ async function handleCombatButton(interaction) {
 
         let newHp, newMaxHp, healDesc;
         if (xpResult.leveledUp) {
+          // addXp already set hp = newMaxHp in DB — just read it back for display
           const afterLvl = await prisma.character.findUnique({ where: { id: characterId }, include: { loadout: true } });
           const { computeStats } = require('../utils/stats');
           newMaxHp = computeStats(afterLvl, afterLvl.loadout ?? {}).hp;
-          newHp    = newMaxHp;
+          newHp    = afterLvl.hp;
           healDesc = `✨ Level up — HP restaurés à **${newHp}/${newMaxHp}** !`;
-          await prisma.character.update({
-            where: { id: characterId },
-            data: { hp: newHp, hpUpdatedAt: new Date() },
-          });
         } else if (state.replayMode) {
           // Rejeu : pas de heal entre les salles
           newMaxHp = state.player.maxHp;
@@ -406,8 +407,13 @@ async function handleActionSelect(interaction) {
     return interaction.reply({ embeds: [errorEmbed('Aucun combat en cours.')], flags: MessageFlags.Ephemeral });
   }
 
-  const action       = interaction.values[0]; // 'attack' | 'skill_<key>'
+  const action       = interaction.values[0]; // 'attack' | 'skill_<key>' | 'flee'
   const aliveEnemies = state.enemies.filter((e) => e.hp > 0);
+
+  if (action === 'flee') {
+    interaction.customId = 'combat_flee';
+    return handleCombatButton(interaction);
+  }
 
   if (aliveEnemies.length <= 1) {
     const targetIdx = Math.max(0, state.enemies.findIndex((e) => e.hp > 0));

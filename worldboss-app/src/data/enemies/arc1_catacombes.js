@@ -18,7 +18,7 @@ module.exports = {
     ability: null,
     emoji: '💀',
     gold: { min: 1, max: 3 },
-    loot: ['bone_club', 'bone_vest', 'skull_cap', 'bone_fragment', 'bone_wraps', 'potion_heal', 'ring_wood'],
+    loot: ['bone_club', 'bone_vest', 'skull_cap', 'bone_fragment', 'bone_wraps', 'potion_heal_minor', 'ring_wood'],
   },
 
   skeleton_archer: {
@@ -69,7 +69,7 @@ module.exports = {
     ability: 'shield_bash',
     gold: { min: 3, max: 6 },
     emoji: '🗡️💀',
-    loot: ['tomb_sword', 'grave_plate', 'catacomb_hood', 'grave_boots', 'sword_steel', 'potion_heal'],
+    loot: ['tomb_sword', 'grave_plate', 'catacomb_hood', 'grave_boots', 'sword_steel', 'potion_heal_minor'],
   },
 
   skeleton_warlord: {
@@ -86,7 +86,7 @@ module.exports = {
     ability: 'war_cry',
     gold: { min: 5, max: 8 },
     emoji: '🛡️💀',
-    loot: ['catacomb_spear', 'grave_plate', 'ghost_talisman', 'axe_heavy', 'amulet_bone', 'potion_heal', 'elixir_iron'],
+    loot: ['catacomb_spear', 'grave_plate', 'ghost_talisman', 'axe_heavy', 'amulet_bone', 'potion_heal_minor', 'elixir_iron'],
   },
 
   skeleton_king: {
@@ -103,7 +103,7 @@ module.exports = {
     ability: 'bone_shield',
     emoji: '💀👑',
     gold: { min: 6, max: 10 },
-    loot: ['tomb_sword', 'grave_plate', 'catacomb_hood', 'ghost_talisman', 'circlet_bone', 'talisman_old', 'potion_heal'],
+    loot: ['tomb_sword', 'grave_plate', 'catacomb_hood', 'ghost_talisman', 'circlet_bone', 'talisman_old', 'potion_heal_minor'],
     elite: true,
     eliteDrops: ['ghost_talisman', 'catacomb_hood'],
   },
