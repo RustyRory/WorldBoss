@@ -1,7 +1,7 @@
 'use strict';
 
 const { prisma } = require('../db/prisma');
-const { xpRequired, baseStats } = require('../utils/stats');
+const { xpRequired, baseStats, computeStats } = require('../utils/stats');
 const { ITEMS } = require('../data/items');
 
 async function getCharacter(userId, guildId) {
@@ -24,9 +24,9 @@ async function characterExists(userId, guildId) {
  * Gives starting items and equips weapon + armor by default.
  */
 async function createCharacter(userId, username, guildId, characterName, race = 'humain', gender = 'male') {
-  const base = baseStats(1);
-
   await ensureItemsSeeded();
+
+  const maxHp = computeStats({ level: 1, rank: 0, race, gender }, null).hp;
 
   return prisma.$transaction(async (tx) => {
     // Upsert Discord identity
@@ -46,7 +46,7 @@ async function createCharacter(userId, username, guildId, characterName, race = 
         level: 1,
         xp: 0,
         gold: 0,
-        hp: base.hp,
+        hp: maxHp,
       },
     });
 
