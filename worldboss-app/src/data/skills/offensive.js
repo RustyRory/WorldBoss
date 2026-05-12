@@ -16,11 +16,11 @@ module.exports = {
 
   bone_bolt: {
     name: 'Trait osseux',
-    wiki: { emoji: '🦴', mult: 1.5, extra: 'Froid Osseux' },
+    wiki: { emoji: '🦴', mult: 1.2, extra: 'Froid Osseux' },
     oncePerCombat: false,
     cooldown: 2,
     resolve(player, target, logs, { playerAttack }) {
-      const result = playerAttack(player, target, 1.5);
+      const result = playerAttack(player, target, 1.2);
       target.hp = Math.max(0, target.hp - result.damage);
       const dot = { id: 'bone_chill', label: 'Froid Osseux', value: 3, turns: 2 };
       const existing = (target.dots ?? []).findIndex((d) => d.id === 'bone_chill');
@@ -192,7 +192,7 @@ module.exports = {
     oncePerCombat: false,
     cooldown: 1,
     resolve(player, target, logs, { playerAttack }) {
-      const result = playerAttack(player, target, 1.4);
+      const result = playerAttack(player, target, 1.2);
       target.hp = Math.max(0, target.hp - result.damage);
       target.def = Math.max(0, target.def - 2);
       logs.push(`🦴 **Coup d'os** : ${result.log} + DEF réduite de **2**.`);
@@ -239,7 +239,7 @@ module.exports = {
     resolve(player, target, logs, { playerAttack }) {
       const savedDef = target.def;
       target.def = Math.floor(target.def * 0.7);
-      const result = playerAttack(player, target, 1.4);
+      const result = playerAttack(player, target, 1.2);
       target.def = savedDef;
       target.hp = Math.max(0, target.hp - result.damage);
       logs.push(`🏹 **Flèche d'os** : ${result.log} *(ignore 30% DEF)*. `);
@@ -252,7 +252,7 @@ module.exports = {
     oncePerCombat: false,
     cooldown: 2,
     resolve(player, target, logs, { playerAttack }) {
-      const result = playerAttack(player, target, 1.6);
+      const result = playerAttack(player, target, 1.5);
       target.hp = Math.max(0, target.hp - result.damage);
       const dot = { id: 'bleed', label: 'Saignement', value: 4, turns: 3 };
       const existing = (target.dots ?? []).findIndex((d) => d.id === 'bleed');

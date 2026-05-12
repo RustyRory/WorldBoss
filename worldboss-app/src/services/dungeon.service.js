@@ -11,6 +11,7 @@ const { buildCombatEmbed, buildCombatRow, buildDungeonNextRow, errorEmbed } = re
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, MessageFlags } = require('discord.js');
 const { DUNGEONS, ALLIES } = require('../data/dungeons');
 const { setCombatState } = require('../cache/redis');
+const { PROGRESSION_CONFIG } = require('../data/progression');
 
 async function showDungeonSelection(interaction, characterId) {
   const character = await prisma.character.findUnique({ where: { id: characterId } });
@@ -22,7 +23,11 @@ async function showDungeonSelection(interaction, characterId) {
   });
   const completedChapters = new Set(completedRuns.map((r) => r.chapter));
 
-  const available = Object.values(DUNGEONS).filter((d) => character.level >= d.levelRequired);
+  const { DUNGEON_LEVEL_TOLERANCE } = PROGRESSION_CONFIG;
+  const available = Object.values(DUNGEONS).filter((d) =>
+    character.level >= d.levelRequired &&
+    character.level <= d.levelRequired + DUNGEON_LEVEL_TOLERANCE,
+  );
 
   if (available.length === 0) {
     return interaction.reply({
@@ -64,8 +69,12 @@ async function startDungeon(interaction, chapter, characterId) {
   }
 
   const character = await prisma.character.findUnique({ where: { id: characterId } });
+  const { DUNGEON_LEVEL_TOLERANCE } = PROGRESSION_CONFIG;
   if (character.level < dungeon.levelRequired) {
     return interaction.update({ embeds: [errorEmbed(`Niveau ${dungeon.levelRequired} requis.`)], components: [] });
+  }
+  if (character.level > dungeon.levelRequired + DUNGEON_LEVEL_TOLERANCE) {
+    return interaction.update({ embeds: [errorEmbed(`Vous êtes trop expérimenté pour ce donjon (niveau ${dungeon.levelRequired}).`)], components: [] });
   }
 
   // Cancel any existing run for this chapter before starting a new one

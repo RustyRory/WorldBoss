@@ -5,6 +5,11 @@ const PROGRESSION_CONFIG = {
   // XP cost per rank = RANK_XP_BASE × (rank + 1)
   RANK_XP_BASE: 500,
 
+  // ── Dungeon access ───────────────────────────────────────────────────────
+  // Max levels above a dungeon's requirement a player can still enter it
+  // e.g. 1 → level 4 can replay dungeon 3, but not dungeon 2
+  DUNGEON_LEVEL_TOLERANCE: 1,
+
   // ── Prime (raid) tuning ───────────────────────────────────────────────────
   // Average level must exceed (prime.levelRequired + PRIME_REPLAY_THRESHOLD) to trigger replayMode
   PRIME_REPLAY_THRESHOLD: 5,
