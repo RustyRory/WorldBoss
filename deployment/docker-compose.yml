@@ -1,11 +1,11 @@
 services:
   worldboss-bot:
     build:
-      context: ..
+      context: ../worldboss-app
       dockerfile: deployment/Dockerfile
     restart: unless-stopped
     env_file:
-      - ../.env
+      - ../worldboss-app/.env
     depends_on:
       - worldboss-db
       - worldboss-redis
