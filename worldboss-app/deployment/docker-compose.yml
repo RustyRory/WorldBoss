@@ -1,0 +1,31 @@
+services:
+  worldboss-bot:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    depends_on:
+      - worldboss-db
+      - worldboss-redis
+
+  worldboss-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - worldboss_postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: worldboss
+      POSTGRES_PASSWORD: worldboss
+      POSTGRES_DB: worldboss
+
+  worldboss-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - worldboss_redis:/data
+
+volumes:
+  worldboss_postgres:
+  worldboss_redis:
