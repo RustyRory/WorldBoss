@@ -1,5 +1,6 @@
 services:
   worldboss-bot:
+    image: worldboss-bot:latest
     build:
       context: ../worldboss-app
       dockerfile: deployment/Dockerfile
