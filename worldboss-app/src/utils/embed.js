@@ -4,6 +4,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelect
 const { ITEMS } = require('../data/items');
 const { getCharacterEmoji, RACES, formatRaceBonuses } = require('../data/races');
 const { PROGRESSION_CONFIG } = require('../data/progression');
+const { LOADOUT_FIELDS } = require('./stats');
 
 const RARITY_COLOR = {
   common: 0x9e9e9e,
@@ -300,12 +301,16 @@ function buildSellChoiceRow(itemId) {
 function buildProfileEmbed(user, stats, loadout, xpReq, interaction = null, ap = null) {
 
   const SLOTS = [
-    { field: 'weaponId',     icon: '⚔️',  label: 'Arme'        },
-    { field: 'armorId',      icon: '🧥',  label: 'Armure'      },
-    { field: 'helmetId',     icon: '🪖',  label: 'Casque'      },
-    { field: 'bootsId',      icon: '👢',  label: 'Bottes'      },
-    { field: 'accessory1Id', icon: '💍',  label: 'Accessoire 1' },
-    { field: 'accessory2Id', icon: '💍',  label: 'Accessoire 2' },
+    { field: 'weaponId', icon: '⚔️',  label: 'Arme'    },
+    { field: 'shieldId', icon: '🛡️',  label: 'Bouclier' },
+    { field: 'armorId',  icon: '🧥',  label: 'Armure'  },
+    { field: 'helmetId', icon: '🪖',  label: 'Casque'  },
+    { field: 'glovesId', icon: '🧤',  label: 'Gants'   },
+    { field: 'bootsId',  icon: '👢',  label: 'Bottes'  },
+    { field: 'beltId',   icon: '🥋',  label: 'Ceinture' },
+    { field: 'amuletId', icon: '📿',  label: 'Amulette' },
+    { field: 'ring1Id',  icon: '💍',  label: 'Anneau 1' },
+    { field: 'ring2Id',  icon: '💍',  label: 'Anneau 2' },
   ];
 
   const equippedLines = SLOTS.map(({ field, icon, label }) => {
@@ -395,13 +400,10 @@ function buildInventoryMessage(user, userItems, loadout, ap = null) {
 
   const RARITY_EMOJI = { common: '⚪', rare: '🔵', epic: '🟣', legendary: '🟠' };
   const RARITY_LABEL = { common: 'Commun', rare: 'Rare', epic: 'Épique', legendary: 'Légendaire' };
-  const TYPE_ICON    = { weapon: '⚔️', armor: '🧥', helmet: '🪖', boots: '👢', accessory: '💍', consumable: '🧪' };
-  const TYPE_LABEL   = { weapon: 'Armes', armor: 'Armures', helmet: 'Casques', boots: 'Bottes', accessory: 'Accessoires', consumable: 'Consommables' };
+  const TYPE_ICON    = { weapon: '⚔️', shield: '🛡️', armor: '🧥', helmet: '🪖', gloves: '🧤', boots: '👢', belt: '🥋', amulet: '📿', ring: '💍', consumable: '🧪' };
+  const TYPE_LABEL   = { weapon: 'Armes', shield: 'Boucliers', armor: 'Armures', helmet: 'Casques', gloves: 'Gants', boots: 'Bottes', belt: 'Ceintures', amulet: 'Amulettes', ring: 'Anneaux', consumable: 'Consommables' };
 
-  const equippedList = [
-    loadout?.weaponId, loadout?.armorId, loadout?.helmetId,
-    loadout?.bootsId, loadout?.accessory1Id, loadout?.accessory2Id,
-  ].filter(Boolean);
+  const equippedList = LOADOUT_FIELDS.map((field) => loadout?.[field]).filter(Boolean);
 
   const groups = {};
   for (const ui of userItems) {
@@ -422,7 +424,7 @@ function buildInventoryMessage(user, userItems, loadout, ap = null) {
     );
   }
 
-  const TYPE_ORDER = ['weapon', 'armor', 'helmet', 'boots', 'accessory', 'consumable'];
+  const TYPE_ORDER = ['weapon', 'shield', 'armor', 'helmet', 'gloves', 'boots', 'belt', 'amulet', 'ring', 'consumable'];
 
   const fields = [];
   const orderedTypes = TYPE_ORDER.filter((t) => groups[t]);
@@ -572,12 +574,16 @@ function buildInventoryMessage(user, userItems, loadout, ap = null) {
 
   // ── Boutons déséquiper ─────────────────────────────────────────────────────
   const occupiedSlots = [
-    { field: 'weaponId',     label: 'Arme',          slot: 'weapon'     },
-    { field: 'armorId',      label: 'Armure',         slot: 'armor'      },
-    { field: 'helmetId',     label: 'Casque',         slot: 'helmet'     },
-    { field: 'bootsId',      label: 'Bottes',         slot: 'boots'      },
-    { field: 'accessory1Id', label: 'Accessoire 1',   slot: 'accessory1' },
-    { field: 'accessory2Id', label: 'Accessoire 2',   slot: 'accessory2' },
+    { field: 'weaponId', label: 'Arme',     slot: 'weapon' },
+    { field: 'shieldId', label: 'Bouclier', slot: 'shield' },
+    { field: 'armorId',  label: 'Armure',   slot: 'armor'  },
+    { field: 'helmetId', label: 'Casque',   slot: 'helmet' },
+    { field: 'glovesId', label: 'Gants',    slot: 'gloves' },
+    { field: 'bootsId',  label: 'Bottes',   slot: 'boots'  },
+    { field: 'beltId',   label: 'Ceinture', slot: 'belt'   },
+    { field: 'amuletId', label: 'Amulette', slot: 'amulet' },
+    { field: 'ring1Id',  label: 'Anneau 1', slot: 'ring1'  },
+    { field: 'ring2Id',  label: 'Anneau 2', slot: 'ring2'  },
   ].filter((s) => loadout?.[s.field]);
 
   if (occupiedSlots.length > 0) {

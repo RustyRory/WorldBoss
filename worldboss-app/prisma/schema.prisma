@@ -51,7 +51,7 @@ model Character {
 model Item {
   id            String @id // e.g. 'sword_rusty'
   name          String
-  type          String // weapon | armor | helmet | boots | accessory | consumable
+  type          String // weapon | shield | armor | helmet | gloves | boots | belt | amulet | ring | consumable
   rarity        String // common | rare | epic | legendary
   statsJson     Json   @default("{}")
   skillJson     Json?
@@ -76,16 +76,20 @@ model CharacterItem {
 }
 
 model Loadout {
-  id           Int     @id @default(autoincrement())
-  characterId  Int     @unique
-  weaponId     String?
-  armorId      String?
-  helmetId     String?
-  bootsId      String?
-  accessory1Id String?
-  accessory2Id String?
+  id          Int     @id @default(autoincrement())
+  characterId Int     @unique
+  weaponId    String?
+  shieldId    String?
+  armorId     String? // armure de torse
+  helmetId    String?
+  glovesId    String?
+  bootsId     String?
+  beltId      String?
+  amuletId    String?
+  ring1Id     String?
+  ring2Id     String?
 
-  character    Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 }
 
 model DungeonRun {
@@ -100,6 +104,8 @@ model DungeonRun {
 }
 
 // ── Guildes (serveurs Discord) ────────────────────────────────────────────────
+// NB: "Guild" ici désigne un serveur Discord, PAS une guilde de joueurs.
+// Pour une guilde/alliance formée par des joueurs, voir le modèle Alliance (à venir).
 
 model Guild {
   id        String   @id // Discord guild ID

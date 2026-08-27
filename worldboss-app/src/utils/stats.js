@@ -26,20 +26,21 @@ function xpRequired(level) {
 }
 
 /**
+ * All Loadout field names, in display order.
+ */
+const LOADOUT_FIELDS = [
+  'weaponId', 'shieldId', 'armorId', 'helmetId', 'glovesId',
+  'bootsId', 'beltId', 'amuletId', 'ring1Id', 'ring2Id',
+];
+
+/**
  * Get all stat bonuses from a loadout record.
- * @param {object} loadout - Prisma Loadout row (fields: weaponId, armorId, helmetId, bootsId, accessory1Id, accessory2Id)
+ * @param {object} loadout - Prisma Loadout row (10 nullable slot fields, see LOADOUT_FIELDS)
  */
 function loadoutStats(loadout) {
   if (!loadout) return { hp: 0, atk: 0, def: 0, spd: 0, crit: 0 };
 
-  const slots = [
-    loadout.weaponId,
-    loadout.armorId,
-    loadout.helmetId,
-    loadout.bootsId,
-    loadout.accessory1Id,
-    loadout.accessory2Id,
-  ].filter(Boolean);
+  const slots = LOADOUT_FIELDS.map((field) => loadout[field]).filter(Boolean);
 
   const bonus = { hp: 0, atk: 0, def: 0, spd: 0, crit: 0 };
 
@@ -74,14 +75,7 @@ function computeStats(user, loadout) {
   };
 
   // Collect all skills and passives from every equipped slot
-  const allSlots = [
-    loadout?.weaponId,
-    loadout?.armorId,
-    loadout?.helmetId,
-    loadout?.bootsId,
-    loadout?.accessory1Id,
-    loadout?.accessory2Id,
-  ].filter(Boolean);
+  const allSlots = LOADOUT_FIELDS.map((field) => loadout?.[field]).filter(Boolean);
 
   const activeSkills  = []; // { key, ...skillDef }
   const activePassives = []; // passive keys (strings)
@@ -108,25 +102,34 @@ function computeStats(user, loadout) {
  */
 const SLOT_MAP = {
   weapon: 'weaponId',
+  shield: 'shieldId',
   armor: 'armorId',
   helmet: 'helmetId',
+  gloves: 'glovesId',
   boots: 'bootsId',
-  accessory1: 'accessory1Id',
-  accessory2: 'accessory2Id',
+  belt: 'beltId',
+  amulet: 'amuletId',
+  ring1: 'ring1Id',
+  ring2: 'ring2Id',
 };
 
 /**
- * Given an item type, return the default slot field. Accessories need special handling.
+ * Given an item type, return the default slot field. Rings need special handling
+ * (picked between ring1/ring2 by the caller, see inventory.service.js).
  */
 function typeToSlot(type) {
   const map = {
     weapon: 'weaponId',
+    shield: 'shieldId',
     armor: 'armorId',
     helmet: 'helmetId',
+    gloves: 'glovesId',
     boots: 'bootsId',
-    accessory: null, // handled separately (accessory1 / accessory2)
+    belt: 'beltId',
+    amulet: 'amuletId',
+    ring: null, // handled separately (ring1 / ring2)
   };
   return map[type] ?? null;
 }
 
-module.exports = { baseStats, xpRequired, loadoutStats, computeStats, SLOT_MAP, typeToSlot };
+module.exports = { baseStats, xpRequired, loadoutStats, computeStats, SLOT_MAP, typeToSlot, LOADOUT_FIELDS };

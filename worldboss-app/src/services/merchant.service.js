@@ -12,7 +12,7 @@ const MIN_SLOTS          = 4;   // minimum si aucun personnage sur le serveur
 const MERCHANT_NAME      = 'Aldric le Marchand';
 const SHOP_PRICE_MULT   = 3;
 
-const EQUIP_TYPES = ['weapon', 'armor', 'helmet', 'boots', 'accessory'];
+const EQUIP_TYPES = ['weapon', 'shield', 'armor', 'helmet', 'gloves', 'boots', 'belt', 'amulet', 'ring'];
 
 const _redisUrl = process.env.REDIS_URL ? new URL(process.env.REDIS_URL) : null;
 const redisConnection = {
@@ -47,7 +47,7 @@ function shuffle(arr) {
   return a;
 }
 
-const EQUIP_TYPE_ORDER = ['weapon', 'armor', 'helmet', 'boots', 'accessory'];
+const EQUIP_TYPE_ORDER = ['weapon', 'shield', 'armor', 'helmet', 'gloves', 'boots', 'belt', 'amulet', 'ring'];
 
 // Retourne le stock acheté et l'or dépensé.
 // Slots totaux = nombre de personnages sur le serveur (min MIN_SLOTS).
@@ -135,11 +135,17 @@ function itemEmoji(rarity) {
 }
 
 function itemTypeFr(type) {
-  return { weapon: 'Arme', armor: 'Armure', helmet: 'Casque', boots: 'Bottes', accessory: 'Accessoire', consumable: 'Consommable' }[type] ?? type;
+  return {
+    weapon: 'Arme', shield: 'Bouclier', armor: 'Armure', helmet: 'Casque', gloves: 'Gants',
+    boots: 'Bottes', belt: 'Ceinture', amulet: 'Amulette', ring: 'Anneau', consumable: 'Consommable',
+  }[type] ?? type;
 }
 
 function typeEmoji(type) {
-  return { weapon: '⚔️', armor: '🛡️', helmet: '🪖', boots: '👢', accessory: '💍', consumable: '🧪' }[type] ?? '📦';
+  return {
+    weapon: '⚔️', shield: '🛡️', armor: '🧥', helmet: '🪖', gloves: '🧤',
+    boots: '👢', belt: '🥋', amulet: '📿', ring: '💍', consumable: '🧪',
+  }[type] ?? '📦';
 }
 
 // ── Construction de l'embed boutique ─────────────────────────────────────────

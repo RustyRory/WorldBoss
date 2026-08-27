@@ -2,7 +2,7 @@
 
 const { prisma } = require('../db/prisma');
 const { ITEMS } = require('../data/items');
-const { typeToSlot } = require('../utils/stats');
+const { typeToSlot, LOADOUT_FIELDS } = require('../utils/stats');
 
 async function getInventory(characterId) {
   return prisma.characterItem.findMany({
@@ -43,10 +43,7 @@ async function equipItem(characterId, itemId) {
   const loadout = await getOrCreateLoadout(characterId);
 
   // Verify enough unequipped copies are available
-  const equippedList = [
-    loadout.weaponId, loadout.armorId, loadout.helmetId,
-    loadout.bootsId, loadout.accessory1Id, loadout.accessory2Id,
-  ];
+  const equippedList = LOADOUT_FIELDS.map((field) => loadout[field]);
   const equippedCount = equippedList.filter((id) => id === itemId).length;
   if (charItem.quantity - equippedCount < 1) {
     return { success: false, message: `Toutes vos copies de **${itemDef.name}** sont déjà équipées.` };
@@ -55,13 +52,13 @@ async function equipItem(characterId, itemId) {
   let slotField = typeToSlot(itemDef.type);
 
   if (!slotField) {
-    if (itemDef.type === 'accessory') {
-      if (!loadout.accessory1Id) {
-        slotField = 'accessory1Id';
-      } else if (!loadout.accessory2Id) {
-        slotField = 'accessory2Id';
+    if (itemDef.type === 'ring') {
+      if (!loadout.ring1Id) {
+        slotField = 'ring1Id';
+      } else if (!loadout.ring2Id) {
+        slotField = 'ring2Id';
       } else {
-        slotField = 'accessory1Id';
+        slotField = 'ring1Id';
       }
     } else {
       return { success: false, message: `Type d'item **${itemDef.type}** non équipable.` };
@@ -77,7 +74,7 @@ async function equipItem(characterId, itemId) {
 }
 
 async function unequipSlot(characterId, slot) {
-  const VALID_SLOTS = ['weapon', 'armor', 'helmet', 'boots', 'accessory1', 'accessory2'];
+  const VALID_SLOTS = ['weapon', 'shield', 'armor', 'helmet', 'gloves', 'boots', 'belt', 'amulet', 'ring1', 'ring2'];
   if (!VALID_SLOTS.includes(slot)) {
     return { success: false, message: `Slot invalide. Utilisez: ${VALID_SLOTS.join(', ')}` };
   }
@@ -118,10 +115,7 @@ async function sellItem(characterId, itemId) {
   }
 
   const loadout = await getOrCreateLoadout(characterId);
-  const equippedIds = [
-    loadout.weaponId, loadout.armorId, loadout.helmetId,
-    loadout.bootsId, loadout.accessory1Id, loadout.accessory2Id,
-  ];
+  const equippedIds = LOADOUT_FIELDS.map((field) => loadout[field]);
   const equippedCount = equippedIds.filter((id) => id === itemId).length;
   if (charItem.quantity - equippedCount < 1) {
     return { success: false, message: `Déséquipe **${itemDef.name}** avant de le vendre.` };
