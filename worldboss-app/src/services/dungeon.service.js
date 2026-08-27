@@ -129,11 +129,13 @@ async function handleDungeonNext(interaction, characterId) {
   const room    = getCurrentRoom(dungeonState);
   const enemies = getRoomEnemies(room);
 
-  // Inject NPC ally if this room defines one, plus the character's companion if it has one
+  // Inject NPC ally if this room defines one, plus the character's companion/servant if available
   const allies = room.ally && ALLIES[room.ally] ? [{ ...ALLIES[room.ally] }] : [];
   const { getCompanion, companionToAllyStatBlock } = require('./companion.service');
-  const companion = await getCompanion(characterId);
+  const { getServant, servantToAllyStatBlock } = require('./servant.service');
+  const [companion, servant] = await Promise.all([getCompanion(characterId), getServant(characterId)]);
   if (companion) allies.push(companionToAllyStatBlock(companion));
+  if (servant && servant.task === 'idle') allies.push(servantToAllyStatBlock(servant));
 
   const { ITEMS } = require('../data/items');
   const charItems = await prisma.characterItem.findMany({ where: { characterId } });

@@ -41,6 +41,7 @@ model Character {
   items           CharacterItem[]
   loadout         Loadout?
   companion       Companion?
+  servant         Servant?
   dungeonRuns     DungeonRun[]
   marketListings      MarketListing[]    @relation("MarketSeller")
   marketBids          MarketListing[]    @relation("MarketBidder")
@@ -104,6 +105,25 @@ model Companion {
   xp          Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+}
+
+// Serviteur — un seul par personnage, recruté chez le recruteur.
+// Assigné à une tâche économique (mine_gold) ou d'entraînement (train_combat) qui se
+// résout dans le temps via une file BullMQ (voir servant.service.js). Ne combat que
+// lorsqu'il est "idle" (pas occupé par une tâche).
+model Servant {
+  id            Int       @id @default(autoincrement())
+  characterId   Int       @unique
+  name          String
+  level         Int       @default(1)
+  loyalty       Int       @default(0)
+  task          String    @default("idle") // idle | mine_gold | train_combat
+  taskStartedAt DateTime?
+  taskEndsAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 }

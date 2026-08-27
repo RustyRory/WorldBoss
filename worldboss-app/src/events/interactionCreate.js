@@ -30,7 +30,7 @@ const { prisma } = require('../db/prisma');
 const { RACES, getCharacterEmoji, formatRaceOnlyBonuses, formatGenderBonuses, formatRaceBonuses } = require('../data/races');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
 
-const ALL_BOT_COMMANDS = ['start', 'profile', 'inventory', 'setup', 'dungeon', 'prime', 'companion'];
+const ALL_BOT_COMMANDS = ['start', 'profile', 'inventory', 'setup', 'dungeon', 'prime', 'companion', 'servant'];
 
 async function getGuildChannels(guildId) {
   return prisma.guildChannels.findUnique({ where: { guildId } });
@@ -392,6 +392,29 @@ module.exports = {
             return interaction.reply({ embeds: [errorEmbed(result.message)], flags: MessageFlags.Ephemeral });
           }
           return refreshInventoryReply(interaction, characterId);
+        }
+
+        if (customId === 'servant_recruit' || customId === 'servant_recall' || customId.startsWith('servant_task:')) {
+          const characterId = await resolveCharacterId(interaction);
+          if (!characterId) return interaction.reply({ embeds: [errorEmbed('Personnage introuvable.')], flags: MessageFlags.Ephemeral });
+
+          const { recruitServant, assignTask, recallServant, getServant } = require('../services/servant.service');
+          const { buildServantMessage } = require('../utils/embed');
+
+          let result;
+          if (customId === 'servant_recruit') result = await recruitServant(characterId);
+          else if (customId === 'servant_recall') result = await recallServant(characterId);
+          else result = await assignTask(characterId, customId.split(':')[1]);
+
+          if (!result.success) {
+            return interaction.reply({ embeds: [errorEmbed(result.message)], flags: MessageFlags.Ephemeral });
+          }
+
+          const character = await prisma.character.findUnique({ where: { id: characterId } });
+          const servant    = await getServant(characterId);
+          const { embed, rows } = buildServantMessage(character, servant);
+          await interaction.update({ embeds: [embed], components: rows });
+          return interaction.followUp({ embeds: [{ color: 0x2ecc71, description: `✅ ${result.message}` }], flags: MessageFlags.Ephemeral });
         }
 
         if (customId === 'info_leaderboard') {

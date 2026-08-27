@@ -678,6 +678,71 @@ function buildCompanionShopMessage(character, availableSpecies) {
 }
 
 /**
+ * Servant panel — recruiter offer (no servant yet), idle status (task buttons),
+ * or busy status (remaining time + recall button). Returns { embed, rows }.
+ */
+function buildServantMessage(character, servant) {
+  const { SERVANT_CONFIG, SERVANT_TASKS, computeServantStats } = require('../data/servants');
+
+  if (!servant) {
+    const embed = new EmbedBuilder()
+      .setTitle('🧑‍🌾  Le Recruteur')
+      .setDescription(
+        `> Recrute un serviteur pour miner de l'or ou s'entraîner pendant que tu joues.\n` +
+        `> Niveau **${SERVANT_CONFIG.levelRequired}**+ requis · **${SERVANT_CONFIG.price}** 🪙\n` +
+        `> Or **${character.gold}** 🪙\n\`${SEP}\``,
+      )
+      .setColor(0x8e6e53);
+
+    const rows = [
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('servant_recruit').setLabel('Recruter').setEmoji('🧑‍🌾').setStyle(ButtonStyle.Primary),
+      ),
+    ];
+    return { embed, rows };
+  }
+
+  if (servant.task !== 'idle') {
+    const taskDef  = SERVANT_TASKS[servant.task];
+    const endsAt   = Math.floor(new Date(servant.taskEndsAt).getTime() / 1000);
+    const embed = new EmbedBuilder()
+      .setTitle(`🧑‍🌾  ${servant.name}`)
+      .setDescription(
+        `> ${taskDef?.emoji ?? '⏳'} En mission : **${taskDef?.label ?? servant.task}**\n` +
+        `> Retour <t:${endsAt}:R>\n\`${SEP}\``,
+      )
+      .setColor(0x8e6e53);
+
+    const rows = [
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('servant_recall').setLabel('Rappeler (sans récompense)').setStyle(ButtonStyle.Danger),
+      ),
+    ];
+    return { embed, rows };
+  }
+
+  const stats = computeServantStats(servant);
+  const embed = new EmbedBuilder()
+    .setTitle(`🧑‍🌾  ${servant.name}`)
+    .setDescription(`> Niveau **${servant.level}** · Loyauté **${servant.loyalty}**\n> Disponible — peut combattre à tes côtés en donjon.\n\`${SEP}\``)
+    .setColor(0x2ecc71)
+    .addFields({
+      name: '📊 Statistiques',
+      value: [`> ❤️  HP   **${stats.maxHp}**`, `> ⚔️  ATK  **${stats.atk}**`, `> 🛡️  DEF  **${stats.def}**`].join('\n'),
+      inline: false,
+    });
+
+  const rows = [
+    new ActionRowBuilder().addComponents(
+      Object.entries(SERVANT_TASKS).map(([key, def]) =>
+        new ButtonBuilder().setCustomId(`servant_task:${key}`).setLabel(def.label).setEmoji(def.emoji).setStyle(ButtonStyle.Secondary),
+      ),
+    ),
+  ];
+  return { embed, rows };
+}
+
+/**
  * Generic error embed.
  */
 function errorEmbed(message) {
@@ -705,6 +770,7 @@ module.exports = {
   buildSellChoiceRow,
   buildCompanionEmbed,
   buildCompanionShopMessage,
+  buildServantMessage,
   errorEmbed,
   successEmbed,
   RARITY_COLOR,

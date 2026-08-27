@@ -6,6 +6,7 @@ const { ensureItemsSeeded } = require('../services/player.service');
 const { ensureGuildInDb, initGuildChannels, updateGuildChannels } = require('../services/guild.service');
 const { refreshInfoPanel } = require('../services/infoPanel.service');
 const { getOrCreateShop, restoreMerchantShops } = require('../services/merchant.service');
+const { restoreServantTasks } = require('../services/servant.service');
 
 module.exports = {
   name: Events.ClientReady,
@@ -49,6 +50,13 @@ module.exports = {
       console.log('[Merchant] Boutiques restaurées.');
     } catch (err) {
       console.error('[Merchant] Erreur restauration boutiques:', err.message);
+    }
+
+    try {
+      await restoreServantTasks(client);
+      console.log('[Servant] Tâches restaurées.');
+    } catch (err) {
+      console.error('[Servant] Erreur restauration tâches:', err.message);
     }
 
     // Rafraîchit le panel wb-info toutes les heures sur tous les serveurs

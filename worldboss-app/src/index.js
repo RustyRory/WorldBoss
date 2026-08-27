@@ -8,6 +8,7 @@ const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const { redis } = require('./cache/redis');
 const { startAuctionWorker } = require('./services/market.service');
 const { startMerchantWorker } = require('./services/merchant.service');
+const { startServantWorker } = require('./services/servant.service');
 const { deployCommands } = require('./deploy-commands');
 
 // ── Discord client ───────────────────────────────────────────────────────────
@@ -86,6 +87,7 @@ client.once('ready', async () => {
   await deployCommands(client).catch((err) => console.error('[Deploy] Erreur au démarrage:', err.message));
   startAuctionWorker(client);
   startMerchantWorker(client);
+  startServantWorker(client);
 });
 
 client.login(token).then(() => {
