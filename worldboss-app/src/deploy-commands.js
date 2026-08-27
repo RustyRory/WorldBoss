@@ -13,6 +13,7 @@ function loadCommands() {
     path.join(__dirname, 'commands', 'inventory'),
     path.join(__dirname, 'commands', 'dungeon'),
     path.join(__dirname, 'commands', 'admin'),
+    path.join(__dirname, 'commands', 'companion'),
   ];
 
   for (const dir of commandDirs) {

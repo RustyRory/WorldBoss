@@ -30,7 +30,7 @@ const { prisma } = require('../db/prisma');
 const { RACES, getCharacterEmoji, formatRaceOnlyBonuses, formatGenderBonuses, formatRaceBonuses } = require('../data/races');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
 
-const ALL_BOT_COMMANDS = ['start', 'profile', 'inventory', 'setup', 'dungeon', 'prime'];
+const ALL_BOT_COMMANDS = ['start', 'profile', 'inventory', 'setup', 'dungeon', 'prime', 'companion'];
 
 async function getGuildChannels(guildId) {
   return prisma.guildChannels.findUnique({ where: { guildId } });
@@ -232,6 +232,22 @@ module.exports = {
           return await handleRestItemUse(interaction, primeRunId);
         } catch (err) {
           console.error('[Prime/rest_item_select]', err);
+        }
+      } else if (interaction.customId === 'companion_buy') {
+        try {
+          const speciesId   = interaction.values[0].split(':')[1];
+          const characterId = await resolveCharacterId(interaction);
+          if (!characterId) return interaction.reply({ embeds: [errorEmbed('Personnage introuvable.')], flags: MessageFlags.Ephemeral });
+          const { buyCompanion } = require('../services/companion.service');
+          const { buildCompanionEmbed } = require('../utils/embed');
+          const result = await buyCompanion(characterId, speciesId);
+          if (!result.success) {
+            return interaction.reply({ embeds: [errorEmbed(result.message)], flags: MessageFlags.Ephemeral });
+          }
+          await interaction.update({ embeds: [buildCompanionEmbed(result.companion)], components: [] });
+          return interaction.followUp({ embeds: [{ color: 0x2ecc71, description: `✅ ${result.message}` }], flags: MessageFlags.Ephemeral });
+        } catch (err) {
+          console.error('[Companion/buy]', err);
         }
       } else if (interaction.customId === 'dungeon_select') {
         try {

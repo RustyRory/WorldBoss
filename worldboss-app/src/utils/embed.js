@@ -607,6 +607,77 @@ function buildInventoryEmbed(user, userItems, loadout) {
 }
 
 /**
+ * Companion info card (owned companion).
+ */
+function buildCompanionEmbed(companion) {
+  const { computeCompanionStats, companionXpRequired, COMPANIONS } = require('../data/companions');
+  const species = COMPANIONS[companion.speciesId];
+  const stats   = computeCompanionStats(companion);
+  const xpReq   = companionXpRequired(companion.level);
+
+  return new EmbedBuilder()
+    .setTitle(`${species?.emoji ?? '🐾'}  ${companion.name}`)
+    .setDescription(`> Niveau **${companion.level}**\n> XP \`${xpBar(companion.xp, xpReq)}\`\n\`${SEP}\``)
+    .setColor(0x2ecc71)
+    .addFields({
+      name: '📊 Statistiques',
+      value: [
+        `> ❤️  HP   **${stats.maxHp}**`,
+        `> ⚔️  ATK  **${stats.atk}**`,
+        `> 🛡️  DEF  **${stats.def}**`,
+      ].join('\n'),
+      inline: false,
+    })
+    .setFooter({ text: 'Votre compagnon combat à vos côtés en donjon et gagne de l\'XP avec vous.' });
+}
+
+/**
+ * Trainer's shop: select menu of species purchasable at the character's level.
+ * Returns { embed, rows }.
+ */
+function buildCompanionShopMessage(character, availableSpecies) {
+  const RARITY_EMOJI = { common: '⚪', rare: '🔵', epic: '🟣', legendary: '🟠' };
+
+  const embed = new EmbedBuilder()
+    .setTitle('🐾  Le Dresseur')
+    .setDescription(
+      `> Tu n'as pas encore de compagnon. Choisis-en un ci-dessous !\n` +
+      `> Or **${character.gold}** 🪙\n\`${SEP}\``,
+    )
+    .setColor(0x2ecc71);
+
+  if (availableSpecies.length === 0) {
+    embed.addFields({ name: '​', value: '*Aucun compagnon disponible à ton niveau pour le moment.*', inline: false });
+    return { embed, rows: [] };
+  }
+
+  embed.addFields(
+    availableSpecies.map((s) => ({
+      name: `${s.emoji} ${s.name}`,
+      value: `> ${RARITY_EMOJI[s.rarity] ?? '⚪'} Niveau **${s.levelRequired}**+ · **${s.price}** 🪙\n> HP ${s.baseStats.hp} · ATK ${s.baseStats.atk} · DEF ${s.baseStats.def}`,
+      inline: true,
+    })),
+  );
+
+  const options = availableSpecies.map((s) => ({
+    label: `${s.emoji} ${s.name}`.slice(0, 100),
+    description: `${s.price} 🪙 · Niveau ${s.levelRequired}+`.slice(0, 100),
+    value: `buy:${s.id}`,
+  }));
+
+  const rows = [
+    new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('companion_buy')
+        .setPlaceholder('🐾  Choisis ton compagnon…')
+        .addOptions(options.slice(0, 25)),
+    ),
+  ];
+
+  return { embed, rows };
+}
+
+/**
  * Generic error embed.
  */
 function errorEmbed(message) {
@@ -632,6 +703,8 @@ module.exports = {
   buildInventoryMessage,
   buildInventoryEmbed,
   buildSellChoiceRow,
+  buildCompanionEmbed,
+  buildCompanionShopMessage,
   errorEmbed,
   successEmbed,
   RARITY_COLOR,

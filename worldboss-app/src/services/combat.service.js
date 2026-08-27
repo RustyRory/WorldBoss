@@ -211,16 +211,22 @@ async function handleCombatButton(interaction) {
       select: { xp: true, level: true, rank: true },
     });
     const xpResult = await addXp(characterId, totalXp);
+    const { addCompanionXp } = require('./companion.service');
+    const companionResult = await addCompanionXp(characterId, totalXp);
 
     const xpBarFn = xpResult.newLevel >= MAX_LEVEL
       ? () => rankXpRequired(xpResult.newRank)
       : xpRequired;
 
-    const levelUpText = xpResult.leveledUp
-      ? `\n🎉 **Level Up !** Niveau **${xpResult.newLevel}** !`
-      : xpResult.rankedUp
-      ? `\n⚜️ **Rang ${xpResult.newRank}** atteint !`
-      : '';
+    const levelUpText =
+      (xpResult.leveledUp
+        ? `\n🎉 **Level Up !** Niveau **${xpResult.newLevel}** !`
+        : xpResult.rankedUp
+        ? `\n⚜️ **Rang ${xpResult.newRank}** atteint !`
+        : '') +
+      (companionResult.leveledUp
+        ? `\n🐾 **${companionResult.name}** monte au niveau **${companionResult.newLevel}** !`
+        : '');
 
     // ── Dungeon context ──────────────────────────────────────────────────────
     if (state.dungeonChapter) {
