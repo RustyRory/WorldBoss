@@ -144,6 +144,27 @@ async function initGuildChannels(guild) {
       ],
     },
     {
+      key: 'cityChannelId',
+      name: 'wb-city',
+      permissionOverwrites: [
+        {
+          id: everyoneId,
+          allow: [
+            PermissionFlagsBits.ViewChannel,
+            PermissionFlagsBits.SendMessages,
+            PermissionFlagsBits.ReadMessageHistory,
+            PermissionFlagsBits.UseApplicationCommands,
+          ],
+          deny: [
+            PermissionFlagsBits.CreatePublicThreads,
+            PermissionFlagsBits.CreatePrivateThreads,
+            PermissionFlagsBits.SendMessagesInThreads,
+          ],
+        },
+        botPerms,
+      ],
+    },
+    {
       key: 'marketChannelId',
       name: 'wb-market',
       permissionOverwrites: [

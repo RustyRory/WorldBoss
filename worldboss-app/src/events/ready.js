@@ -7,6 +7,7 @@ const { ensureGuildInDb, initGuildChannels, updateGuildChannels } = require('../
 const { refreshInfoPanel } = require('../services/infoPanel.service');
 const { getOrCreateShop, restoreMerchantShops } = require('../services/merchant.service');
 const { restoreServantTasks } = require('../services/servant.service');
+const { restoreConstructionJobs } = require('../services/city.service');
 
 module.exports = {
   name: Events.ClientReady,
@@ -57,6 +58,13 @@ module.exports = {
       console.log('[Servant] Tâches restaurées.');
     } catch (err) {
       console.error('[Servant] Erreur restauration tâches:', err.message);
+    }
+
+    try {
+      await restoreConstructionJobs(client);
+      console.log('[City] Constructions restaurées.');
+    } catch (err) {
+      console.error('[City] Erreur restauration constructions:', err.message);
     }
 
     // Rafraîchit le panel wb-info toutes les heures sur tous les serveurs

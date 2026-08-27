@@ -16,6 +16,7 @@ function loadCommands() {
     path.join(__dirname, 'commands', 'companion'),
     path.join(__dirname, 'commands', 'servant'),
     path.join(__dirname, 'commands', 'pvp'),
+    path.join(__dirname, 'commands', 'city'),
   ];
 
   for (const dir of commandDirs) {

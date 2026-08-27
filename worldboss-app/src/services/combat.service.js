@@ -201,11 +201,16 @@ async function handleCombatButton(interaction) {
     state.status = 'victory';
     await deleteCombatState(characterId);
 
-    const totalXp   = state.enemies.reduce((sum, e) => sum + (e.xp ?? 0), 0);
-    const roomGold  = state.enemies.reduce((sum, e) => {
+    const { getServerBonuses, rollResourceDrop } = require('./city.service');
+    const cityBonuses = await getServerBonuses(state.guildId);
+
+    const rawXp     = state.enemies.reduce((sum, e) => sum + (e.xp ?? 0), 0);
+    const rawGold   = state.enemies.reduce((sum, e) => {
       if (!e.gold) return sum;
       return sum + Math.floor(Math.random() * (e.gold.max - e.gold.min + 1)) + e.gold.min;
     }, 0);
+    const totalXp  = Math.round(rawXp * (1 + (cityBonuses.xpPct ?? 0)));
+    const roomGold = Math.round(rawGold * (1 + (cityBonuses.goldPct ?? 0)));
     const { xp: startXp, level: startLevel, rank: startRank } = await prisma.character.findUnique({
       where:  { id: characterId },
       select: { xp: true, level: true, rank: true },
@@ -249,7 +254,7 @@ async function handleCombatButton(interaction) {
         let finalGold = roomGold;
         if (dungeon?.reward?.gold) {
           const { min, max } = dungeon.reward.gold;
-          finalGold = Math.floor(Math.random() * (max - min + 1)) + min;
+          finalGold = Math.round((Math.floor(Math.random() * (max - min + 1)) + min) * (1 + (cityBonuses.goldPct ?? 0)));
         }
         await addGold(characterId, finalGold);
 
@@ -268,6 +273,11 @@ async function handleCombatButton(interaction) {
             const itemId = pool[Math.floor(Math.random() * pool.length)];
             await applyLoot(prisma, characterId, itemId);
             droppedNames.push(ITEMS[itemId]?.name ?? itemId);
+          }
+
+          const resourceDrop = await rollResourceDrop(characterId, state.guildId);
+          if (resourceDrop) {
+            droppedNames.push(`${resourceDrop.quantity}x ${ITEMS[resourceDrop.type]?.name ?? resourceDrop.type}`);
           }
         }
 

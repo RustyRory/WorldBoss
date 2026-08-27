@@ -9,6 +9,7 @@ const boots       = require('./boots');
 const belts       = require('./belts');
 const amulets     = require('./amulets');
 const rings       = require('./rings');
+const resources   = require('./resources');
 const consumables = require('./consumables');
 
 const ITEMS = {
@@ -21,6 +22,7 @@ const ITEMS = {
   ...belts,
   ...amulets,
   ...rings,
+  ...resources,
   ...consumables,
 };
 

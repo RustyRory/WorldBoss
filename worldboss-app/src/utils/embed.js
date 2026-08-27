@@ -400,8 +400,8 @@ function buildInventoryMessage(user, userItems, loadout, ap = null) {
 
   const RARITY_EMOJI = { common: '⚪', rare: '🔵', epic: '🟣', legendary: '🟠' };
   const RARITY_LABEL = { common: 'Commun', rare: 'Rare', epic: 'Épique', legendary: 'Légendaire' };
-  const TYPE_ICON    = { weapon: '⚔️', shield: '🛡️', armor: '🧥', helmet: '🪖', gloves: '🧤', boots: '👢', belt: '🥋', amulet: '📿', ring: '💍', consumable: '🧪' };
-  const TYPE_LABEL   = { weapon: 'Armes', shield: 'Boucliers', armor: 'Armures', helmet: 'Casques', gloves: 'Gants', boots: 'Bottes', belt: 'Ceintures', amulet: 'Amulettes', ring: 'Anneaux', consumable: 'Consommables' };
+  const TYPE_ICON    = { weapon: '⚔️', shield: '🛡️', armor: '🧥', helmet: '🪖', gloves: '🧤', boots: '👢', belt: '🥋', amulet: '📿', ring: '💍', resource: '📦', consumable: '🧪' };
+  const TYPE_LABEL   = { weapon: 'Armes', shield: 'Boucliers', armor: 'Armures', helmet: 'Casques', gloves: 'Gants', boots: 'Bottes', belt: 'Ceintures', amulet: 'Amulettes', ring: 'Anneaux', resource: 'Ressources (cité)', consumable: 'Consommables' };
 
   const equippedList = LOADOUT_FIELDS.map((field) => loadout?.[field]).filter(Boolean);
 
@@ -424,7 +424,7 @@ function buildInventoryMessage(user, userItems, loadout, ap = null) {
     );
   }
 
-  const TYPE_ORDER = ['weapon', 'shield', 'armor', 'helmet', 'gloves', 'boots', 'belt', 'amulet', 'ring', 'consumable'];
+  const TYPE_ORDER = ['weapon', 'shield', 'armor', 'helmet', 'gloves', 'boots', 'belt', 'amulet', 'ring', 'resource', 'consumable'];
 
   const fields = [];
   const orderedTypes = TYPE_ORDER.filter((t) => groups[t]);
@@ -470,9 +470,10 @@ function buildInventoryMessage(user, userItems, loadout, ap = null) {
   }
 
   // ── Select menu équiper ────────────────────────────────────────────────────
+  const NON_EQUIPABLE_TYPES = new Set(['consumable', 'resource']);
   const equipable = userItems.filter((ui) => {
     const item = ITEMS[ui.itemId];
-    if (!item || item.type === 'consumable') return false;
+    if (!item || NON_EQUIPABLE_TYPES.has(item.type)) return false;
     const ec = equippedList.filter((id) => id === ui.itemId).length;
     return ui.quantity - ec >= 1;
   });
@@ -857,6 +858,50 @@ function buildArenaMatchMessage(state) {
 }
 
 /**
+ * Common city — resource stockpile, buildings (level + bonus), active construction.
+ */
+function buildCityEmbed(city) {
+  const { BUILDINGS, RESOURCE_TYPES, costForLevel, durationForLevel } = require('../data/buildings');
+
+  const RESOURCE_LABEL = { wood: '🪵 Bois', stone: '🪨 Pierre', iron: '⛓️ Fer', food: '🌾 Vivres' };
+  const stockLine = RESOURCE_TYPES.map((r) => `${RESOURCE_LABEL[r]} **${city[r]}**`).join(' · ');
+
+  const embed = new EmbedBuilder()
+    .setTitle('🏛️  Cité du serveur')
+    .setDescription(`> Stock commun : ${stockLine}\n\`${SEP}\``)
+    .setColor(0x8e6e53);
+
+  const buildingLines = Object.values(BUILDINGS).map((def) => {
+    const built = city.buildings.find((b) => b.type === def.id);
+    const level = built?.level ?? 0;
+    if (level >= def.maxLevel) {
+      return `${def.emoji} **${def.name}** — Niveau **${level}/${def.maxLevel}** (max)\n> ${def.description}`;
+    }
+    const cost = costForLevel(def.id, level + 1);
+    const costLine = RESOURCE_TYPES.map((r) => `${cost[r]} ${RESOURCE_LABEL[r]}`).join(' · ');
+    const hours = Math.round(durationForLevel(def.id, level + 1) / 3_600_000 * 10) / 10;
+    return `${def.emoji} **${def.name}** — Niveau **${level}/${def.maxLevel}**\n> ${def.description}\n> Prochain niveau : ${costLine} (${hours}h)`;
+  });
+
+  embed.addFields({ name: '🏗️ Bâtiments', value: buildingLines.join('\n\n'), inline: false });
+
+  if (city.constructionJob) {
+    const def = BUILDINGS[city.constructionJob.buildingType];
+    const endsAt = Math.floor(new Date(city.constructionJob.completesAt).getTime() / 1000);
+    embed.addFields({
+      name: '⏳ Construction en cours',
+      value: `${def?.emoji ?? '🏗️'} **${def?.name ?? city.constructionJob.buildingType}** niveau **${city.constructionJob.targetLevel}** — prêt <t:${endsAt}:R>`,
+      inline: false,
+    });
+  } else {
+    embed.addFields({ name: '⏳ Construction', value: '*Aucune construction en cours — `/city build` pour en lancer une.*', inline: false });
+  }
+
+  embed.setFooter({ text: 'WorldBoss • /city donate <ressource> <quantité> pour contribuer' });
+  return embed;
+}
+
+/**
  * Generic error embed.
  */
 function errorEmbed(message) {
@@ -888,6 +933,7 @@ module.exports = {
   buildArenaHomeMessage,
   buildArenaChallengeMessage,
   buildArenaMatchMessage,
+  buildCityEmbed,
   errorEmbed,
   successEmbed,
   RARITY_COLOR,

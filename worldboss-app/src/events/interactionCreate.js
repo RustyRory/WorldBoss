@@ -30,7 +30,7 @@ const { prisma } = require('../db/prisma');
 const { RACES, getCharacterEmoji, formatRaceOnlyBonuses, formatGenderBonuses, formatRaceBonuses } = require('../data/races');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
 
-const ALL_BOT_COMMANDS = ['start', 'profile', 'inventory', 'setup', 'dungeon', 'prime', 'companion', 'servant', 'arena'];
+const ALL_BOT_COMMANDS = ['start', 'profile', 'inventory', 'setup', 'dungeon', 'prime', 'companion', 'servant', 'arena', 'city'];
 
 async function getGuildChannels(guildId) {
   return prisma.guildChannels.findUnique({ where: { guildId } });
@@ -100,6 +100,13 @@ module.exports = {
           if (interaction.commandName === 'arena' && channels.arenaChannelId && interaction.channelId !== channels.arenaChannelId) {
             return interaction.reply({
               embeds: [errorEmbed(`La commande \`/arena\` est réservée à <#${channels.arenaChannelId}>.`)],
+              flags: MessageFlags.Ephemeral,
+            });
+          }
+
+          if (interaction.commandName === 'city' && channels.cityChannelId && interaction.channelId !== channels.cityChannelId) {
+            return interaction.reply({
+              embeds: [errorEmbed(`La commande \`/city\` est réservée à <#${channels.cityChannelId}>.`)],
               flags: MessageFlags.Ephemeral,
             });
           }

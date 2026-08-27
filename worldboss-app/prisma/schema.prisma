@@ -154,6 +154,7 @@ model Guild {
   channels      GuildChannels?
   characters    Character[]
   merchantShop  MerchantShop?
+  city          City?
 }
 
 model GuildChannels {
@@ -165,6 +166,7 @@ model GuildChannels {
   dungeonChannelId String?
   marketChannelId  String?
   arenaChannelId   String?
+  cityChannelId    String?
 
   guild            Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
 }
@@ -239,6 +241,48 @@ model ArenaMatch {
 
   characterA ArenaProfile @relation("ArenaMatchA", fields: [characterAId], references: [characterId], onDelete: Cascade)
   characterB ArenaProfile @relation("ArenaMatchB", fields: [characterBId], references: [characterId], onDelete: Cascade)
+}
+
+// ── Cité commune (une par serveur Discord, alimentée par les dons des joueurs) ─
+
+model City {
+  id        Int      @id @default(autoincrement())
+  guildId   String   @unique
+  wood      Int      @default(0)
+  stone     Int      @default(0)
+  iron      Int      @default(0)
+  food      Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  guild           Guild            @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  buildings       Building[]
+  constructionJob ConstructionJob?
+}
+
+model Building {
+  id        Int      @id @default(autoincrement())
+  cityId    Int
+  type      String
+  level     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  city City @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@unique([cityId, type])
+}
+
+// @unique sur cityId : une seule construction active à la fois par cité (décision actée).
+model ConstructionJob {
+  id           Int      @id @default(autoincrement())
+  cityId       Int      @unique
+  buildingType String
+  targetLevel  Int
+  startedAt    DateTime @default(now())
+  completesAt  DateTime
+
+  city City @relation(fields: [cityId], references: [id], onDelete: Cascade)
 }
 
 model MarketListing {
