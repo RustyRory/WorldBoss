@@ -33,6 +33,17 @@ const COMBAT_CONFIG = {
 
   // Minimum HP guaranteed by the between-room heal
   MIN_ROOM_HEAL_HP: 5,
+
+  // PvP (arena) damage multiplier applied on top of normal PvE damage — matches all
+  // outgoing damage (basic attack + skills) down to make arena fights last longer.
+  PVP_DAMAGE_MULT: 0.75,
+
+  // Arena ELO rating: K-factor controls how much a single match moves the rating.
+  ARENA_ELO_K: 32,
+  ARENA_ELO_DEFAULT: 1000,
+
+  // Character level required to access the arena.
+  ARENA_LEVEL_REQUIRED: 50,
 };
 
 module.exports = { COMBAT_CONFIG };

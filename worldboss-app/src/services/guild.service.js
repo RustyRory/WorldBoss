@@ -123,6 +123,27 @@ async function initGuildChannels(guild) {
       ],
     },
     {
+      key: 'arenaChannelId',
+      name: 'wb-arena',
+      permissionOverwrites: [
+        {
+          id: everyoneId,
+          allow: [
+            PermissionFlagsBits.ViewChannel,
+            PermissionFlagsBits.SendMessages,
+            PermissionFlagsBits.ReadMessageHistory,
+            PermissionFlagsBits.UseApplicationCommands,
+          ],
+          deny: [
+            PermissionFlagsBits.CreatePublicThreads,
+            PermissionFlagsBits.CreatePrivateThreads,
+            PermissionFlagsBits.SendMessagesInThreads,
+          ],
+        },
+        botPerms,
+      ],
+    },
+    {
       key: 'marketChannelId',
       name: 'wb-market',
       permissionOverwrites: [

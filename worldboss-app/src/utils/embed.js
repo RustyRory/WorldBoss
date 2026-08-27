@@ -743,6 +743,118 @@ function buildServantMessage(character, servant) {
 }
 
 /**
+ * Arena home screen — profile (ELO/wins/losses) + challenge/queue buttons.
+ */
+function buildArenaHomeMessage(character, profile, queued) {
+  const embed = new EmbedBuilder()
+    .setTitle('⚔️  Arène')
+    .setDescription(
+      `> Classement **${profile.elo}** ELO\n` +
+      `> Victoires **${profile.wins}** · Défaites **${profile.losses}**\n` +
+      (queued ? `\n> 🕒 *Tu es dans la file d'attente...*` : ''),
+    )
+    .setColor(0xc0392b);
+
+  const { UserSelectMenuBuilder } = require('discord.js');
+
+  const rows = [
+    new ActionRowBuilder().addComponents(
+      new UserSelectMenuBuilder()
+        .setCustomId('arena_challenge_target')
+        .setPlaceholder('⚔️  Défier un joueur (amical)…')
+        .setMinValues(1)
+        .setMaxValues(1),
+    ),
+    new ActionRowBuilder().addComponents(
+      queued
+        ? new ButtonBuilder().setCustomId('arena_queue_leave').setLabel('Quitter la file').setStyle(ButtonStyle.Secondary)
+        : new ButtonBuilder().setCustomId('arena_queue_join').setLabel('Rejoindre la file classée').setEmoji('🏆').setStyle(ButtonStyle.Primary),
+    ),
+  ];
+
+  return { embed, rows };
+}
+
+/**
+ * Challenge invite — posted publicly, Accept/Decline for the target only.
+ */
+function buildArenaChallengeMessage(challengerCharacterId, challengerName, targetUserId) {
+  const embed = new EmbedBuilder()
+    .setTitle('⚔️  Défi lancé !')
+    .setDescription(`> **${challengerName}** défie <@${targetUserId}> en duel amical (hors classement).`)
+    .setColor(0xc0392b);
+
+  const rows = [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`arena_challenge_accept:${challengerCharacterId}:${targetUserId}`).setLabel('Accepter').setEmoji('✅').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId(`arena_challenge_decline:${challengerCharacterId}:${targetUserId}`).setLabel('Refuser').setEmoji('❌').setStyle(ButtonStyle.Danger),
+    ),
+  ];
+
+  return { embed, rows };
+}
+
+/**
+ * Shared 1v1 arena match message — HP bars for both sides, recent log, and (while
+ * active) one action-select per side. Returns { embed, rows }.
+ */
+function buildArenaMatchMessage(state) {
+  const { playerA, playerB } = state;
+
+  const sideLine = (p) => {
+    const pct  = Math.max(0, Math.round((p.hp / p.maxHp) * 100));
+    const icon = p.hp <= 0 ? '💀' : pct > 50 ? '🟩' : pct > 25 ? '🟨' : '🟥';
+    return `${p.emoji ?? '🧑'} **${p.name}**\n${icon} ${hpBar(p.hp, p.maxHp)}`;
+  };
+
+  const recentLog = state.log.slice(-6).map((l) => `> ${l}`).join('\n') || '> *Le combat commence...*';
+
+  const embed = new EmbedBuilder()
+    .setTitle(state.status === 'finished' ? '⚔️  Arène — Combat terminé' : `⚔️  Arène — Tour ${state.round}`)
+    .addFields(
+      { name: sideLine(playerA), value: '​', inline: true },
+      { name: '⚔️', value: '​', inline: true },
+      { name: sideLine(playerB), value: '​', inline: true },
+      { name: '📜 Journal', value: recentLog, inline: false },
+    )
+    .setColor(state.status === 'finished' ? 0x7f8c8d : 0xc0392b);
+
+  if (state.status === 'finished') {
+    const winner = playerA.hp > 0 ? playerA : playerB;
+    embed.addFields({ name: '🏆 Vainqueur', value: `**${winner.name}**`, inline: false });
+    return { embed, rows: [] };
+  }
+
+  const actionOptions = (p) => {
+    const cooldowns = p.skillCooldowns ?? {};
+    const usedOnce  = p.usedOnceSkills ?? [];
+    return [
+      { label: 'Attaquer', value: 'attack', emoji: '⚔️' },
+      ...(p.activeSkills ?? [])
+        .filter((sk) => (cooldowns[sk.key] ?? 0) <= 0 && !(sk.oncePerCombat && usedOnce.includes(sk.key)))
+        .map((sk) => ({ label: sk.name, value: `skill_${sk.key}`, emoji: '🔥' })),
+    ];
+  };
+
+  const rows = [
+    new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId(`arena_action:${state.matchId}:A`)
+        .setPlaceholder(`Action de ${playerA.name}…`)
+        .addOptions(actionOptions(playerA)),
+    ),
+    new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId(`arena_action:${state.matchId}:B`)
+        .setPlaceholder(`Action de ${playerB.name}…`)
+        .addOptions(actionOptions(playerB)),
+    ),
+  ];
+
+  return { embed, rows };
+}
+
+/**
  * Generic error embed.
  */
 function errorEmbed(message) {
@@ -771,6 +883,9 @@ module.exports = {
   buildCompanionEmbed,
   buildCompanionShopMessage,
   buildServantMessage,
+  buildArenaHomeMessage,
+  buildArenaChallengeMessage,
+  buildArenaMatchMessage,
   errorEmbed,
   successEmbed,
   RARITY_COLOR,

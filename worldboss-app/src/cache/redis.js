@@ -79,6 +79,32 @@ async function deletePrimeCombatState(primeRunId) {
   await redis.del(`prime:${primeRunId}`);
 }
 
+// ── Helper: arena (PvP) match state + matchmaking queue ─────────────────────
+const ARENA_MATCH_TTL = 60 * 30; // 30 minutes
+const ARENA_QUEUE_TTL = 60 * 60; // 1 hour
+
+async function getArenaMatchState(matchId) {
+  const raw = await redis.get(`arena:match:${matchId}`);
+  return raw ? JSON.parse(raw) : null;
+}
+
+async function setArenaMatchState(matchId, state) {
+  await redis.set(`arena:match:${matchId}`, JSON.stringify(state), 'EX', ARENA_MATCH_TTL);
+}
+
+async function deleteArenaMatchState(matchId) {
+  await redis.del(`arena:match:${matchId}`);
+}
+
+async function getArenaQueue(guildId) {
+  const raw = await redis.get(`arena:queue:${guildId}`);
+  return raw ? JSON.parse(raw) : [];
+}
+
+async function setArenaQueue(guildId, queue) {
+  await redis.set(`arena:queue:${guildId}`, JSON.stringify(queue), 'EX', ARENA_QUEUE_TTL);
+}
+
 module.exports = {
   redis,
   getCombatState,
@@ -93,4 +119,9 @@ module.exports = {
   getPrimeCombatState,
   setPrimeCombatState,
   deletePrimeCombatState,
+  getArenaMatchState,
+  setArenaMatchState,
+  deleteArenaMatchState,
+  getArenaQueue,
+  setArenaQueue,
 };

@@ -42,6 +42,7 @@ model Character {
   loadout         Loadout?
   companion       Companion?
   servant         Servant?
+  arenaProfile    ArenaProfile?
   dungeonRuns     DungeonRun[]
   marketListings      MarketListing[]    @relation("MarketSeller")
   marketBids          MarketListing[]    @relation("MarketBidder")
@@ -163,6 +164,7 @@ model GuildChannels {
   generalChannelId String?
   dungeonChannelId String?
   marketChannelId  String?
+  arenaChannelId   String?
 
   guild            Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
 }
@@ -206,6 +208,37 @@ model PrimeParticipant {
   character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@unique([primeRunId, characterId])
+}
+
+// ── Arène PvP (Phase 1 : 1v1 classée ou amicale, même serveur) ────────────────
+
+model ArenaProfile {
+  id          Int       @id @default(autoincrement())
+  characterId Int       @unique
+  elo         Int       @default(1000)
+  wins        Int       @default(0)
+  losses      Int       @default(0)
+  lastMatchAt DateTime?
+
+  character  Character    @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  matchesAsA ArenaMatch[] @relation("ArenaMatchA")
+  matchesAsB ArenaMatch[] @relation("ArenaMatchB")
+}
+
+model ArenaMatch {
+  id           Int      @id @default(autoincrement())
+  guildId      String
+  characterAId Int
+  characterBId Int
+  winnerId     Int?
+  ranked       Boolean  @default(true)
+  eloDeltaA    Int      @default(0)
+  eloDeltaB    Int      @default(0)
+  logJson      Json     @default("[]")
+  createdAt    DateTime @default(now())
+
+  characterA ArenaProfile @relation("ArenaMatchA", fields: [characterAId], references: [characterId], onDelete: Cascade)
+  characterB ArenaProfile @relation("ArenaMatchB", fields: [characterBId], references: [characterId], onDelete: Cascade)
 }
 
 model MarketListing {

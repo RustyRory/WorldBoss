@@ -30,7 +30,7 @@ const { prisma } = require('../db/prisma');
 const { RACES, getCharacterEmoji, formatRaceOnlyBonuses, formatGenderBonuses, formatRaceBonuses } = require('../data/races');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
 
-const ALL_BOT_COMMANDS = ['start', 'profile', 'inventory', 'setup', 'dungeon', 'prime', 'companion', 'servant'];
+const ALL_BOT_COMMANDS = ['start', 'profile', 'inventory', 'setup', 'dungeon', 'prime', 'companion', 'servant', 'arena'];
 
 async function getGuildChannels(guildId) {
   return prisma.guildChannels.findUnique({ where: { guildId } });
@@ -93,6 +93,13 @@ module.exports = {
           if (interaction.commandName === 'prime' && channels.dungeonChannelId && interaction.channelId !== channels.dungeonChannelId) {
             return interaction.reply({
               embeds: [errorEmbed(`La commande \`/prime\` est réservée à <#${channels.dungeonChannelId}>.`)],
+              flags: MessageFlags.Ephemeral,
+            });
+          }
+
+          if (interaction.commandName === 'arena' && channels.arenaChannelId && interaction.channelId !== channels.arenaChannelId) {
+            return interaction.reply({
+              embeds: [errorEmbed(`La commande \`/arena\` est réservée à <#${channels.arenaChannelId}>.`)],
               flags: MessageFlags.Ephemeral,
             });
           }
@@ -258,6 +265,64 @@ module.exports = {
         } catch (err) {
           console.error('[Dungeon/select]', err);
         }
+      } else if (interaction.customId.startsWith('arena_action:')) {
+        try {
+          const [, matchId, side] = interaction.customId.split(':');
+          const characterId = await resolveCharacterId(interaction);
+          if (!characterId) return interaction.reply({ embeds: [errorEmbed('Personnage introuvable.')], flags: MessageFlags.Ephemeral });
+
+          const { submitAction } = require('../services/arena.service');
+          const { buildArenaMatchMessage } = require('../utils/embed');
+          const result = await submitAction(matchId, side, characterId, interaction.values[0], interaction.client);
+
+          if (result.mode === 'error') {
+            return interaction.reply({ embeds: [errorEmbed(result.message)], flags: MessageFlags.Ephemeral });
+          }
+          if (result.mode === 'wait') {
+            return interaction.reply({ embeds: [{ color: 0x3498db, description: `⏳ ${result.message}` }], flags: MessageFlags.Ephemeral });
+          }
+          const { embed, rows } = buildArenaMatchMessage(result.state);
+          return interaction.update({ embeds: [embed], components: rows });
+        } catch (err) {
+          console.error('[Arena/action]', err);
+        }
+      }
+      return;
+    }
+
+    // ── User select menu interactions ──────────────────────────────────────
+    if (interaction.isUserSelectMenu()) {
+      if (interaction.customId === 'arena_challenge_target') {
+        try {
+          const targetUserId = interaction.values[0];
+          const characterId  = await resolveCharacterId(interaction);
+          if (!characterId) return interaction.reply({ embeds: [errorEmbed('Personnage introuvable.')], flags: MessageFlags.Ephemeral });
+          if (targetUserId === interaction.user.id) {
+            return interaction.reply({ embeds: [errorEmbed('Tu ne peux pas te défier toi-même.')], flags: MessageFlags.Ephemeral });
+          }
+
+          const { checkArenaAccess } = require('../services/arena.service');
+          const challenger = await prisma.character.findUnique({ where: { id: characterId } });
+          const access = checkArenaAccess(challenger);
+          if (!access.ok) return interaction.reply({ embeds: [errorEmbed(access.message)], flags: MessageFlags.Ephemeral });
+
+          const target = await prisma.character.findUnique({
+            where: { userId_guildId: { userId: targetUserId, guildId: interaction.guildId } },
+          });
+          if (!target) {
+            return interaction.reply({ embeds: [errorEmbed('Ce joueur n\'a pas de personnage sur ce serveur.')], flags: MessageFlags.Ephemeral });
+          }
+          const targetAccess = checkArenaAccess(target);
+          if (!targetAccess.ok) {
+            return interaction.reply({ embeds: [errorEmbed(`<@${targetUserId}> n'a pas encore accès à l'arène.`)], flags: MessageFlags.Ephemeral });
+          }
+
+          const { buildArenaChallengeMessage } = require('../utils/embed');
+          const { embed, rows } = buildArenaChallengeMessage(characterId, challenger.name, targetUserId);
+          return interaction.reply({ content: `<@${targetUserId}>`, embeds: [embed], components: rows });
+        } catch (err) {
+          console.error('[Arena/challenge_target]', err);
+        }
       }
       return;
     }
@@ -415,6 +480,65 @@ module.exports = {
           const { embed, rows } = buildServantMessage(character, servant);
           await interaction.update({ embeds: [embed], components: rows });
           return interaction.followUp({ embeds: [{ color: 0x2ecc71, description: `✅ ${result.message}` }], flags: MessageFlags.Ephemeral });
+        }
+
+        if (customId === 'arena_queue_join' || customId === 'arena_queue_leave') {
+          const characterId = await resolveCharacterId(interaction);
+          if (!characterId) return interaction.reply({ embeds: [errorEmbed('Personnage introuvable.')], flags: MessageFlags.Ephemeral });
+
+          const { joinQueue, leaveQueue, checkArenaAccess, getOrCreateArenaProfile } = require('../services/arena.service');
+          const { getArenaQueue } = require('../cache/redis');
+          const { buildArenaHomeMessage } = require('../utils/embed');
+
+          const character = await prisma.character.findUnique({ where: { id: characterId }, include: { loadout: true } });
+          const access = checkArenaAccess(character);
+          if (!access.ok) return interaction.reply({ embeds: [errorEmbed(access.message)], flags: MessageFlags.Ephemeral });
+
+          const result = customId === 'arena_queue_join'
+            ? await joinQueue(character, character.loadout, interaction.guildId, interaction.client)
+            : await leaveQueue(characterId, interaction.guildId);
+
+          if (!result.success) {
+            return interaction.reply({ embeds: [errorEmbed(result.message)], flags: MessageFlags.Ephemeral });
+          }
+
+          const [profile, queue] = await Promise.all([
+            getOrCreateArenaProfile(characterId),
+            getArenaQueue(interaction.guildId),
+          ]);
+          const queued = queue.some((q) => q.characterId === characterId);
+          const { embed, rows } = buildArenaHomeMessage(character, profile, queued);
+          await interaction.update({ embeds: [embed], components: rows });
+          return interaction.followUp({ embeds: [{ color: 0x2ecc71, description: `✅ ${result.message}` }], flags: MessageFlags.Ephemeral });
+        }
+
+        if (customId.startsWith('arena_challenge_accept:') || customId.startsWith('arena_challenge_decline:')) {
+          const [, challengerCharacterId, targetUserId] = customId.split(':');
+          if (interaction.user.id !== targetUserId) {
+            return interaction.reply({ embeds: [errorEmbed('Seul le joueur défié peut répondre.')], flags: MessageFlags.Ephemeral });
+          }
+
+          if (customId.startsWith('arena_challenge_decline:')) {
+            await interaction.update({ embeds: [{ color: 0x7f8c8d, description: '❌ Défi refusé.' }], components: [] });
+            return;
+          }
+
+          const { startMatch, isInMatch } = require('../services/arena.service');
+          const challenger = await prisma.character.findUnique({ where: { id: parseInt(challengerCharacterId, 10) }, include: { loadout: true } });
+          const target     = await prisma.character.findUnique({
+            where: { userId_guildId: { userId: targetUserId, guildId: interaction.guildId } },
+            include: { loadout: true },
+          });
+          if (!challenger || !target) {
+            return interaction.reply({ embeds: [errorEmbed('Un des deux joueurs est introuvable.')], flags: MessageFlags.Ephemeral });
+          }
+          if ((await isInMatch(challenger.id)) || (await isInMatch(target.id))) {
+            return interaction.reply({ embeds: [errorEmbed('Un des deux joueurs est déjà en plein combat.')], flags: MessageFlags.Ephemeral });
+          }
+
+          await interaction.update({ embeds: [{ color: 0x2ecc71, description: '✅ Défi accepté ! Le combat commence dans le canal arène.' }], components: [] });
+          await startMatch(challenger, challenger.loadout, target, target.loadout, interaction.guildId, false, interaction.client);
+          return;
         }
 
         if (customId === 'info_leaderboard') {
