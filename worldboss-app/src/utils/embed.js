@@ -804,7 +804,7 @@ function buildArenaMatchMessage(state) {
   const sideLine = (p) => {
     const pct  = Math.max(0, Math.round((p.hp / p.maxHp) * 100));
     const icon = p.hp <= 0 ? '💀' : pct > 50 ? '🟩' : pct > 25 ? '🟨' : '🟥';
-    return `${p.emoji ?? '🧑'} **${p.name}**\n${icon} ${hpBar(p.hp, p.maxHp)}`;
+    return `${p.emoji ?? '🧑'} **${p.name}**\n${icon} ${hpBar(p.hp, p.maxHp)}\n⚔️ ${Math.round(p.atk)} · 🛡️ ${Math.round(p.def)} · 💨 ${Math.round(p.spd)}`;
   };
 
   const recentLog = state.log.slice(-6).map((l) => `> ${l}`).join('\n') || '> *Le combat commence...*';
@@ -835,6 +835,8 @@ function buildArenaMatchMessage(state) {
         .map((sk) => ({ label: sk.name, value: `skill_${sk.key}`, emoji: '🔥' })),
     ];
   };
+
+  embed.setFooter({ text: '⏱️  30 secondes pour choisir une action, sinon attaque automatique.' });
 
   const rows = [
     new ActionRowBuilder().addComponents(

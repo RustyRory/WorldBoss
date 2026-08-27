@@ -1,6 +1,7 @@
 'use strict';
 
 const crypto = require('crypto');
+const { Queue, Worker } = require('bullmq');
 const { prisma } = require('../db/prisma');
 const { redis, getArenaMatchState, setArenaMatchState, deleteArenaMatchState, getArenaQueue, setArenaQueue } = require('../cache/redis');
 const { resolveArenaRound } = require('../engines/pvpCombatEngine');
@@ -8,10 +9,46 @@ const { computeStats } = require('../utils/stats');
 const { COMBAT_CONFIG } = require('../data/combat');
 const { getCharacterEmoji } = require('../data/races');
 
-const ACTIVE_TTL = 60 * 30; // 30 minutes safety net in case a match is abandoned
+const ACTIVE_TTL = 60 * 30; // 30 minutes safety net, refreshed every round so it never expires mid-match
+
+const _redisUrl = process.env.REDIS_URL ? new URL(process.env.REDIS_URL) : null;
+const redisConnection = {
+  host: _redisUrl?.hostname ?? process.env.REDIS_HOST ?? 'localhost',
+  port: _redisUrl ? parseInt(_redisUrl.port || '6379', 10) : parseInt(process.env.REDIS_PORT ?? '6379', 10),
+  password: _redisUrl?.password || process.env.REDIS_PASSWORD || undefined,
+};
+
+const arenaTurnQueue = new Queue('arena-turn', { connection: redisConnection });
+let workerStarted = false;
 
 function activeKey(characterId) {
   return `arena:active:${characterId}`;
+}
+
+/**
+ * A player's action and the 30s auto-timeout can fire almost simultaneously — without
+ * locking, both would read-modify-write the same Redis match state and one update would
+ * silently clobber the other (lost update). Serializes access per match with a short-lived
+ * Redis lock (retries for ~1s, which comfortably covers normal read-modify-write latency).
+ */
+async function withMatchLock(matchId, fn) {
+  const lockKey = `arena:lock:${matchId}`;
+  const token   = crypto.randomUUID();
+  let acquired  = false;
+
+  for (let i = 0; i < 20; i++) {
+    acquired = (await redis.set(lockKey, token, 'NX', 'PX', 5000)) === 'OK';
+    if (acquired) break;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  if (!acquired) throw new Error('Le combat est occupé, réessaie dans un instant.');
+
+  try {
+    return await fn();
+  } finally {
+    const current = await redis.get(lockKey);
+    if (current === token) await redis.del(lockKey);
+  }
 }
 
 async function isInMatch(characterId) {
@@ -64,6 +101,113 @@ function buildCombatant(character, loadout) {
   };
 }
 
+// ── Tour : minuteur 30s + forfait après 3 tours manqués d'affilée ────────────
+
+async function scheduleTurnTimeout(matchId, round) {
+  await arenaTurnQueue.add(
+    'timeout',
+    { matchId, round },
+    { delay: COMBAT_CONFIG.ARENA_TURN_TIMEOUT_MS, jobId: `arena-turn-${matchId}-${round}`, removeOnComplete: true, removeOnFail: true },
+  );
+}
+
+async function cancelTurnTimeout(matchId, round) {
+  await arenaTurnQueue.remove(`arena-turn-${matchId}-${round}`).catch(() => {});
+}
+
+async function postArenaUpdate(state, discordClient) {
+  if (!discordClient || !state.channelId || !state.messageId) return;
+  const channel = await discordClient.channels.fetch(state.channelId).catch(() => null);
+  if (!channel) return;
+  const message = await channel.messages.fetch(state.messageId).catch(() => null);
+  if (!message) return;
+  const { buildArenaMatchMessage } = require('../utils/embed');
+  const { embed, rows } = buildArenaMatchMessage(state);
+  await message.edit({ embeds: [embed], components: rows }).catch(() => {});
+}
+
+/**
+ * Resolves the current round once both sides have an action queued (state.pendingActions
+ * fully populated), persists/schedules what's needed for the next round, and returns a
+ * uniform result shape used by both the interaction-driven path (submitAction) and the
+ * timeout-driven path (handleTurnTimeout).
+ */
+async function resolveRound(state, discordClient) {
+  const result = resolveArenaRound(state);
+  state.playerA = result.playerA;
+  state.playerB = result.playerB;
+  state.log.push(...result.logs);
+  state.pendingActions = {};
+  state.round += 1;
+
+  if (!result.finished) {
+    await setArenaMatchState(state.matchId, state);
+    await markActive(state.playerA.characterId, state.matchId);
+    await markActive(state.playerB.characterId, state.matchId);
+    await scheduleTurnTimeout(state.matchId, state.round);
+    return { state, finished: false, logs: result.logs };
+  }
+
+  state.status = 'finished';
+  const winnerSide = result.aDied ? 'B' : 'A';
+  await finalizeMatch(state, winnerSide, discordClient);
+  return { state, finished: true, winnerSide, logs: result.logs };
+}
+
+/**
+ * Fires when a round's 30s timer elapses. Auto-fills 'attack' for whoever hasn't
+ * submitted, or declares a forfeit if a side has missed ARENA_MAX_MISSED_TURNS in a row.
+ */
+async function handleTurnTimeout(matchId, round, discordClient) {
+  const outcome = await withMatchLock(matchId, async () => {
+    const state = await getArenaMatchState(matchId);
+    if (!state || state.status !== 'active' || state.round !== round) return null; // already resolved
+
+    state.missedTurns = state.missedTurns ?? { A: 0, B: 0 };
+    const autoLogs = [];
+
+    for (const side of ['A', 'B']) {
+      const name = side === 'A' ? state.playerA.name : state.playerB.name;
+      if (!state.pendingActions[side]) {
+        state.pendingActions[side] = 'attack';
+        state.missedTurns[side] += 1;
+        autoLogs.push(`⏱️ **${name}** n'a pas choisi à temps — attaque automatique.`);
+      } else {
+        state.missedTurns[side] = 0;
+      }
+    }
+
+    const forfeitSide = (['A', 'B']).find((s) => state.missedTurns[s] >= COMBAT_CONFIG.ARENA_MAX_MISSED_TURNS);
+    if (forfeitSide) {
+      const winnerSide = forfeitSide === 'A' ? 'B' : 'A';
+      const loserName  = forfeitSide === 'A' ? state.playerA.name : state.playerB.name;
+      state.log.push(...autoLogs, `🏳️ **${loserName}** abandonne le combat (inactif trop longtemps).`);
+      state.status = 'finished';
+      await finalizeMatch(state, winnerSide, discordClient);
+      return state;
+    }
+
+    state.log.push(...autoLogs);
+    const resolved = await resolveRound(state, discordClient);
+    return resolved.state;
+  });
+
+  if (outcome) await postArenaUpdate(outcome, discordClient);
+}
+
+function startArenaWorker(discordClient) {
+  if (workerStarted) return;
+  workerStarted = true;
+
+  new Worker(
+    'arena-turn',
+    async (job) => {
+      await handleTurnTimeout(job.data.matchId, job.data.round, discordClient);
+    },
+    { connection: redisConnection },
+  );
+}
+
 /**
  * Starts a new 1v1 arena match between two characters and posts the shared match
  * message (with one action-select per side) to the guild's arena channel.
@@ -79,6 +223,7 @@ async function startMatch(characterA, loadoutA, characterB, loadoutB, guildId, r
     status: 'active',
     log: [],
     pendingActions: {},
+    missedTurns: { A: 0, B: 0 },
     playerA: buildCombatant(characterA, loadoutA),
     playerB: buildCombatant(characterB, loadoutB),
   };
@@ -103,6 +248,8 @@ async function startMatch(characterA, loadoutA, characterB, loadoutB, guildId, r
     state.channelId = msg.channelId;
     await setArenaMatchState(matchId, state);
   }
+
+  await scheduleTurnTimeout(matchId, 1);
 
   return { matchId, state, posted: !!channel };
 }
@@ -162,42 +309,30 @@ function eloDelta(eloSelf, eloOpponent, won) {
  * { mode: 'wait' | 'resolved' | 'error', ... }
  */
 async function submitAction(matchId, side, characterId, action, discordClient) {
-  const state = await getArenaMatchState(matchId);
-  if (!state || state.status !== 'active') return { mode: 'error', message: 'Ce combat est terminé ou introuvable.' };
+  return withMatchLock(matchId, async () => {
+    const state = await getArenaMatchState(matchId);
+    if (!state || state.status !== 'active') return { mode: 'error', message: 'Ce combat est terminé ou introuvable.' };
 
-  const combatant = side === 'A' ? state.playerA : state.playerB;
-  if (combatant.characterId !== characterId) return { mode: 'error', message: 'Ce n\'est pas ton choix à faire.' };
-  if (state.pendingActions[side]) return { mode: 'wait', message: 'Tu as déjà choisi ton action ce tour — en attente de ton adversaire.' };
+    const combatant = side === 'A' ? state.playerA : state.playerB;
+    if (combatant.characterId !== characterId) return { mode: 'error', message: 'Ce n\'est pas ton choix à faire.' };
+    if (state.pendingActions[side]) return { mode: 'wait', message: 'Tu as déjà choisi ton action ce tour — en attente de ton adversaire.' };
 
-  state.pendingActions[side] = action;
+    state.pendingActions[side] = action;
 
-  if (!state.pendingActions.A || !state.pendingActions.B) {
-    await setArenaMatchState(matchId, state);
-    return { mode: 'wait', message: 'Action enregistrée — en attente de ton adversaire.' };
-  }
+    if (!state.pendingActions.A || !state.pendingActions.B) {
+      await setArenaMatchState(matchId, state);
+      return { mode: 'wait', message: 'Action enregistrée — en attente de ton adversaire.' };
+    }
 
-  // Both sides have chosen: resolve the round.
-  const result = resolveArenaRound(state);
-  state.playerA = result.playerA;
-  state.playerB = result.playerB;
-  state.log.push(...result.logs);
-  state.pendingActions = {};
-  state.round += 1;
-
-  if (!result.finished) {
-    await setArenaMatchState(matchId, state);
-    return { mode: 'resolved', state, finished: false, logs: result.logs };
-  }
-
-  state.status = 'finished';
-  const winnerSide = result.aDied ? 'B' : 'A';
-  await finalizeMatch(state, winnerSide, discordClient);
-  return { mode: 'resolved', state, finished: true, winnerSide, logs: result.logs };
+    // Both sides have chosen before the timer ran out — cancel it and resolve now.
+    await cancelTurnTimeout(matchId, state.round);
+    const resolved = await resolveRound(state, discordClient);
+    return { mode: 'resolved', ...resolved };
+  });
 }
 
 async function finalizeMatch(state, winnerSide, discordClient) {
   const winner = winnerSide === 'A' ? state.playerA : state.playerB;
-  const loser  = winnerSide === 'A' ? state.playerB : state.playerA;
 
   const [profileA, profileB] = await Promise.all([
     getOrCreateArenaProfile(state.playerA.characterId),
@@ -236,11 +371,10 @@ async function finalizeMatch(state, winnerSide, discordClient) {
     },
   });
 
+  await cancelTurnTimeout(state.matchId, state.round);
   await clearActive(state.playerA.characterId);
   await clearActive(state.playerB.characterId);
   await deleteArenaMatchState(state.matchId);
-
-  void winner; void loser; void discordClient; // kept for symmetry / future notification hooks
 }
 
 module.exports = {
@@ -253,4 +387,5 @@ module.exports = {
   submitAction,
   isInMatch,
   clearActive,
+  startArenaWorker,
 };

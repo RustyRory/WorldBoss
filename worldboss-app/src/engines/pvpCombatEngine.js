@@ -100,6 +100,7 @@ function resolveArenaRound(state) {
 
   const aFirst = rollInitiative(playerA.spd) >= rollInitiative(playerB.spd);
   const order  = aFirst ? [['A', playerA, playerB], ['B', playerB, playerA]] : [['B', playerB, playerA], ['A', playerA, playerB]];
+  logs.push(`⚡ **${aFirst ? playerA.name : playerB.name}** agit en premier ce tour (VIT ${Math.round(playerA.spd)} vs ${Math.round(playerB.spd)}).`);
 
   for (const [side, actor, target] of order) {
     executeAction(actor, target, state.pendingActions[side], logs);

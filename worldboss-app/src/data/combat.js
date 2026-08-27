@@ -44,6 +44,12 @@ const COMBAT_CONFIG = {
 
   // Character level required to access the arena.
   ARENA_LEVEL_REQUIRED: 50,
+
+  // Max time a player has to pick an arena action before it auto-resolves to 'attack'.
+  ARENA_TURN_TIMEOUT_MS: 30_000,
+
+  // Consecutive missed turns before a player forfeits the match (handles AFK/abandon).
+  ARENA_MAX_MISSED_TURNS: 3,
 };
 
 module.exports = { COMBAT_CONFIG };
