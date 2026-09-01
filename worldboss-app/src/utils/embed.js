@@ -902,6 +902,118 @@ function buildCityEmbed(city) {
 }
 
 /**
+ * 4v4 team lobby (recruiting on one server before cross-server matchmaking).
+ */
+function buildArenaTeamLobbyMessage(lobby) {
+  const TEAM_SIZE = 4;
+  const memberLines = Array.from({ length: TEAM_SIZE }, (_, i) => {
+    const m = lobby?.members?.[i];
+    return m ? `> ${i + 1}. **${m.name}**${m.characterId === lobby.leaderId ? ' 👑' : ''}` : `> ${i + 1}. *En attente...*`;
+  }).join('\n');
+
+  const full = (lobby?.members?.length ?? 0) >= TEAM_SIZE;
+
+  const embed = new EmbedBuilder()
+    .setTitle('⚔️  Groupe d\'arène 4v4')
+    .setDescription(`> ${lobby?.members?.length ?? 0}/${TEAM_SIZE} joueurs\n\`${SEP}\`\n${memberLines}`)
+    .setColor(0xc0392b)
+    .setFooter({ text: full ? 'Groupe complet — lancez la recherche d\'adversaire !' : 'En attente de joueurs supplémentaires...' });
+
+  const rows = [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('arena_team_join').setLabel('Rejoindre').setEmoji('➕').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId('arena_team_leave').setLabel('Quitter').setEmoji('➖').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId('arena_team_search').setLabel('Chercher un adversaire').setEmoji('🔍').setStyle(ButtonStyle.Primary).setDisabled(!full),
+    ),
+  ];
+
+  return { embed, rows };
+}
+
+/**
+ * Shared 4v4 team arena match message — HP bars for both teams (8 combatants total),
+ * recent log, and (while active) a single "Agir" button (each participant gets their own
+ * ephemeral action+target menu when they click it — 8 select menus would exceed Discord's
+ * 5-action-row limit per message).
+ */
+function buildArenaTeamMatchMessage(state) {
+  const teamLine = (team) => team.map((c) => {
+    const pct  = Math.max(0, Math.round((c.hp / c.maxHp) * 100));
+    const icon = c.hp <= 0 ? '💀' : pct > 50 ? '🟩' : pct > 25 ? '🟨' : '🟥';
+    return `${icon} **${c.name}** ${hpBar(c.hp, c.maxHp)}`;
+  }).join('\n');
+
+  const recentLog = state.log.slice(-8).map((l) => `> ${l}`).join('\n') || '> *Le combat commence...*';
+
+  const embed = new EmbedBuilder()
+    .setTitle(state.status === 'finished' ? '⚔️  4v4 — Combat terminé' : `⚔️  4v4 — Tour ${state.round}`)
+    .addFields(
+      { name: `🅰️ Équipe A (${state.guildIdA})`, value: teamLine(state.teamA), inline: true },
+      { name: `🅱️ Équipe B (${state.guildIdB})`, value: teamLine(state.teamB), inline: true },
+      { name: '📜 Journal', value: recentLog, inline: false },
+    )
+    .setColor(state.status === 'finished' ? 0x7f8c8d : 0xc0392b);
+
+  if (state.status === 'finished') {
+    const winningTeam = state.teamA.some((c) => c.hp > 0) ? 'A' : 'B';
+    embed.addFields({ name: '🏆 Équipe gagnante', value: winningTeam === 'A' ? `🅰️ ${state.guildIdA}` : `🅱️ ${state.guildIdB}`, inline: false });
+    return { embed, rows: [] };
+  }
+
+  embed.setFooter({ text: '⏱️  30 secondes pour agir — clique sur "Agir" si tu participes à ce combat.' });
+
+  const rows = [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`arena_team_act:${state.matchId}`).setLabel('Agir').setEmoji('⚔️').setStyle(ButtonStyle.Primary),
+    ),
+  ];
+
+  return { embed, rows };
+}
+
+/**
+ * Ephemeral action+target menu shown to one participant after they click "Agir".
+ */
+function buildArenaTeamActionMenu(matchId, combatant, enemyTeam) {
+  const cooldowns = combatant.skillCooldowns ?? {};
+  const usedOnce  = combatant.usedOnceSkills ?? [];
+  const actions = [
+    { key: 'attack', label: 'Attaquer', emoji: '⚔️' },
+    ...(combatant.activeSkills ?? [])
+      .filter((sk) => (cooldowns[sk.key] ?? 0) <= 0 && !(sk.oncePerCombat && usedOnce.includes(sk.key)))
+      .map((sk) => ({ key: `skill_${sk.key}`, label: sk.name, emoji: '🔥' })),
+  ];
+
+  const options = [];
+  for (const action of actions) {
+    enemyTeam.forEach((enemy, idx) => {
+      if (enemy.hp <= 0) return;
+      options.push({
+        label: `${action.label} → ${enemy.name}`.slice(0, 100),
+        value: `${action.key}:${idx}`,
+        emoji: action.emoji,
+      });
+    });
+  }
+
+  const embed = new EmbedBuilder()
+    .setTitle(`⚔️  ${combatant.name} — À toi de jouer !`)
+    .setDescription('Choisis une action et une cible.')
+    .setColor(0xc0392b);
+
+  const rows = [
+    new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId(`arena_team_action:${matchId}`)
+        .setPlaceholder('⚔️  Choisir une action et une cible…')
+        .addOptions(options.slice(0, 25)),
+    ),
+  ];
+
+  return { embed, rows };
+}
+
+/**
  * Generic error embed.
  */
 function errorEmbed(message) {
@@ -933,6 +1045,9 @@ module.exports = {
   buildArenaHomeMessage,
   buildArenaChallengeMessage,
   buildArenaMatchMessage,
+  buildArenaTeamLobbyMessage,
+  buildArenaTeamMatchMessage,
+  buildArenaTeamActionMenu,
   buildCityEmbed,
   errorEmbed,
   successEmbed,

@@ -6,7 +6,7 @@ services:
       dockerfile: deployment/Dockerfile
     restart: unless-stopped
     env_file:
-      - ../worldboss-app/.env
+      - .env
     depends_on:
       - worldboss-db
       - worldboss-redis

@@ -10,6 +10,7 @@ const { startAuctionWorker } = require('./services/market.service');
 const { startMerchantWorker } = require('./services/merchant.service');
 const { startServantWorker } = require('./services/servant.service');
 const { startArenaWorker } = require('./services/arena.service');
+const { startArenaTeamWorker } = require('./services/arenaTeam.service');
 const { startCityWorker } = require('./services/city.service');
 const { deployCommands } = require('./deploy-commands');
 
@@ -91,6 +92,7 @@ client.once('ready', async () => {
   startMerchantWorker(client);
   startServantWorker(client);
   startArenaWorker(client);
+  startArenaTeamWorker(client);
   startCityWorker(client);
 });
 

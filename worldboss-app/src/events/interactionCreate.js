@@ -272,6 +272,30 @@ module.exports = {
         } catch (err) {
           console.error('[Dungeon/select]', err);
         }
+      } else if (interaction.customId.startsWith('arena_team_action:')) {
+        try {
+          const matchId = interaction.customId.split(':')[1];
+          const characterId = await resolveCharacterId(interaction);
+          if (!characterId) return interaction.reply({ embeds: [errorEmbed('Personnage introuvable.')], flags: MessageFlags.Ephemeral });
+
+          const [action, targetIndexRaw] = interaction.values[0].split(':');
+          const targetIndex = parseInt(targetIndexRaw, 10);
+
+          const { submitAction, postTeamUpdate } = require('../services/arenaTeam.service');
+          const result = await submitAction(matchId, characterId, action, targetIndex, interaction.client);
+
+          if (result.mode === 'error') {
+            return interaction.update({ embeds: [errorEmbed(result.message)], components: [] });
+          }
+          if (result.mode === 'wait') {
+            return interaction.update({ embeds: [{ color: 0x3498db, description: `⏳ ${result.message}` }], components: [] });
+          }
+
+          await interaction.update({ embeds: [{ color: 0x2ecc71, description: '✅ Action enregistrée !' }], components: [] });
+          await postTeamUpdate(result.state, interaction.client);
+        } catch (err) {
+          console.error('[Arena/team_action]', err);
+        }
       } else if (interaction.customId.startsWith('arena_action:')) {
         try {
           const [, matchId, side] = interaction.customId.split(':');
@@ -546,6 +570,62 @@ module.exports = {
           await interaction.update({ embeds: [{ color: 0x2ecc71, description: '✅ Défi accepté ! Le combat commence dans le canal arène.' }], components: [] });
           await startMatch(challenger, challenger.loadout, target, target.loadout, interaction.guildId, false, interaction.client);
           return;
+        }
+
+        if (customId === 'arena_team_join' || customId === 'arena_team_leave') {
+          const characterId = await resolveCharacterId(interaction);
+          if (!characterId) return interaction.reply({ embeds: [errorEmbed('Personnage introuvable.')], flags: MessageFlags.Ephemeral });
+
+          const { joinLobby, leaveLobby } = require('../services/arenaTeam.service');
+          const { getArenaTeamLobby } = require('../cache/redis');
+          const { buildArenaTeamLobbyMessage } = require('../utils/embed');
+
+          const character = await prisma.character.findUnique({ where: { id: characterId } });
+          const result = customId === 'arena_team_join'
+            ? await joinLobby(character, interaction.guildId)
+            : await leaveLobby(characterId, interaction.guildId);
+
+          if (!result.success) {
+            return interaction.reply({ embeds: [errorEmbed(result.message)], flags: MessageFlags.Ephemeral });
+          }
+
+          const lobby = await getArenaTeamLobby(interaction.guildId);
+          const { embed, rows } = buildArenaTeamLobbyMessage(lobby);
+          return interaction.update({ embeds: [embed], components: rows });
+        }
+
+        if (customId === 'arena_team_search') {
+          const characterId = await resolveCharacterId(interaction);
+          if (!characterId) return interaction.reply({ embeds: [errorEmbed('Personnage introuvable.')], flags: MessageFlags.Ephemeral });
+
+          const { searchMatch } = require('../services/arenaTeam.service');
+          const result = await searchMatch(interaction.guildId, interaction.client);
+          if (!result.success) return interaction.reply({ embeds: [errorEmbed(result.message)], flags: MessageFlags.Ephemeral });
+
+          return interaction.update({ embeds: [{ color: 0x2ecc71, description: `✅ ${result.message}` }], components: [] });
+        }
+
+        if (customId.startsWith('arena_team_act:')) {
+          const matchId = customId.split(':')[1];
+          const { getArenaTeamMatchState } = require('../cache/redis');
+          const { findActor } = require('../services/arenaTeam.service');
+          const { buildArenaTeamActionMenu } = require('../utils/embed');
+
+          const state = await getArenaTeamMatchState(matchId);
+          if (!state || state.status !== 'active') {
+            return interaction.reply({ embeds: [errorEmbed('Ce combat est terminé ou introuvable.')], flags: MessageFlags.Ephemeral });
+          }
+
+          const actor = findActor(state, interaction.user.id);
+          if (!actor) return interaction.reply({ embeds: [errorEmbed('Tu ne participes pas à ce combat.')], flags: MessageFlags.Ephemeral });
+          if (actor.combatant.hp <= 0) return interaction.reply({ embeds: [errorEmbed('Tu es K.O. — tu ne peux plus agir ce combat.')], flags: MessageFlags.Ephemeral });
+          if (state.pendingActions[actor.combatant.characterId]) {
+            return interaction.reply({ embeds: [errorEmbed('Tu as déjà choisi ton action ce tour.')], flags: MessageFlags.Ephemeral });
+          }
+
+          const enemyTeam = actor.side === 'A' ? state.teamB : state.teamA;
+          const { embed, rows } = buildArenaTeamActionMenu(matchId, actor.combatant, enemyTeam);
+          return interaction.reply({ embeds: [embed], components: rows, flags: MessageFlags.Ephemeral });
         }
 
         if (customId === 'info_leaderboard') {

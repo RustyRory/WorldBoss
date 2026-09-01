@@ -114,4 +114,49 @@ function resolveArenaRound(state) {
   return { playerA, playerB, logs, finished: aDied || bDied, aDied, bDied };
 }
 
-module.exports = { resolveArenaRound };
+function cloneCombatant(c) {
+  return { ...c, buffs: [...(c.buffs ?? [])], dots: [...(c.dots ?? [])], skillCooldowns: { ...(c.skillCooldowns ?? {}) }, usedOnceSkills: [...(c.usedOnceSkills ?? [])] };
+}
+
+/**
+ * Resolve one round of a 4v4 team arena match (Phase 2 — cross-server).
+ * @param {object} state - { teamA, teamB, pendingActions: { [characterId]: { action, targetIndex } } }
+ *   pendingActions.targetIndex indexes into the ACTOR's enemy team array.
+ */
+function resolveTeamRound(state) {
+  const teamA = state.teamA.map(cloneCombatant);
+  const teamB = state.teamB.map(cloneCombatant);
+  const logs = [];
+
+  for (const c of [...teamA, ...teamB]) decayStatus(c, logs);
+
+  const entries = [
+    ...teamA.map((c) => ({ c, team: 'A' })),
+    ...teamB.map((c) => ({ c, team: 'B' })),
+  ].filter((e) => e.c.hp > 0);
+
+  const order = entries
+    .map((e) => ({ ...e, roll: rollInitiative(e.c.spd) }))
+    .sort((a, b) => b.roll - a.roll);
+
+  for (const entry of order) {
+    const actor = entry.c;
+    if (actor.hp <= 0) continue;
+
+    const enemyTeam = entry.team === 'A' ? teamB : teamA;
+    const pending   = state.pendingActions[actor.characterId] ?? { action: 'attack', targetIndex: 0 };
+
+    let target = enemyTeam[pending.targetIndex];
+    if (!target || target.hp <= 0) target = enemyTeam.find((t) => t.hp > 0);
+    if (!target) continue; // enemy team already wiped out
+
+    executeAction(actor, target, pending.action, logs);
+  }
+
+  const aWiped = teamA.every((c) => c.hp <= 0);
+  const bWiped = teamB.every((c) => c.hp <= 0);
+
+  return { teamA, teamB, logs, finished: aWiped || bWiped, aWiped, bWiped };
+}
+
+module.exports = { resolveArenaRound, resolveTeamRound };

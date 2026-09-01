@@ -105,6 +105,47 @@ async function setArenaQueue(guildId, queue) {
   await redis.set(`arena:queue:${guildId}`, JSON.stringify(queue), 'EX', ARENA_QUEUE_TTL);
 }
 
+// ── Helper: arena team battles (4v4 inter-serveurs, Phase 2) ────────────────
+const TEAM_LOBBY_TTL = 60 * 60;     // 1 hour
+const TEAM_MATCH_TTL = 60 * 30;     // 30 minutes, refreshed every round
+const TEAM_QUEUE_TTL = 60 * 60 * 2; // 2 hours
+
+async function getArenaTeamLobby(guildId) {
+  const raw = await redis.get(`arena:team-lobby:${guildId}`);
+  return raw ? JSON.parse(raw) : null;
+}
+
+async function setArenaTeamLobby(guildId, lobby) {
+  await redis.set(`arena:team-lobby:${guildId}`, JSON.stringify(lobby), 'EX', TEAM_LOBBY_TTL);
+}
+
+async function deleteArenaTeamLobby(guildId) {
+  await redis.del(`arena:team-lobby:${guildId}`);
+}
+
+// Cross-guild — one shared queue, not scoped per server.
+async function getArenaTeamQueue() {
+  const raw = await redis.get('arena:team-queue');
+  return raw ? JSON.parse(raw) : [];
+}
+
+async function setArenaTeamQueue(queue) {
+  await redis.set('arena:team-queue', JSON.stringify(queue), 'EX', TEAM_QUEUE_TTL);
+}
+
+async function getArenaTeamMatchState(matchId) {
+  const raw = await redis.get(`arena:team-match:${matchId}`);
+  return raw ? JSON.parse(raw) : null;
+}
+
+async function setArenaTeamMatchState(matchId, state) {
+  await redis.set(`arena:team-match:${matchId}`, JSON.stringify(state), 'EX', TEAM_MATCH_TTL);
+}
+
+async function deleteArenaTeamMatchState(matchId) {
+  await redis.del(`arena:team-match:${matchId}`);
+}
+
 module.exports = {
   redis,
   getCombatState,
@@ -124,4 +165,12 @@ module.exports = {
   deleteArenaMatchState,
   getArenaQueue,
   setArenaQueue,
+  getArenaTeamLobby,
+  setArenaTeamLobby,
+  deleteArenaTeamLobby,
+  getArenaTeamQueue,
+  setArenaTeamQueue,
+  getArenaTeamMatchState,
+  setArenaTeamMatchState,
+  deleteArenaTeamMatchState,
 };

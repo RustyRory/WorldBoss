@@ -285,6 +285,30 @@ model ConstructionJob {
   city City @relation(fields: [cityId], references: [id], onDelete: Cascade)
 }
 
+// ── Arène PvP Phase 2 : 4v4 inter-serveurs (session-only, aucun partage de stats) ──
+
+model ArenaTeamMatch {
+  id             Int      @id @default(autoincrement())
+  guildIdA       String
+  guildIdB       String
+  winningGuildId String?
+  ranked         Boolean  @default(true)
+  logJson        Json     @default("[]")
+  createdAt      DateTime @default(now())
+
+  participants ArenaTeamParticipant[]
+}
+
+model ArenaTeamParticipant {
+  id          Int    @id @default(autoincrement())
+  matchId     Int
+  characterId Int
+  side        String // "A" | "B"
+  eloDelta    Int    @default(0)
+
+  match ArenaTeamMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+}
+
 model MarketListing {
   id          Int       @id @default(autoincrement())
   guildId     String
